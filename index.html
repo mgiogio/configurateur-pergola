@@ -10122,8 +10122,8 @@ var qrcode = function() {
   .rating-ph{font-size:11px;color:#9aa0a0;font-style:italic}
   .product-head .from{margin-top:10px;font-size:14px;color:var(--ink-soft);font-weight:500}
   .product-head .from b{color:var(--green)}
-  .layout{display:grid;grid-template-columns:1.5fr .95fr;gap:32px;align-items:start;padding-top:10px;padding-bottom:150px}
-  .stage-col{position:sticky;top:70px}
+  .layout{display:grid;grid-template-columns:1.5fr .95fr;gap:32px;align-items:start;padding-top:18px;padding-bottom:150px}
+  .stage-col{position:sticky;top:14px}
   .stage{position:relative;border-radius:20px;overflow:hidden;height:min(52vh,560px);background-color:#fcfdfb;background-image:linear-gradient(rgba(4,158,0,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(4,158,0,.06) 1px,transparent 1px),linear-gradient(rgba(4,158,0,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(4,158,0,.13) 1px,transparent 1px);background-size:9px 9px,9px 9px,45px 45px,45px 45px;box-shadow:var(--shadow)}
   .stage canvas{display:block;width:100%!important;height:100%!important}
   .stage .badge{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.78);backdrop-filter:blur(8px);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--ink-soft);font-weight:500;z-index:4}
@@ -10157,7 +10157,7 @@ var qrcode = function() {
   .ar-btn:hover{background:#dff3d6}
   .ar-btn svg{width:21px;height:21px}
   .ar-btn .ar-sub{font-weight:500;font-size:12px;opacity:.85}
-  .group{padding:38px 0;border-bottom:1px solid var(--line);scroll-margin-top:84px}
+  .group{padding:38px 0;border-bottom:1px solid var(--line);scroll-margin-top:20px}
   .group:first-of-type{padding-top:12px}
   .group:first-child{padding-top:4px}
   .step-no{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--green-soft);color:var(--green-dk);font-size:15px;font-weight:800;margin-right:11px;font-family:Roboto;flex:none}
@@ -10265,6 +10265,25 @@ var qrcode = function() {
   .sc.on{background:var(--green);border-color:var(--green);color:#fff}
   .simul-detail{margin-top:12px;font-size:14px;color:var(--ink-soft)}
   .simul-detail b{color:var(--green);font-weight:800}
+  /* Stories vidéo (témoignages / explications) */
+  .stories-title{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin:2px 0 10px}
+  .stories{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 24px}
+  .story-vid{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;background:#dfeecb}
+  .story{display:flex;flex-direction:column;align-items:center;gap:7px;width:74px;cursor:pointer;background:none;border:none;padding:0;font-family:inherit}
+  .story-bubble{width:68px;height:68px;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--green),#86d76a);position:relative;flex:none}
+  .story-bubble img,.story-ph{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;background:linear-gradient(135deg,#e3efd4,#cfe3b8)}
+  .story-play{position:absolute;inset:3px;display:grid;place-items:center;pointer-events:none}
+  .story-play i{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;box-shadow:0 1px 5px rgba(0,0,0,.3)}
+  .story-play svg{width:12px;height:12px;margin-left:1px;color:var(--ink);display:block}
+  .story-label{font-size:11.5px;line-height:1.2;color:var(--ink);font-weight:600;text-align:center}
+  .story-label b{color:var(--orange)}
+  .vid-modal{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(20,30,15,.62);backdrop-filter:blur(4px);padding:20px}
+  .vid-modal.show{display:flex}
+  .vid-card{background:#000;border-radius:16px;overflow:hidden;width:min(400px,92vw);position:relative;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .vid-frame{position:relative;width:100%;aspect-ratio:9/16;background:#111}
+  .vid-frame iframe,.vid-frame video{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .vid-ph{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:13px;text-align:center;padding:20px;line-height:1.5}
+  .vid-close{position:absolute;top:8px;right:10px;z-index:2;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer}
   .reviews-wc{margin-top:20px}
   .wc-shortcode{font-family:monospace;font-size:12px;color:var(--ink-soft);background:var(--grey-1);border:1px dashed var(--line);border-radius:8px;padding:7px 11px;display:inline-block}
   .recap{margin-top:26px;border-top:2px solid var(--line);padding-top:18px}
@@ -10285,7 +10304,7 @@ var qrcode = function() {
     .layout{grid-template-columns:1fr;gap:14px;padding-top:12px;padding-bottom:110px}
     .hero{padding-top:18px;padding-bottom:2px}.hero h1{font-size:24px}.hero p{font-size:14px}
     .product-head h1{font-size:22px}
-    .stage-col{position:sticky;top:58px;z-index:30;background:var(--bg);padding-bottom:8px;height:auto;display:block}
+    .stage-col{position:sticky;top:8px;z-index:30;background:var(--bg);padding-bottom:8px;height:auto;display:block}
     .stage{height:30vh;border-radius:16px;flex:none}
     .tap-hint{display:block}
     .drag-hint{display:none}
@@ -10314,11 +10333,6 @@ var qrcode = function() {
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
-  <a class="brand" href="#"><img src="https://cover.green/wp-content/uploads/2020/06/logo-cover-green.svg" alt="Cover Green"><span>Configurateur</span></a>
-  <div class="top-cta">Besoin d'aide ? Nous contacter</div>
-</div></header>
-
 <div class="wrap layout">
   <div class="stage-col">
     <div class="stage" id="stage">
@@ -10340,6 +10354,8 @@ var qrcode = function() {
       <div class="rating"><span class="stars">★★★★★</span> <b>4,9</b> <a href="#avis">128 avis</a> <span class="rating-ph">(note WooCommerce)</span></div>
       <div class="from" id="fromLine">À partir de <b style="color:var(--green)">1&nbsp;119,15&nbsp;€</b> · bois français · livraison offerte</div>
     </div>
+    <div class="stories-title">Témoignages clients</div>
+    <div class="stories" id="stories"></div>
     <div class="opts" id="opts"></div>
   </div>
 </div>
@@ -10349,6 +10365,7 @@ var qrcode = function() {
   <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Sauver</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
+<div class="vid-modal" id="vidModal"><div class="vid-card"><button class="vid-close" id="vidClose" aria-label="Fermer">✕</button><div class="vid-frame" id="vidFrame"></div></div></div>
 
 <!-- Modale info (bois, connecteurs...) -->
 <div class="qr-modal" id="infoModal">
@@ -11390,6 +11407,38 @@ function buildSimulator(){
     document.getElementById('simDetail').innerHTML=simDetail(computePrice(),SIM_PLANS.find(p=>p.n===simN)); });
   return w;
 }
+/* Stories vidéo (témoignages / explications). Remplace thumb (image) et video (URL YouTube/Vimeo/MP4). */
+const PLAY_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+const CFV='https://customer-vnge7i59cxj9ym3o.cloudflarestream.com/';
+const MINI='https://cover.green/wp-content/uploads/2026/04/miniature_video-';
+const STORIES=[
+  {label:'', poster:MINI+'01.webp', video:CFV+'9e32daf6ed46ca720cd80564ffa08753/downloads/default.mp4'},
+  {label:'', poster:MINI+'02.webp', video:CFV+'96331c1a6ee58c8bf3755eada6c2cdc5/downloads/default.mp4'},
+  {label:'', poster:MINI+'03.webp', video:CFV+'47a645c8567203918678a3e61e0d1b2c/downloads/default.mp4'},
+  {label:'', poster:MINI+'04.webp', video:CFV+'bea4d6424c1d1cdd007e333c0d20880e/downloads/default.mp4'}
+];
+function buildStories(){
+  const el=document.getElementById('stories'); if(!el) return;
+  el.innerHTML=STORIES.map((s,i)=>{
+    const media = s.video
+      ? `<video class="story-vid" src="${s.video}" ${s.poster?`poster="${s.poster}"`:''} muted loop autoplay playsinline preload="metadata"></video>`
+      : (s.poster?`<img src="${s.poster}" alt="">`:`<span class="story-ph"></span>`);
+    return `<button type="button" class="story" data-i="${i}">`
+      +`<span class="story-bubble">${media}<span class="story-play"><i>${PLAY_SVG}</i></span></span>`
+      +(s.label?`<span class="story-label">${s.label}</span>`:'')+`</button>`;
+  }).join('');
+  el.querySelectorAll('.story').forEach(b=>b.onclick=()=>openVid(+b.dataset.i));
+}
+function openVid(i){
+  const s=STORIES[i]||{}, fr=document.getElementById('vidFrame');
+  const url=s.video||s.preview;
+  if(url){
+    if(/youtube|youtu\.be|vimeo/.test(url)) fr.innerHTML=`<iframe src="${url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+    else fr.innerHTML=`<video src="${url}" ${s.poster?`poster="${s.poster}"`:''} controls autoplay playsinline></video>`;
+  } else fr.innerHTML=`<div class="vid-ph">Emplacement vidéo<br><small>Ajoute l'URL dans STORIES.</small></div>`;
+  document.getElementById('vidModal').classList.add('show');
+}
+function hideVid(){ document.getElementById('vidModal').classList.remove('show'); document.getElementById('vidFrame').innerHTML=''; }
 /* Réassurance — 3 pictos (livraison via balise WP, rétractation, bois) */
 const RZ_SVG={
   truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 9.5h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/></svg>',
@@ -11801,7 +11850,7 @@ function saveConfig(){
 function hideDragHint(){ const d=document.getElementById('dragHint'); if(d) d.classList.add('hide'); }
 
 /* ===== BOOT ===== */
-renderOptions(); updatePrice(); initScene();
+buildStories(); renderOptions(); updatePrice(); initScene();
 document.getElementById('resetBtn').onclick=()=>heroView(false);
 document.getElementById('expandBtn').onclick=()=>fsOpen?closeFS():openFS();
 document.getElementById('closeFs').onclick=closeFS;
@@ -11811,9 +11860,11 @@ document.getElementById('cartBtn').onclick=()=>toast('Ajouté au panier — '+fm
 document.getElementById('saveBtn').onclick=saveConfig;
 document.getElementById('qrClose').onclick=hideQR;
 document.getElementById('qrModal').addEventListener('click',e=>{ if(e.target.id==='qrModal') hideQR(); });
+document.getElementById('vidClose').onclick=hideVid;
+document.getElementById('vidModal').addEventListener('click',e=>{ if(e.target.id==='vidModal') hideVid(); });
 document.getElementById('infoClose').onclick=hideInfo;
 document.getElementById('infoModal').addEventListener('click',e=>{ if(e.target.id==='infoModal') hideInfo(); });
-window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(document.getElementById('infoModal').classList.contains('show')) hideInfo(); else if(document.getElementById('qrModal').classList.contains('show')) hideQR(); else if(fsOpen) closeFS(); } });
+window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(document.getElementById('vidModal').classList.contains('show')) hideVid(); else if(document.getElementById('infoModal').classList.contains('show')) hideInfo(); else if(document.getElementById('qrModal').classList.contains('show')) hideQR(); else if(fsOpen) closeFS(); } });
 </script>
 </body>
 </html>
