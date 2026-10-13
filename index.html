@@ -11200,6 +11200,7 @@ function buildStories(){
       +(s.label?`<span class="story-label">${s.label}</span>`:'')+`</button>`;
   }).join('');
   el.querySelectorAll('.story').forEach(b=>b.onclick=()=>openVid(+b.dataset.i));
+  el.querySelectorAll('.story-vid').forEach(v=>{ v.muted=true; const p=v.play(); if(p&&p.catch)p.catch(()=>{}); });
 }
 function openVid(i){
   const s=STORIES[i]||{}, fr=document.getElementById('vidFrame');
