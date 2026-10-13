@@ -10955,8 +10955,6 @@ function manifestFor(pose){ return pose==='murale'?MANIFEST_MURALE:MANIFEST_AUTO
 /* ===== Diagnostic visible à l'écran (pour localiser un éventuel blocage) ===== */
 function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; l.style.display='grid';
   l.innerHTML=(err?'<div style="max-width:88%;color:#a33;font-size:13px;white-space:pre-wrap;text-align:left">':'<div><div class="spin"></div>')+msg+'</div>';}
-window.addEventListener('error',e=>{ if(window.__loaded) return; if(((e.filename||'')+'').indexOf('model-viewer')>=0) return; __status('Erreur JS :\n'+(e.message||'')+'\n'+(((e.error&&e.error.stack)||'').split('\n').slice(0,3).join('\n')),true); });
-window.addEventListener('unhandledrejection',e=>{ if(window.__loaded) return; __status('Promesse rejetée :\n'+((e.reason&&(e.reason.message||e.reason))||'?'),true); });
 __status('THREE='+(typeof THREE)+' · GLTFLoader='+(typeof (window.THREE&&THREE.GLTFLoader))+' · Meshopt='+(typeof window.MeshoptDecoder));
 
 /* Surcoûts placeholders (à confirmer côté Woo) */
