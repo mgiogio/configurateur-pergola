@@ -11472,7 +11472,7 @@ function ensureMV(){ return new Promise((res)=>{
   setTimeout(()=>{ clearInterval(t); res(); }, 10000);
 }); }
 const isHandheld=()=> /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (window.matchMedia('(max-width:880px)').matches && 'ontouchstart' in window);
-let __mvReady=false, __mvDirty=true, __arTimer=null;
+let __mvReady=false, __mvDirty=true, __arTimer=null, __mvLastErr='';
 function prepareAR(){
   if(!root) return Promise.resolve(false);
   return ensureMV().then(()=> new Promise(res=>{
@@ -11493,9 +11493,12 @@ function prepareAR(){
 function scheduleAR(){ __mvDirty=true; if(isHandheld()){ clearTimeout(__arTimer); __arTimer=setTimeout(prepareAR,1200); } }
 function arStatus(){
   const mv=document.getElementById('mv'); const el=document.getElementById('arOvStatus'); if(!el) return;
-  el.textContent = (mv && mv.canActivateAR)
-    ? 'Tournez la pergola, puis touchez « Voir en réalité augmentée » pour la placer dans votre jardin.'
-    : ('Vue 3D. AR indisponible sur cet appareil. [modèle chargé: '+(mv&&mv.loaded?'oui':'non')+']');
+  if(mv && mv.canActivateAR){ el.textContent='Tournez la pergola, puis touchez « Voir en réalité augmentée » pour la placer dans votre jardin.'; return; }
+  var srcv = mv && (mv.src || mv.getAttribute('src'));
+  el.textContent = 'Diag  composant:'+(customElements.get('model-viewer')?'OK':'NON')
+    +'  source:'+(srcv?'OK':'NON')
+    +'  chargé:'+(mv&&mv.loaded?'oui':'non')
+    +'  erreur:'+(__mvLastErr||'aucune');
 }
 function openArStage(){
   const st=document.getElementById('arStage'); if(!st) return;
@@ -11626,6 +11629,7 @@ document.getElementById('expandBtn').onclick=()=>fsOpen?closeFS():openFS();
 document.getElementById('closeFs').onclick=closeFS;
 document.getElementById('arBtn').onclick=launchAR;
 var __arClose=document.getElementById('arOvClose'); if(__arClose) __arClose.onclick=closeArStage;
+var __mvEl0=document.getElementById('mv'); if(__mvEl0) __mvEl0.addEventListener('error',function(e){ try{ __mvLastErr=(e&&e.detail&&((e.detail.sourceError&&e.detail.sourceError.message)||e.detail.type||e.detail.status))||'err'; }catch(_){ __mvLastErr='err'; } });
 stage.addEventListener('click',e=>{ if(isMobile()&&!fsOpen&&!e.target.closest('.icon-btn,.close-fs,.stage-overlay')) openFS(); });
 document.getElementById('cartBtn').onclick=addToCart;
 document.getElementById('saveBtn').onclick=saveConfig;
