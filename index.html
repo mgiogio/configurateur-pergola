@@ -10123,7 +10123,7 @@ var qrcode = function() {
   <div class="opts-col">
     <div class="product-head">
       <h1>Pergola bois <span style="color:var(--cg-green)">sur mesure</span></h1>
-      <div class="rating"><span class="stars">★★★★★</span> <b>4,9</b> <a href="#avis">128 avis</a> <span class="rating-ph">(note WooCommerce)</span></div>
+      <div class="rating" id="cgRating"><span class="stars">★★★★★</span> <b>4,9</b> <a href="#avis">128 avis</a> <span class="rating-ph">(note WooCommerce)</span></div>
       <div class="from" id="fromLine">À partir de <b style="color:var(--cg-green)">1&nbsp;119,15&nbsp;€</b> · bois français · livraison offerte</div>
     </div>
     <div class="stories-title">Témoignages clients</div>
@@ -10936,8 +10936,24 @@ const SECTIONS = {
 
 /* ===== Etat (+ restauration depuis le lien partagé) ===== */
 const RESTORE = readConfigFromHash();
-if(RESTORE && RESTORE.p==='murale') MANIFEST = MANIFEST_MURALE;
-const state = { pose:(RESTORE&&RESTORE.p==='murale')?'murale':'auto',
+/* Contexte produit : fourni par le plugin (window.CGP_CTX) sinon déduit de la page */
+const CTX = (function(){
+  const c = Object.assign({}, window.CGP_CTX||{});
+  if(c.rating==null || c.count==null){
+    try{ document.querySelectorAll('script[type="application/ld+json"]').forEach(sc=>{
+      const j=JSON.parse(sc.textContent); const arr=Array.isArray(j)?j:(j['@graph']||[j]);
+      arr.forEach(o=>{ if(o && /product/i.test(''+(o['@type']||'')) && o.aggregateRating){
+        if(c.rating==null) c.rating=parseFloat(o.aggregateRating.ratingValue);
+        if(c.count==null) c.count=parseInt(o.aggregateRating.reviewCount||o.aggregateRating.ratingCount,10);
+      }});
+    }); }catch(e){}
+  }
+  if(!c.pose) c.pose = /murale/i.test(location.pathname) ? 'murale' : 'auto';
+  if(!c.delivery) c.delivery = '5 à 8 jours ouvrés';
+  return c;
+})();
+if((((RESTORE&&RESTORE.p)||CTX.pose))==='murale') MANIFEST = MANIFEST_MURALE;
+const state = { pose:(RESTORE&&RESTORE.p)?RESTORE.p:CTX.pose,
                 taille:(RESTORE && MANIFEST.perSize[RESTORE.t])?RESTORE.t:MANIFEST.dimensions.taille.values[0],
                 recoupeOpen:false };
 function initState(){
@@ -11509,8 +11525,19 @@ function saveConfig(){
 /* Badge 3D : reste tant que l'utilisateur n'a pas vraiment fait tourner la pergola */
 function hideDragHint(){ const d=document.getElementById('dragHint'); if(d) d.classList.add('hide'); }
 
+/* Applique la note d'avis réelle + la livraison */
+function applyCtx(){
+  const el=document.getElementById('cgRating');
+  if(el && CTX.rating){
+    const r=CTX.rating, full=Math.round(r);
+    const stars='★★★★★'.slice(0,full)+'☆☆☆☆☆'.slice(0,5-full);
+    const n=(''+r).replace('.',',');
+    const cnt=CTX.count?`<a href="#avis">${CTX.count} avis</a>`:'';
+    el.innerHTML=`<span class="stars">${stars}</span> <b>${n}</b> ${cnt}`;
+  }
+}
 /* ===== BOOT ===== */
-buildStories(); renderOptions(); updatePrice(); initScene();
+applyCtx(); buildStories(); renderOptions(); updatePrice(); initScene();
 document.getElementById('resetBtn').onclick=()=>heroView(false);
 document.getElementById('expandBtn').onclick=()=>fsOpen?closeFS():openFS();
 document.getElementById('closeFs').onclick=closeFS;
