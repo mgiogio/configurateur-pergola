@@ -11490,7 +11490,7 @@ function prepareAR(){
         mv.addEventListener('load', onL, {once:true});
         mv.src=url;
         setTimeout(()=>{ if(!__mvReady) res(true); }, 4000);
-      }, ()=>res(false), {binary:true, onlyVisible:true});
+      }, {binary:true, onlyVisible:true});
     }catch(e){ res(false); }
   })).catch(()=>false);
 }
