@@ -12000,7 +12000,7 @@ const SECTIONS = {
       {t:"Pieds réglables", img:"", b:"Mêmes supports que les platines (dalle, terrasse, carrelage), mais ils rattrapent le niveau du sol et donnent un rendu plus épuré."},
       {t:"Sans pied", img:"", b:"Pour une pose adossée à un mur, ou sur un muret / une surélévation déjà existante."}
     ], note:"Section des poteaux : <b>90 × 90 mm</b>. Hauteur totale selon les pieds : 2,30 m à 2,50 m <span class=\"todo\">(à confirmer)</span>. Ces informations vous seront utiles pour votre déclaration préalable en mairie." }},
-  toiturebrisesoleil:{title:"Toiture brise-soleil.", q:"Combien de pans souhaitez-vous couvrir ?",
+  toiturebrisesoleil:{title:"Toiture brise-soleil.", q:"Quels pans souhaitez-vous couvrir ?",
     desc:"Des lames de bois qui filtrent le soleil tout en laissant respirer l'air.",
     arg:{img:"", intro:"Maîtrisez la lumière, gardez la fraîcheur.", points:[
       ["Douglas français","Les lames sont en bois douglas français, naturellement durable."],
@@ -12187,10 +12187,15 @@ const STORIES=[
   {label:'', poster:MINI+'03.webp', video:CFV+'47a645c8567203918678a3e61e0d1b2c/downloads/default.mp4'},
   {label:'', poster:MINI+'04.webp', video:CFV+'bea4d6424c1d1cdd007e333c0d20880e/downloads/default.mp4'}
 ];
+/* Miniature GIF animée légère (Cloudflare Stream) : montre que c'est une vidéo sans charger la vidéo */
+function cfGif(v){ const m=v&&v.match(/cloudflarestream\.com\/([^\/]+)\//); return m?CFV+m[1]+'/thumbnails/thumbnail.gif?time=1s&duration=3s&height=140&fps=6':''; }
 function buildStories(){
   const el=document.getElementById('stories'); if(!el) return;
   el.innerHTML=STORIES.map((s,i)=>{
-    const media = s.poster?`<img src="${s.poster}" alt="" loading="lazy" decoding="async">`:`<span class="story-ph"></span>`;
+    const gif = cfGif(s.video);
+    const media = gif
+      ? `<img class="story-gif" src="${gif}" alt="" loading="lazy" decoding="async"${s.poster?` onerror="this.onerror=null;this.src='${s.poster}'"`:''}>`
+      : (s.poster?`<img src="${s.poster}" alt="" loading="lazy" decoding="async">`:`<span class="story-ph"></span>`);
     return `<button type="button" class="story" data-i="${i}">`
       +`<span class="story-bubble">${media}<span class="story-play"><i>${PLAY_SVG}</i></span></span>`
       +(s.label?`<span class="story-label">${s.label}</span>`:'')+`</button>`;
@@ -12336,7 +12341,7 @@ function togglePan(g,panId){
 }
 function refresh(groupId, stay){
   renderOptions(); applyVisibility(); updateGround(); updatePrice();
-  animateReframe(); scheduleAR(); // la vue se déplace en douceur pour montrer la pièce changée
+  focusOnChange(groupId); scheduleAR(); // la vue se déplace vers la pièce changée (toiture, côtés, pieds...)
 }
 function applySize(){ initStateKeepSize(); renderOptions(); applyVisibility(); frameModel(); updatePrice(); }
 function onSizeChange(){ applySize(); }
@@ -12481,6 +12486,54 @@ function animateReframe(){
   controls.minDistance=modelRadius*.5; controls.maxDistance=modelRadius*6;
   if(groundMesh) groundMesh.position.y=box.min.y+0.002;
   heroView(false); // easing vers la vue hauteur d'homme pour montrer le changement
+}
+/* Boîte englobante des pièces VISIBLES d'un groupe (pour cadrer la partie modifiée) */
+function groupBox(g){
+  if(!root||!g) return null;
+  const names=[];
+  if(g.type==='panels'){ g.panels.forEach(p=>{ if(state[g.id]&&state[g.id].has&&state[g.id].has(p.id)) names.push(p.node); }); }
+  else if(g.type==='exclusive'){ g.options.forEach(o=>{ if(state[g.id]===o.id) (o.nodes||[]).forEach(nm=>names.push(nm)); }); }
+  else if(g.type==='onoff'){ if(state[g.id]) (g.nodes||[]).forEach(nm=>names.push(nm)); }
+  else if(g.type==='cumulative'){ (g.nodesOrdered||[]).forEach((nm,i)=>{ if(i<state[g.id]) names.push(nm); }); }
+  if(!names.length) return null;
+  const box=new THREE.Box3(), tmp=new THREE.Box3(); let any=false;
+  names.forEach(nm=>{ const o=root.getObjectByName(nm); if(o){ o.updateWorldMatrix(true,true); tmp.setFromObject(o); if(!tmp.isEmpty()){ box.union(tmp); any=true; } }});
+  return any?box:null;
+}
+/* Recadre vers une cible donnée avec un angle donné, en gardant toute la pergola dans le cadre */
+function reframeTo(dir, tt, instant){
+  if(!root) return;
+  const whole=visibleBox(); if(whole.isEmpty()) return;
+  const sz=whole.getSize(new THREE.Vector3());
+  const R=0.5*Math.hypot(sz.x*0.72,sz.y,sz.z); modelRadius=R; modelCenter=whole.getCenter(new THREE.Vector3());
+  const vfov=camera.fov*Math.PI/180, hfov=2*Math.atan(Math.tan(vfov/2)*Math.max(camera.aspect,0.2));
+  const dist=(R/Math.sin(Math.min(vfov,hfov)/2))*1.08;
+  controls.minDistance=R*0.4; controls.maxDistance=dist*3;
+  if(groundMesh) groundMesh.position.y=whole.min.y+0.002;
+  const dn=dir.clone().normalize();
+  const target = tt?tt.clone():modelCenter.clone();
+  const to=target.clone().add(dn.multiplyScalar(dist));
+  if(instant){ camera.position.copy(to); controls.target.copy(target); controls.update(); return; }
+  const from=camera.position.clone(), ft=controls.target.clone(); let t=0; cancelAnimationFrame(tween);
+  (function step(){ t=Math.min(1,t+.04); const e=1-Math.pow(1-t,3);
+    camera.position.lerpVectors(from,to,e); controls.target.lerpVectors(ft,target,e); controls.update();
+    if(t<1) tween=requestAnimationFrame(step); })();
+}
+/* Choisit le cadrage selon la famille modifiée : toiture vue de dessus, côtés de face, etc. */
+function focusOnChange(groupId){
+  if(!root) return;
+  const g = groupId && groupById(groupId);
+  const box = g && groupBox(g);
+  if(g && box){
+    let dir;
+    if(ROOF_COMBO.indexOf(groupId)>-1 || groupId===ROOF_BIO) dir=new THREE.Vector3(0.9,0.85,1.0);   // toiture : légère plongée
+    else if(SIDES.indexOf(groupId)>-1) dir=new THREE.Vector3(0.4,0.3,1.35);                          // brise-vue : de face
+    else if(groupId==='pieds') dir=new THREE.Vector3(0.7,0.22,1.2);                                   // pieds : vue basse
+    else dir=new THREE.Vector3(1,0.4,1.05);
+    reframeTo(dir, box.getCenter(new THREE.Vector3()), false);
+  } else {
+    animateReframe();
+  }
 }
 function frameModel(){
   if(!root)return;
