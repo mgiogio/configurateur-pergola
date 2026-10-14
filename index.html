@@ -12598,7 +12598,6 @@ function scheduleAR(){ __mvDirty=true; if(isHandheld()){ clearTimeout(__arTimer)
 function arStatus(){
   const mv=document.getElementById('mv'); const el=document.getElementById('arOvStatus'); const btn=document.getElementById('mvArBtn'); if(!el) return;
   const can = mv && mv.canActivateAR;
-  if(btn) btn.style.display = can ? 'block' : 'none';
   if(can){ el.textContent='Tournez la pergola, puis touchez « Voir en réalité augmentée » pour la placer dans votre jardin.'; return; }
   var srcv = mv && (mv.src || mv.getAttribute('src'));
   el.textContent = 'Diag  composant:'+(customElements.get('model-viewer')?'OK':'NON')
@@ -12609,10 +12608,12 @@ function arStatus(){
 function openArStage(){
   const st=document.getElementById('arStage'); if(!st) return;
   st.classList.add('open'); document.body.style.overflow='hidden';
+  var btn=document.getElementById('mvArBtn'); if(btn) btn.style.display='block';
   arStatus(); setTimeout(arStatus,700); setTimeout(arStatus,2200);
 }
 function closeArStage(){
   const st=document.getElementById('arStage'); if(st) st.classList.remove('open');
+  var btn=document.getElementById('mvArBtn'); if(btn) btn.style.display='none';
   document.body.style.overflow='';
 }
 function launchAR(){
@@ -12739,6 +12740,7 @@ var __mvArBtn=document.getElementById('mvArBtn');
 if(__mvArBtn) __mvArBtn.onclick=function(){
   var mv=document.getElementById('mv'); var el=document.getElementById('arOvStatus');
   try{
+    if(!mv.canActivateAR && el){ el.textContent='AR non disponible (canAR:0) - composant:'+(customElements.get('model-viewer')?'OK':'NON')+' chargé:'+(mv.loaded?'oui':'non'); }
     var p=mv.activateAR();
     if(p&&p.then) p.then(function(){}, function(e){ if(el) el.textContent='AR échec : '+((e&&e.message)||e); });
   }catch(e){ if(el) el.textContent='AR exception : '+((e&&e.message)||e); }
