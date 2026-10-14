@@ -12733,6 +12733,7 @@ document.getElementById('expandBtn').onclick=()=>fsOpen?closeFS():openFS();
 document.getElementById('closeFs').onclick=closeFS;
 document.getElementById('arBtn').onclick=launchAR;
 var __arClose=document.getElementById('arOvClose'); if(__arClose) __arClose.onclick=closeArStage;
+var __arStageEl=document.getElementById('arStage'); if(__arStageEl && document.body && __arStageEl.parentNode!==document.body){ document.body.appendChild(__arStageEl); }
 var __mvEl0=document.getElementById('mv'); if(__mvEl0) __mvEl0.addEventListener('error',function(e){ try{ __mvLastErr=(e&&e.detail&&((e.detail.sourceError&&e.detail.sourceError.message)||e.detail.type||e.detail.status))||'err'; }catch(_){ __mvLastErr='err'; } });
 stage.addEventListener('click',e=>{ if(isMobile()&&!fsOpen&&!e.target.closest('.icon-btn,.close-fs,.stage-overlay')) openFS(); });
 document.getElementById('cartBtn').onclick=addToCart;
