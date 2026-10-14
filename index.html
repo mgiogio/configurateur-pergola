@@ -10964,12 +10964,12 @@ const SIZE_EXTRA_PER_M2 = 90; // placeholder
 function sizeLabel(v){ const p=v.split('x').map(Number); return [p[0]+' × '+p[1]+' m', (p[0]*p[1])+' m²']; }
 function sizeArea(v){ const p=v.split('x').map(Number); return p[0]*p[1]; }
 
-/* Données produit — PLACEHOLDERS à confirmer. Le sol est fusionné dans les pieds (fix). */
+/* Données produit - PLACEHOLDERS à confirmer. Le sol est fusionné dans les pieds (fix). */
 const PIEDS = {
   classiques:{label:"Sur platine", sub:"Dalle, terrasse ou carrelage", haut:"2,30 m", fix:"Platines boulonnées sur surface dure : dalle béton, terrasse bois ou carrelage."},
   invisibles:{label:"Pieds réglables", sub:"Dalle, terrasse ou carrelage", haut:"2,40 m", fix:"Pieds réglables, posés sur les mêmes supports que les platines : dalle béton, terrasse bois ou carrelage. Ils rattrapent le niveau et offrent un rendu plus épuré."},
   pieux:{label:"Pieux à planter", sub:"Pelouse ou terre", haut:"2,50 m", fix:"Pieux à planter directement dans le sol meuble (pelouse, terre), sans dalle à couler."},
-  sans:{label:"Sans pied", sub:"Pose adossée ou surélevée", haut:"—", fix:"Sans pied au sol : pour une pose adossée (murale) ou sur un muret / une surélévation existante."}
+  sans:{label:"Sans pied", sub:"Pose adossée ou surélevée", haut:"-", fix:"Sans pied au sol : pour une pose adossée (murale) ou sur un muret / une surélévation existante."}
 };
 const POSE = { options:[
   {id:'auto', label:"Autoportée", sub:"Indépendante, 4 montants", note:""},
@@ -11112,7 +11112,7 @@ function openArg(id){ const s=SECTIONS[id]||{}, a=s.arg; if(!a) return;
   } else {
     html=(a.img?`<img class="arg-img" src="${a.img}" alt="">`:`<div class="arg-img ph"></div>`)
       +(a.intro?`<p class="arg-intro">${fixPunct(a.intro)}</p>`:'')
-      +'<ul class="arg-list">'+a.points.map(p=>`<li><b>${fixPunct(p[0])}</b> — ${fixPunct(p[1])}</li>`).join('')+'</ul>';
+      +'<ul class="arg-list">'+a.points.map(p=>`<li><b>${fixPunct(p[0])}</b> - ${fixPunct(p[1])}</li>`).join('')+'</ul>';
   }
   if(a.note) html+=`<div class="arg-note">${a.note}</div>`;
   document.getElementById('infoB').innerHTML=html;
@@ -11212,7 +11212,7 @@ function openVid(i){
   document.getElementById('vidModal').classList.add('show');
 }
 function hideVid(){ document.getElementById('vidModal').classList.remove('show'); document.getElementById('vidFrame').innerHTML=''; }
-/* Réassurance — 3 pictos (livraison via balise WP, rétractation, bois) */
+/* Réassurance - 3 pictos (livraison via balise WP, rétractation, bois) */
 const RZ_SVG={
   truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 9.5h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/></svg>',
   ret:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9h11a5 5 0 0 1 0 10H8"/><path d="M6.5 5.5 3 9l3.5 3.5"/></svg>',
@@ -11228,7 +11228,7 @@ function buildReassurance(){
   w.innerHTML=items.map(i=>`<div class="rz-item"><span class="rz-ic">${i.ic}</span><div class="rz-tx"><b>${i.t}</b><span>${fixPunct(i.s)}</span></div></div>`).join('');
   return w;
 }
-/* Avis produit — emplacement du shortcode ; titre + étoiles gérés côté page par Manuel */
+/* Avis produit - emplacement du shortcode ; titre + étoiles gérés côté page par Manuel */
 function buildReviews(){
   const rev=document.createElement('div'); rev.className='reviews-wc';
   rev.innerHTML=`<div class="wc-shortcode">[woocommerce_product_reviews]</div>`;
@@ -11280,7 +11280,7 @@ function buildTaille(){
 function buildPieds(g){
   const wrap=document.createElement('div');
   const c=document.createElement('div'); c.className='choices cols-2';
-  c.appendChild(choiceCard(PIEDS.sans.label, PIEDS.sans.sub, '', state.pieds==='sans', ()=>{ state.pieds='sans'; chosen.pieds=true; refresh('pieds'); }));
+  c.appendChild(choiceCard(PIEDS.sans.label, '', '', state.pieds==='sans', ()=>{ state.pieds='sans'; chosen.pieds=true; refresh('pieds'); }));
   g.options.forEach(o=>{ const m=PIEDS[o.id]||{label:o.label}; const sel=state.pieds===o.id, d=PRICES.pieds[o.id]||0;
     c.appendChild(choiceCard(m.label, m.sub||'', d>0?fmtEUR(d):'', sel, ()=>{ state.pieds=o.id; chosen.pieds=true; refresh('pieds'); })); });
   wrap.appendChild(c);
@@ -11629,7 +11629,7 @@ document.getElementById('expandBtn').onclick=()=>fsOpen?closeFS():openFS();
 document.getElementById('closeFs').onclick=closeFS;
 document.getElementById('arBtn').onclick=launchAR;
 stage.addEventListener('click',e=>{ if(isMobile()&&!fsOpen&&!e.target.closest('.icon-btn,.close-fs,.stage-overlay')) openFS(); });
-document.getElementById('cartBtn').onclick=()=>toast('Ajouté au panier — '+fmtEUR(computePrice()));
+document.getElementById('cartBtn').onclick=()=>toast('Ajouté au panier - '+fmtEUR(computePrice()));
 document.getElementById('saveBtn').onclick=saveConfig;
 document.getElementById('qrClose').onclick=hideQR;
 document.getElementById('qrModal').addEventListener('click',e=>{ if(e.target.id==='qrModal') hideQR(); });
