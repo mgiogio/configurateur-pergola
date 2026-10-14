@@ -11536,6 +11536,43 @@ function applyCtx(){
     el.innerHTML=`<span class="stars">${stars}</span> <b>${n}</b> ${cnt}`;
   }
 }
+/* ===== Ajout au panier WooCommerce (kit + composants par SKU) ===== */
+function cartPayload(){
+  const pose=state.pose, sz=state.taille, items=[];
+  if(SKU[pose]&&SKU[pose].base[sz]) items.push({sku:SKU[pose].base[sz], qty:1, role:'main'});
+  if(state.pieds && state.pieds!=='sans' && SKU[pose].pieds[sz] && SKU[pose].pieds[sz][state.pieds])
+    items.push({sku:SKU[pose].pieds[sz][state.pieds], qty:1, role:'component'});
+  const nT=(state.toileombrage&&state.toileombrage.size)||0;
+  if(nT>0 && SKU.toileombrage[nT-1]) items.push({sku:SKU.toileombrage[nT-1], qty:1, role:'component'});
+  const nBS=(state.toiturebrisesoleil&&state.toiturebrisesoleil.size)||0;
+  if(nBS>0 && SKU.toiturebrisesoleil[nBS-1]) items.push({sku:SKU.toiturebrisesoleil[nBS-1], qty:1, role:'component'});
+  const nBV=(state.rideaubrisevue&&state.rideaubrisevue.size)||0;
+  for(let i=0;i<nBV && i<SKU.rideaubrisevue.length;i++) items.push({sku:SKU.rideaubrisevue[i], qty:1, role:'component'});
+  return items;
+}
+function cartSummary(){
+  const poseL=(POSE.options.find(o=>o.id===state.pose)||{}).label;
+  const rows=[['Pose',poseL],['Dimensions',sizeLabel(state.taille)[0]],['Fixation',(PIEDS[state.pieds]||{}).label||'Sans']];
+  FAMILY_ORDER.forEach(fid=>{ const g=groupById(fid); if(!g)return; const n=state[fid]?state[fid].size:0;
+    if(n){ const lbl=((SECTIONS[fid]||{}).title||fid).replace(/\.$/,''); rows.push([lbl, n+' pan'+(n>1?'s':'')]); }});
+  return rows;
+}
+function addToCart(){
+  if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
+  const btn=document.getElementById('cartBtn'), old=btn.innerHTML; btn.disabled=true; btn.textContent='Ajout…';
+  const body=new URLSearchParams();
+  body.set('action','cgp_add'); body.set('nonce',CTX.nonce||'');
+  body.set('pose',state.pose); body.set('size',state.taille);
+  body.set('total',computePrice().toFixed(2));
+  body.set('label','Pergola bois '+((POSE.options.find(o=>o.id===state.pose)||{}).label||'')+' '+sizeLabel(state.taille)[0]);
+  body.set('items',JSON.stringify(cartPayload()));
+  body.set('summary',JSON.stringify(cartSummary()));
+  fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()})
+    .then(r=>r.json()).then(j=>{
+      if(j&&j.success){ if(j.data&&j.data.cart_url){ location.href=j.data.cart_url; } else { toast('Ajouté au panier'); btn.disabled=false; btn.innerHTML=old; } }
+      else { toast((j&&j.data&&j.data.message)||'Erreur lors de l\'ajout au panier'); btn.disabled=false; btn.innerHTML=old; }
+    }).catch(()=>{ toast('Erreur réseau, réessayez.'); btn.disabled=false; btn.innerHTML=old; });
+}
 /* ===== BOOT ===== */
 applyCtx(); buildStories(); renderOptions(); updatePrice(); initScene();
 document.getElementById('resetBtn').onclick=()=>heroView(false);
@@ -11543,7 +11580,7 @@ document.getElementById('expandBtn').onclick=()=>fsOpen?closeFS():openFS();
 document.getElementById('closeFs').onclick=closeFS;
 document.getElementById('arBtn').onclick=launchAR;
 stage.addEventListener('click',e=>{ if(isMobile()&&!fsOpen&&!e.target.closest('.icon-btn,.close-fs,.stage-overlay')) openFS(); });
-document.getElementById('cartBtn').onclick=()=>toast('Ajouté au panier - '+fmtEUR(computePrice()));
+document.getElementById('cartBtn').onclick=addToCart;
 document.getElementById('saveBtn').onclick=saveConfig;
 document.getElementById('qrClose').onclick=hideQR;
 document.getElementById('qrModal').addEventListener('click',e=>{ if(e.target.id==='qrModal') hideQR(); });
