@@ -11500,7 +11500,7 @@ function arStatus(){
   const mv=document.getElementById('mv'); const el=document.getElementById('arOvStatus'); if(!el) return;
   el.textContent = (mv && mv.canActivateAR)
     ? 'Tournez la pergola, puis touchez « Voir en réalité augmentée » pour la placer dans votre jardin.'
-    : 'Vue 3D. La réalité augmentée n\'est pas disponible sur cet appareil.';
+    : ('Vue 3D. AR indisponible sur cet appareil. [modèle chargé: '+(mv&&mv.loaded?'oui':'non')+']');
 }
 function openArStage(){
   const st=document.getElementById('arStage'); if(!st) return;
@@ -11515,7 +11515,9 @@ function launchAR(){
   if(!root) return;
   if(!isHandheld()){ showQR(); return; }
   openArStage();
-  if(!(__mvReady && !__mvDirty)) prepareAR().then(arStatus);
+  // (re)charge le modèle pendant que l'élément est visible (iOS suspend le WebGL hors écran)
+  __mvDirty=true;
+  prepareAR().then(arStatus);
 }
 function showQR(){
   const url=location.origin+location.pathname+'#cfg='+encodeConfig()+'&ar=1';
