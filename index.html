@@ -12577,9 +12577,20 @@ function ensureMV(){ return new Promise((res)=>{
 }); }
 const isHandheld=()=> /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (window.matchMedia('(max-width:880px)').matches && 'ontouchstart' in window);
 let __mvReady=false, __mvDirty=true, __arTimer=null, __mvLastErr='';
+function ensureMvUpgraded(){
+  var mv=document.getElementById('mv');
+  if(!mv || typeof mv.activateAR==='function') return;
+  try{ if(window.customElements && customElements.upgrade) customElements.upgrade(mv); }catch(e){}
+  if(typeof mv.activateAR==='function') return;
+  try{
+    var nmv=document.createElement('model-viewer');
+    for(var i=0;i<mv.attributes.length;i++){ nmv.setAttribute(mv.attributes[i].name, mv.attributes[i].value); }
+    mv.parentNode.replaceChild(nmv, mv);
+  }catch(e){}
+}
 function prepareAR(){
   if(!root) return Promise.resolve(false);
-  return ensureMV().then(()=> new Promise(res=>{
+  return ensureMV().then(()=>{ ensureMvUpgraded(); return new Promise(res=>{
     try{
       new THREE.GLTFExporter().parse(root, glb=>{
         const mv=document.getElementById('mv');
@@ -12592,7 +12603,7 @@ function prepareAR(){
         setTimeout(()=>{ if(!__mvReady){ __mvReady=true; res(true); } }, 4000);
       }, {binary:true, onlyVisible:true});
     }catch(e){ res(false); }
-  })).catch(()=>false);
+  }); }).catch(()=>false);
 }
 function scheduleAR(){ __mvDirty=true; if(isHandheld()){ clearTimeout(__arTimer); __arTimer=setTimeout(prepareAR,1200); } }
 function arStatus(){
@@ -12738,6 +12749,7 @@ document.getElementById('arBtn').onclick=launchAR;
 var __arClose=document.getElementById('arOvClose'); if(__arClose) __arClose.onclick=closeArStage;
 var __mvArBtn=document.getElementById('mvArBtn');
 if(__mvArBtn) __mvArBtn.onclick=function(){
+  ensureMvUpgraded();
   var mv=document.getElementById('mv'); var el=document.getElementById('arOvStatus');
   try{
     if(!mv.canActivateAR && el){ el.textContent='AR non disponible (canAR:0) - composant:'+(customElements.get('model-viewer')?'OK':'NON')+' chargé:'+(mv.loaded?'oui':'non'); }
