@@ -10120,7 +10120,7 @@ var qrcode = function() {
     </div>
     <div class="ar-row"><button class="ar-btn" id="arBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6 20 7v10l-8 4.4L4 17V7z"/><path d="M12 12 20 7M12 12v9.4M12 12 4 7"/></svg>Voir dans mon jardin <span class="ar-sub">en réalité augmentée</span></button></div>
     <style>.ar-stage{position:fixed;right:0;bottom:0;width:1px;height:1px;overflow:hidden;z-index:-1}.ar-stage.open{inset:0;width:100%;height:100%;overflow:visible;z-index:2147483000;background:#eef1f3}.ar-stage model-viewer{width:100%;height:100%;opacity:0;--poster-color:transparent}.ar-stage.open model-viewer{opacity:1}.ar-ov-close{display:none;position:absolute;top:14px;left:14px;z-index:5;align-items:center;justify-content:center;border:none;background:rgba(30,33,31,.82);color:#fff;width:42px;height:42px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer}.ar-stage.open .ar-ov-close{display:flex}.ar-ov-status{display:none;position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:5;font:600 13px Roboto,Arial,sans-serif;color:#1E211F;background:rgba(255,255,255,.92);padding:8px 15px;border-radius:999px;max-width:86vw;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.12)}.ar-stage.open .ar-ov-status{display:block}.mv-ar-btn{border:none;background:#EB5A00;color:#fff;font:700 15px Roboto,Arial,sans-serif;padding:14px 26px;border-radius:999px;box-shadow:0 6px 20px rgba(235,90,0,.42);cursor:pointer;position:absolute;bottom:26px;left:50%;transform:translateX(-50%)}.mv-ar-btn:hover,.mv-ar-btn:active,.mv-ar-btn:focus,.mv-ar-btn:visited{background:#EB5A00!important;color:#fff!important;text-decoration:none!important;outline:none}</style>
-    <div class="ar-stage" id="arStage"><button class="ar-ov-close" id="arOvClose" aria-label="Fermer">&#10005;</button><div class="ar-ov-status" id="arOvStatus"></div><model-viewer id="mv" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls loading="eager" touch-action="pan-y"></model-viewer><button id="mvArBtn" class="mv-ar-btn" style="display:none">Voir en r&#233;alit&#233; augment&#233;e</button></div>
+    <div class="ar-stage" id="arStage"><button class="ar-ov-close" id="arOvClose" aria-label="Fermer">&#10005;</button><div class="ar-ov-status" id="arOvStatus"></div><model-viewer id="mv" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls loading="eager" touch-action="pan-y"><button slot="ar-button" style="display:none" aria-hidden="true"></button></model-viewer><button id="mvArBtn" class="mv-ar-btn" style="display:none">Voir en r&#233;alit&#233; augment&#233;e</button></div>
   </div>
   <div class="opts-col">
     <div class="product-head">
@@ -12676,7 +12676,7 @@ function scheduleAR(){ __mvDirty=true; if(isHandheld()){ clearTimeout(__arTimer)
 function arStatus(){
   const mv=document.getElementById('mv'); const el=document.getElementById('arOvStatus'); const btn=document.getElementById('mvArBtn'); if(!el) return;
   const can = mv && mv.canActivateAR;
-  if(can){ el.textContent='Tournez la pergola, puis touchez « Voir en réalité augmentée » pour la placer dans votre jardin.'; return; }
+  if(can){ el.textContent='Touchez « Voir en réalité augmentée » pour placer la pergola dans votre jardin.'; return; }
   var srcv = mv && (mv.src || mv.getAttribute('src'));
   el.textContent = 'Diag  composant:'+(customElements.get('model-viewer')?'OK':'NON')
     +'  source:'+(srcv?'OK':'NON')
@@ -12697,8 +12697,14 @@ function closeArStage(){
 function launchAR(){
   if(!root) return;
   if(!isHandheld()){ showQR(); return; }
+  ensureMvUpgraded();
+  const mv=document.getElementById('mv');
+  // Modèle prêt + AR dispo : on lance directement la réalité augmentée native (positionnement dans le jardin)
+  if(mv && typeof mv.activateAR==='function' && __mvReady && !__mvDirty && mv.canActivateAR){
+    try{ const p=mv.activateAR(); if(p&&p.catch) p.catch(function(){ toast("AR non disponible sur cet appareil."); }); return; }catch(e){}
+  }
+  // Sinon : aperçu 3D le temps que le modèle charge, puis le bouton lance l'AR
   openArStage();
-  // (re)charge le modèle pendant que l'élément est visible (iOS suspend le WebGL hors écran)
   __mvDirty=true;
   prepareAR().then(arStatus);
 }
