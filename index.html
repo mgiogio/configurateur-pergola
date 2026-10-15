@@ -12813,15 +12813,20 @@ function cartSummary(){
 }
 function snapshot(){
   try{
-    if(!(renderer&&renderer.domElement)) return '';
-    renderer.render(scene,camera);
+    if(!(renderer&&renderer.domElement&&camera)) return '';
+    // Toujours capturer une VUE D'ENSEMBLE (pas le zoom courant sur un panneau)
+    var __sp=camera.position.clone(), __st=(controls?controls.target.clone():null);
+    try{ heroView(true); renderer.render(scene,camera); }catch(e){ renderer.render(scene,camera); }
     const src=renderer.domElement, S=600;
     const c=document.createElement('canvas'); c.width=S; c.height=S;
     const x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,S,S);   // fond blanc (JPEG n'a pas de transparence)
     const sw=src.width, sh=src.height, k=Math.min(S/sw,S/sh);                  // carré, image centrée, sans déformation
     const dw=sw*k, dh=sh*k;
     x.drawImage(src,0,0,sw,sh,(S-dw)/2,(S-dh)/2,dw,dh);
-    return c.toDataURL('image/jpeg',0.85);
+    const url=c.toDataURL('image/jpeg',0.85);
+    // restaurer la vue de l'utilisateur
+    try{ camera.position.copy(__sp); if(controls&&__st){ controls.target.copy(__st); controls.update(); } renderer.render(scene,camera); }catch(e){}
+    return url;
   }catch(e){ return ''; }
 }
 function addToCart(){
