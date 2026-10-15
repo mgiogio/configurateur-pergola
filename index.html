@@ -10173,6 +10173,19 @@ var qrcode = function() {
   </div>
 </div>
 
+<div class="qr-modal" id="arTuto">
+  <div class="qr-card" style="text-align:left;max-width:360px">
+    <button class="qr-close" id="arTutoClose">&#10005;</button>
+    <h3 style="margin-right:24px">Placer votre pergola dans le jardin</h3>
+    <ol style="margin:8px 0 14px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+      <li style="font-size:13.5px;line-height:1.45;color:var(--cg-ink-soft)"><b style="color:var(--cg-ink)">Scannez le sol</b> : bougez lentement le t&#233;l&#233;phone vers votre terrasse ou jardin.</li>
+      <li style="font-size:13.5px;line-height:1.45;color:var(--cg-ink-soft)"><b style="color:var(--cg-ink)">Posez la pergola</b> : touchez l'endroit voulu pour la positionner.</li>
+      <li style="font-size:13.5px;line-height:1.45;color:var(--cg-ink-soft)"><b style="color:var(--cg-ink)">Ajustez</b> : glissez pour d&#233;placer, pincez pour tourner et redimensionner.</li>
+    </ol>
+    <button class="btn primary" id="arTutoGo" style="width:100%;height:48px">Lancer la visualisation</button>
+    <label style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;font-size:12.5px;color:var(--cg-ink-soft);cursor:pointer"><input type="checkbox" id="arTutoSkip"> Ne plus afficher</label>
+  </div>
+</div>
 </div><!-- /cgp-root -->
 
 <!-- Modèle 3D embarqué (base64) pour fonctionner par simple double-clic -->
@@ -12697,6 +12710,13 @@ function closeArStage(){
 function launchAR(){
   if(!root) return;
   if(!isHandheld()){ showQR(); return; }
+  var skip=false; try{ skip=localStorage.getItem('cgp_arTuto')==='1'; }catch(e){}
+  if(skip){ doLaunchAR(); return; }
+  var m=document.getElementById('arTuto');
+  if(m){ var sk=document.getElementById('arTutoSkip'); if(sk) sk.checked=false; m.classList.add('show'); }
+  else doLaunchAR();
+}
+function doLaunchAR(){
   ensureMvUpgraded();
   const mv=document.getElementById('mv');
   // Modèle prêt + AR dispo : on lance directement la réalité augmentée native (positionnement dans le jardin)
@@ -12851,6 +12871,9 @@ document.getElementById('saveBtn').onclick=saveConfig;
 var __sClose=document.getElementById('saveClose'); if(__sClose) __sClose.onclick=function(){ document.getElementById('saveModal').classList.remove('show'); };
 var __sCopy=document.getElementById('saveCopy'); if(__sCopy) __sCopy.onclick=function(){ var i=document.getElementById('saveLink'); if(i){ i.select(); try{document.execCommand('copy');}catch(e){} if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(i.value).catch(function(){}); toast('Lien copié'); } };
 var __sModal=document.getElementById('saveModal'); if(__sModal) __sModal.onclick=function(e){ if(e.target===__sModal) __sModal.classList.remove('show'); };
+var __arTutoClose=document.getElementById('arTutoClose'); if(__arTutoClose) __arTutoClose.onclick=function(){ var m=document.getElementById('arTuto'); if(m) m.classList.remove('show'); };
+var __arTutoM=document.getElementById('arTuto'); if(__arTutoM) __arTutoM.onclick=function(e){ if(e.target===__arTutoM) __arTutoM.classList.remove('show'); };
+var __arTutoGo=document.getElementById('arTutoGo'); if(__arTutoGo) __arTutoGo.onclick=function(){ try{ var s=document.getElementById('arTutoSkip'); if(s&&s.checked) localStorage.setItem('cgp_arTuto','1'); }catch(e){} var m=document.getElementById('arTuto'); if(m) m.classList.remove('show'); doLaunchAR(); };
 document.getElementById('qrClose').onclick=hideQR;
 document.getElementById('qrModal').addEventListener('click',e=>{ if(e.target.id==='qrModal') hideQR(); });
 document.getElementById('vidClose').onclick=hideVid;
