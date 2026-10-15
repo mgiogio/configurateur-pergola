@@ -10176,12 +10176,14 @@ var qrcode = function() {
 <div class="qr-modal" id="arTuto">
   <div class="qr-card" style="text-align:left;max-width:360px">
     <button class="qr-close" id="arTutoClose">&#10005;</button>
-    <h3 style="margin-right:24px">Placer votre pergola dans le jardin</h3>
-    <ol style="margin:8px 0 14px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
-      <li style="font-size:13.5px;line-height:1.45;color:var(--cg-ink-soft)"><b style="color:var(--cg-ink)">Scannez le sol</b> : bougez lentement le t&#233;l&#233;phone vers votre terrasse ou jardin.</li>
-      <li style="font-size:13.5px;line-height:1.45;color:var(--cg-ink-soft)"><b style="color:var(--cg-ink)">Posez la pergola</b> : touchez l'endroit voulu pour la positionner.</li>
-      <li style="font-size:13.5px;line-height:1.45;color:var(--cg-ink-soft)"><b style="color:var(--cg-ink)">Ajustez</b> : glissez pour d&#233;placer, pincez pour tourner et redimensionner.</li>
-    </ol>
+    <h3 id="arTutoTitle" style="margin-right:24px">Voir votre pergola chez vous</h3>
+    <p style="margin:6px 0 15px;font-size:13px;color:var(--cg-ink-soft);line-height:1.5">La cam&#233;ra de votre t&#233;l&#233;phone va s'ouvrir. Suivez ces &#233;tapes :</p>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:16px">
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">1. Placez-vous sur le lieu</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Rendez-vous l&#224; o&#249; vous souhaitez l'installer.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8"/><path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8"/><path d="M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16"/><path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><circle cx="12" cy="12" r="2.3"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">2. Visez le sol</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Dirigez la cam&#233;ra vers votre terrasse ou jardin, en bougeant doucement.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5V6a2 2 0 1 1 4 0v5"/><path d="M13 10a2 2 0 0 1 4 0v4.5a5.5 5.5 0 0 1-5.5 5.5H11a5 5 0 0 1-4.2-2.3l-2-3.1a1.6 1.6 0 0 1 2.5-2l1.2 1.4"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">3. Touchez pour poser</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Tapez l'&#233;cran &#224; l'endroit voulu.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><path d="m8.5 6.5 3.5-3.5 3.5 3.5M8.5 17.5 12 21l3.5-3.5M6.5 8.5 3 12l3.5 3.5M17.5 8.5 21 12l-3.5 3.5"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">4. Ajustez</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Glissez pour d&#233;placer, pincez pour tourner et redimensionner.</div></div></div>
+    </div>
     <button class="btn primary" id="arTutoGo" style="width:100%;height:48px">Lancer la visualisation</button>
     <label style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;font-size:12.5px;color:var(--cg-ink-soft);cursor:pointer"><input type="checkbox" id="arTutoSkip"> Ne plus afficher</label>
   </div>
@@ -12072,6 +12074,7 @@ const CTX = (function(){
   if(!c.delivery) c.delivery = '5 à 8 jours ouvrés';
   return c;
 })();
+const CFG_NOUN = (window.CGP_CTX && CGP_CTX.noun) ? String(CGP_CTX.noun) : 'pergola';
 if((((RESTORE&&RESTORE.p)||CTX.pose))==='murale') MANIFEST = MANIFEST_MURALE;
 const state = { pose:(RESTORE&&RESTORE.p)?RESTORE.p:CTX.pose,
                 taille:(RESTORE && MANIFEST.perSize[RESTORE.t])?RESTORE.t:MANIFEST.dimensions.taille.values[0],
@@ -12713,7 +12716,7 @@ function launchAR(){
   var skip=false; try{ skip=localStorage.getItem('cgp_arTuto')==='1'; }catch(e){}
   if(skip){ doLaunchAR(); return; }
   var m=document.getElementById('arTuto');
-  if(m){ var sk=document.getElementById('arTutoSkip'); if(sk) sk.checked=false; m.classList.add('show'); }
+  if(m){ var sk=document.getElementById('arTutoSkip'); if(sk) sk.checked=false; var tt=document.getElementById('arTutoTitle'); if(tt) tt.textContent='Voir votre '+CFG_NOUN+' chez vous'; m.classList.add('show'); }
   else doLaunchAR();
 }
 function doLaunchAR(){
