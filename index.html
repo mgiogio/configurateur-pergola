@@ -12834,6 +12834,7 @@ function addToCart(){
   body.set('label','Pergola bois '+((POSE.options.find(o=>o.id===state.pose)||{}).label||'')+' '+sizeLabel(state.taille)[0]);
   body.set('items',JSON.stringify(cartPayload()));
   body.set('summary',JSON.stringify(cartSummary()));
+  body.set('cfg', encodeConfig());
   body.set('image', snapshot());
   fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()})
     .then(r=>r.json()).then(j=>{
