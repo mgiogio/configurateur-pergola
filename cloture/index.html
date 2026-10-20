@@ -11671,6 +11671,12 @@ var CFG_FRAME_WHOLE = true;
 var CFG_HERO_ZOOM = 0.62;         // rapproché
 var CFG_EXPOSURE = 0.98;          // lumière de jour
 var CFG_GROUND_Y = 0;             // sol au niveau réel (y=0)
+/* Décor jardin = photo fixe en fond -> on bride la rotation : on "pivote dans l'image"
+   (léger 3/4 gauche/droite, vue toujours à hauteur d'oeil) sans jamais coucher la clôture. */
+var CFG_LIMIT_ORBIT = true;
+var CFG_ORBIT_AZ = 0.5;           // +/- ~29° d'azimut
+var CFG_ORBIT_POLMIN = 0.44;      // ~79° (un peu au-dessus de l'horizon)
+var CFG_ORBIT_POLMAX = 0.52;      // ~94° (un peu en dessous)
 /* Éclairage accordé à la photo (fin d'après-midi ensoleillée, soleil chaud) */
 var CFG_HEMI_SKY = 0xbcd8ff;
 var CFG_HEMI_GROUND = 0x9aa878;
@@ -12100,6 +12106,14 @@ function initScene(){
   controls=new THREE.OrbitControls(camera,renderer.domElement);
   controls.enableDamping=true; controls.dampingFactor=.08; controls.maxPolarAngle=Math.PI*0.54;
   controls.enableZoom=false; // molette = défilement de la page ; zoom seulement en plein écran
+  // Décor fixe (photo de fond) : on bride la rotation pour "pivoter dans l'image" sans coucher l'objet.
+  if(typeof CFG_LIMIT_ORBIT!=='undefined' && CFG_LIMIT_ORBIT){
+    controls.enablePan=false;
+    controls.minPolarAngle=Math.PI*(CFG_ORBIT_POLMIN!==undefined?CFG_ORBIT_POLMIN:0.44);
+    controls.maxPolarAngle=Math.PI*(CFG_ORBIT_POLMAX!==undefined?CFG_ORBIT_POLMAX:0.52);
+    controls.minAzimuthAngle=(CFG_ORBIT_AZ!==undefined?-CFG_ORBIT_AZ:-0.5);
+    controls.maxAzimuthAngle=(CFG_ORBIT_AZ!==undefined? CFG_ORBIT_AZ: 0.5);
+  }
   // Badge 3D : ne se masque qu'après une vraie rotation faite à la main (cumul d'angle), pas au premier clic
   let __drag={on:false,acc:0,az:0,pol:0,done:false};
   controls.addEventListener('start',()=>{ __drag.on=true; __drag.az=controls.getAzimuthalAngle(); __drag.pol=controls.getPolarAngle(); });
