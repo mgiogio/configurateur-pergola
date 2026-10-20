@@ -11672,6 +11672,9 @@ var CFG_HERO_ZOOM = 0.62;         // rapproché
 /* Vue par défaut : clôture posée sur la pelouse, cadrage horizontal et un peu frontal
    (évite le décalage de parallaxe avec le gazon du décor 360). Proportions validées en live. */
 var CFG_HERO_POSE = { distK:1.43, dir:[0.35,1], eyeF:0.54, tgtF:0.30 };
+/* Cône de pivot autour de la vue par défaut (az0 = atan2(0.35,1) ≈ 0.338 rad).
+   +/-0.42 rad d'azimut, polaire proche de l'horizon : tour d'horizon léger, jamais d'angle moche. */
+var CFG_ORBIT_LIMIT = { az0:0.338, az:0.42, polMin:0.45, polMax:0.52 };
 var CFG_EXPOSURE = 1.0;           // lumière de jour
 var CFG_GROUND_Y = 0;             // sol au niveau réel (y=0)
 
@@ -12120,6 +12123,14 @@ function initScene(){
   controls=new THREE.OrbitControls(camera,renderer.domElement);
   controls.enableDamping=true; controls.dampingFactor=.08; controls.maxPolarAngle=Math.PI*0.54;
   controls.enableZoom=false; // molette = défilement de la page ; zoom seulement en plein écran
+  // Décor 360 : on autorise le pivot (le jardin tourne avec la caméra) mais dans un CÔNE propre,
+  // pour ne jamais atteindre les angles rasants où la clôture semble s'enfoncer/flotter (parallaxe).
+  if(typeof CFG_ORBIT_LIMIT!=='undefined' && CFG_ORBIT_LIMIT){
+    controls.enablePan=false;
+    if(CFG_ORBIT_LIMIT.az!==undefined){ controls.minAzimuthAngle=CFG_ORBIT_LIMIT.az0-CFG_ORBIT_LIMIT.az; controls.maxAzimuthAngle=CFG_ORBIT_LIMIT.az0+CFG_ORBIT_LIMIT.az; }
+    if(CFG_ORBIT_LIMIT.polMin!==undefined) controls.minPolarAngle=Math.PI*CFG_ORBIT_LIMIT.polMin;
+    if(CFG_ORBIT_LIMIT.polMax!==undefined) controls.maxPolarAngle=Math.PI*CFG_ORBIT_LIMIT.polMax;
+  }
   // Badge 3D : ne se masque qu'après une vraie rotation faite à la main (cumul d'angle), pas au premier clic
   let __drag={on:false,acc:0,az:0,pol:0,done:false};
   controls.addEventListener('start',()=>{ __drag.on=true; __drag.az=controls.getAzimuthalAngle(); __drag.pol=controls.getPolarAngle(); });
