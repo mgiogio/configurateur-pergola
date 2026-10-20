@@ -11669,6 +11669,9 @@ function CFG_APPLY_VIS(){
    d'elle sans qu'elle glisse sur la pelouse. Le sol 3D reste un capteur d'ombre. */
 var CFG_FRAME_WHOLE = true;
 var CFG_HERO_ZOOM = 0.62;         // rapproché
+/* Vue par défaut : clôture posée sur la pelouse, cadrage horizontal et un peu frontal
+   (évite le décalage de parallaxe avec le gazon du décor 360). Proportions validées en live. */
+var CFG_HERO_POSE = { distK:1.43, dir:[0.35,1], eyeF:0.54, tgtF:0.30 };
 var CFG_EXPOSURE = 1.0;           // lumière de jour
 var CFG_GROUND_Y = 0;             // sol au niveau réel (y=0)
 
@@ -12315,10 +12318,18 @@ function heroView(instant){
   let dist=(R/Math.sin(Math.min(vfov,hfov)/2))*1.0; if(state.pose==='murale') dist*=0.82;  // resserré, murale plus proche
   if(typeof CFG_HERO_ZOOM!=='undefined') dist*=CFG_HERO_ZOOM;   // cadrage plus serré selon le produit
   controls.minDistance=R*0.4; controls.maxDistance=dist*3;
-  const dx=1,dz=1.05,L=Math.hypot(dx,dz);
-  const eye=gy+1.6;                                              // hauteur d'homme
+  let dx=1,dz=1.05,eye=gy+1.6,tgtY=c.y;                         // défaut : 3/4, hauteur d'homme, vise le centre
+  // Override produit : angle/hauteur de la vue par défaut (ex. clôture posée dans un décor 360)
+  if(typeof CFG_HERO_POSE!=='undefined' && CFG_HERO_POSE){
+    if(CFG_HERO_POSE.distK) dist*=CFG_HERO_POSE.distK;
+    if(CFG_HERO_POSE.dir){ dx=CFG_HERO_POSE.dir[0]; dz=CFG_HERO_POSE.dir[1]; }
+    if(CFG_HERO_POSE.eyeF!==undefined) eye=gy+CFG_HERO_POSE.eyeF*sz.y;
+    if(CFG_HERO_POSE.tgtF!==undefined) tgtY=gy+CFG_HERO_POSE.tgtF*sz.y;
+    controls.maxDistance=dist*3;                                // suit le nouveau dist
+  }
+  const L=Math.hypot(dx,dz);
   const to=new THREE.Vector3(c.x+dx/L*dist, eye, c.z+dz/L*dist);
-  const tt=c.clone();                                           // vise le centre : base et haut dans le cadre
+  const tt=new THREE.Vector3(c.x, tgtY, c.z);
   if(groundMesh) groundMesh.position.y=__groundY(gy+0.002);
   if(instant){ camera.position.copy(to); controls.target.copy(tt); controls.update(); return; }
   const from=camera.position.clone(), ft=controls.target.clone(); let t=0; cancelAnimationFrame(tween);
