@@ -11454,31 +11454,28 @@ function cloBoxOf(names){
   names.forEach(function(nm){ var o=sceneNode(nm); if(o && o.visible){ o.updateWorldMatrix(true,true); tmp.setFromObject(o); if(!tmp.isEmpty()){ box.union(tmp); any=true; } } });
   return any?box:null;
 }
-/* Caméra : pointe la pièce liée à l'option choisie (vue de côté pour la fixation au sol) */
+/* Zoom auto soigné : on cadre la partie concernée par l'option, à un angle naturel.
+   IMPORTANT : poteaux, pieds et 2e face sont DERRIÈRE les panneaux -> on les montre depuis
+   l'arrière 3/4 (seul endroit où ils sont visibles) ; le type (ajouré/occultant) se voit de face. */
 function cloFocus(section){
   if(!root || typeof reframeTo!=='function' || typeof THREE==='undefined'){ if(typeof heroView==='function') heroView(false); return; }
-  var dir, names, lowTarget=false, zoom=0.7;
-  if(section==='poteaux' || section==='support'){
-    names=['Poteau_1_Sol','Poteau_2_Sol','Pieds_Sol','Pieux_Sol','Panneau_1_Sol','Panneau_2_Sol'];
-    dir=new THREE.Vector3(1.8,0.10,0.14);      // quasi au ras du sol, de côté : voir la fixation / le pied
-    lowTarget=true; zoom=0.5;
-  } else if(section==='faces'){
-    names=['Panneau_1_Sol','Panneaux_2ème_Face_1_Sol','Occultant_1_Sol'];
-    dir=new THREE.Vector3(1.35,0.35,0.5);      // 3/4 côté : épaisseur / 2e face
-  } else if(section==='type'){
-    names=['Panneau_1_Sol','Panneau_4_Sol'];
-    dir=new THREE.Vector3(0.35,0.3,1.4);       // de face : ajouré vs occultant
+  var box=(typeof visibleBox==='function')?visibleBox():null;
+  if(!box || box.isEmpty()){ heroView(false); return; }
+  var c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3()), gy=box.min.y;
+  var dir, ty, zoom;
+  if(section==='type'){                                   // de face : motif ajouré vs occultant
+    dir=new THREE.Vector3(0.32,0.28,1); ty=gy+0.45*sz.y; zoom=0.92;
+  } else if(section==='faces'){                           // arrière 3/4 : fond noir (1 face) vs 2e face bois
+    dir=new THREE.Vector3(0.55,0.33,-1); ty=gy+0.42*sz.y; zoom=0.98;
+  } else if(section==='poteaux'){                         // arrière 3/4 : poteaux visibles
+    dir=new THREE.Vector3(0.5,0.30,-1); ty=gy+0.40*sz.y; zoom=0.98;
+  } else if(section==='support'){                         // arrière, plus bas : pied / fixation au sol
+    dir=new THREE.Vector3(0.5,0.42,-1); ty=gy+0.20*sz.y; zoom=0.72;
   } else { heroView(false); return; }
-  var box=cloBoxOf(names);
-  if(box && !box.isEmpty()){
-    var c=box.getCenter(new THREE.Vector3());
-    var target = lowTarget ? new THREE.Vector3(c.x, box.min.y + (box.max.y-box.min.y)*0.12, c.z) : c;  // viser le bas (le pied)
-    reframeTo(dir, target, false, zoom);
-  } else heroView(false);
+  reframeTo(dir, new THREE.Vector3(c.x, ty, c.z), false, zoom);
 }
-/* Rafraichit options + 3D + prix (sans recharger le glb). La caméra NE BOUGE PAS :
-   l'utilisateur garde sa vue, le produit se met à jour sur place. */
-function cloRefresh(section){ CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); }
+/* Rafraichit options + 3D + prix (sans recharger le glb), puis zoom auto soigné sur l'option. */
+function cloRefresh(section){ CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); if(section && typeof cloFocus==='function') cloFocus(section); }
 /* Changement de hauteur = rechargement du glb correspondant, sans reset du reste */
 function cloSetHeight(id){
   if(state.pose===id) return;
