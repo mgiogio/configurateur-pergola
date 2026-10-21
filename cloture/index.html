@@ -10136,7 +10136,7 @@ var qrcode = function() {
 </div>
 
 <div class="footbar"><div class="wrap">
-  <div class="price-block"><div class="lbl">Total TTC · Livraison offerte</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div></div>
+  <div class="price-block"><div class="lbl" id="shipLbl">Total TTC · Livraison offerte</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div></div>
   <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Sauver</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
@@ -11597,7 +11597,7 @@ function cloRecap(){
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
-    +`<div class="recap-row"><span>Livraison</span><b>${cloLivraisonLabel()}</b></div>`
+    +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
     +`<div class="recap-row total"><span>Total TTC</span><b>${fmtEUR(computePrice())}</b></div>`;
   return w;
 }
@@ -11783,6 +11783,28 @@ if(RESTORE){ chosen.pose=chosen.taille=chosen.pieds=true; FAMILY_ORDER.forEach(f
 
 /* ===== Prix ===== */
 const fmtEUR=n=>n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+/* Livraison dynamique - champ ACF shipping_discount (transmis par le plugin dans CTX.shippingDiscount) :
+   nombre = seuil TTC de livraison offerte ; texte = affiché tel quel ; vide = livraison offerte. */
+function shipInfo(total){
+  const raw=(CTX.shippingDiscount==null)?'':String(CTX.shippingDiscount).trim();
+  const n=parseFloat(raw.replace(/[^0-9.,]/g,'').replace(/\s/g,'').replace(',','.'));
+  if(raw && /^[\s0-9.,€]+$/.test(raw) && !isNaN(n) && n>0){
+    if(total>=n) return {free:true, line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte'};
+    const lim=Math.round(n).toLocaleString('fr-FR')+' €';
+    return {free:false, line:'Livraison offerte dès '+lim, recap:'Offerte dès '+lim+' (encore '+fmtEUR(n-total)+')', lbl:'Livraison offerte dès '+lim};
+  }
+  if(raw) return {free:false, line:raw, recap:raw, lbl:raw};
+  return {free:true, line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte'};
+}
+/* Met à jour tous les affichages livraison (bandeau, barre prix, réassurance, récap) */
+function applyShipping(total){
+  const s=shipInfo(total);
+  const dl=document.getElementById('delivLine');
+  if(dl){ const del=CTX.delivery||'5 à 8 jours ouvrés'; dl.innerHTML=s.line+' · expédiée sous <b>'+del+'</b>'; dl.style.display='inline-block'; }
+  const lb=document.getElementById('shipLbl'); if(lb) lb.textContent='Total TTC · '+s.lbl;
+  document.querySelectorAll('.rz-ship-t').forEach(e=>e.textContent=s.free?'Livraison offerte':s.lbl);
+  document.querySelectorAll('.ship-recap').forEach(e=>e.textContent=s.recap);
+}
 
 /* ===== Rendu options ===== */
 const optsEl=document.getElementById('opts');
@@ -11917,7 +11939,7 @@ const RZ_SVG={
 };
 function buildReassurance(){
   const items=[
-    {ic:RZ_SVG.truck, t:'Livraison offerte', s:'Expédiée sous '+(CTX.delivery||'5 à 8 jours ouvrés')},
+    {ic:RZ_SVG.truck, t:'<span class="rz-ship-t">'+(shipInfo(computePrice()).free?'Livraison offerte':shipInfo(computePrice()).lbl)+'</span>', s:'Expédiée sous '+(CTX.delivery||'5 à 8 jours ouvrés')},
     {ic:RZ_SVG.ret,   t:'15 jours',          s:"Pour changer d'avis"},
     {ic:RZ_SVG.leaf,  t:'Lamellé-collé',     s:'Transformé en France'}
   ];
@@ -11991,7 +12013,7 @@ function buildRecap(){
   FAMILY_ORDER.forEach(fid=>{ const g=groupById(fid); if(!g)return; const n=state[fid]?state[fid].size:0; if(n) rows.push([g.label, n+' pan'+(n>1?'s':'')]); });
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
-    +`<div class="recap-row"><span>Livraison</span><b>Offerte</b></div>`
+    +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
     +`<div class="recap-row total"><span>Total TTC</span><b>${fmtEUR(computePrice())}</b></div>`;
   return w;
 }
@@ -12048,7 +12070,8 @@ function initStateKeepSize(){ const sz=state.taille; const ps=MANIFEST.perSize[s
 function updatePrice(){ const p=computePrice();
   document.getElementById('totalPrice').textContent=fmtEUR(p);
   const sp=document.getElementById('splitPay');
-  if(sp) sp.textContent = fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*'; }
+  if(sp) sp.textContent = fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*';
+  try{ applyShipping(p); }catch(e){} }
 
 /* ============================================================================
    SCENE 3D + chargement du .glb embarqué
@@ -12516,7 +12539,7 @@ function applyCtx(){
     el.innerHTML=`<span class="stars">${stars}</span> <b>${n}</b> ${cnt}`;
   }
   const dl=document.getElementById('delivLine');
-  if(dl){ const del=CTX.delivery||'5 à 8 jours ouvrés'; dl.innerHTML='Livraison offerte · expédiée sous <b>'+del+'</b>'; dl.style.display='inline-block'; }
+  if(dl) applyShipping(computePrice());
 }
 /* ===== Ajout au panier WooCommerce (kit + composants par SKU) ===== */
 function cartPayload(){
