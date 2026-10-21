@@ -11630,17 +11630,43 @@ function cloScaleY(name,s){ var o=sceneNode(name); if(o) o.scale.y=s; }
 function cloLiftY(name,lift){ var o=sceneNode(name); if(o){ if(o.__oy===undefined) o.__oy=o.position.y; o.position.y=o.__oy+lift; } }
 function cloShiftZ(name,dz){ var o=sceneNode(name); if(o){ if(o.__oz===undefined) o.__oz=o.position.z; o.position.z=o.__oz+dz; } }
 /* Réchauffe la teinte du bois (douglas) : le matériau WOOD rend trop pâle/citron par défaut */
+/* Ombre des traverses : dans la réalité les liteaux verticaux sont DERRIÈRE les lames, à l'ombre,
+   et les ajours se lisent comme de fines lignes sombres. Le glb n'a pas d'occlusion ambiante :
+   on l'ajoute dans le shader du bois des panneaux, à partir de la profondeur locale
+   (lames : z de -0,005 à 0,020 ; traverses : z de -0,030 à -0,005, identique pour les 2 faces). */
+function cloShadePanelWood(m){
+  m.onBeforeCompile=function(sh){
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>','#include <common>\nvarying float vLZ; varying vec3 vLN;')
+      .replace('#include <begin_vertex>','#include <begin_vertex>\nvLZ=position.z; vLN=normal;');
+    sh.fragmentShader=sh.fragmentShader
+      .replace('#include <common>','#include <common>\nvarying float vLZ; varying vec3 vLN;')
+      .replace('#include <map_fragment>','#include <map_fragment>\n'
+        +'  float occ_=1.0;\n'
+        +'  if(vLN.z>0.5 && vLZ<-0.003) occ_=0.28;\n'                                          // face avant des traverses : à l'ombre
+        +'  else if(abs(vLN.x)>0.5 && vLZ<-0.004) occ_=mix(0.25,0.55,smoothstep(-0.030,-0.004,vLZ));\n' // flancs des traverses
+        +'  else if(abs(vLN.y)>0.5) occ_=mix(0.45,1.0,smoothstep(-0.005,0.020,vLZ));\n'       // chants des lames : ombre au fond des ajours
+        +'  diffuseColor.rgb*=occ_;');
+  };
+  m.customProgramCacheKey=function(){ return 'cloShadePanelWood'; };
+  m.needsUpdate=true;
+}
 function CFG_TUNE_MATS(r){
   if(typeof THREE==='undefined' || !r) return;
   r.traverse(function(o){
     if(!o.isMesh || !o.material) return;
     var mats = Array.isArray(o.material) ? o.material : [o.material];
     mats.forEach(function(m){
-      // Couleur calibrée sur la vraie photo produit CLO (douglas miel, rapport R:V:B ≈ 1 : 0,79 : 0,50).
-      // La texture d'origine est trop orange : on la corrige par un multiplicateur (bleu > 1).
-      if(m && m.name==='WOOD' && m.color){ m.color.setRGB(0.78,0.90,1.45); m.needsUpdate=true; }
+      // Douglas marron chaud, calibré sur les photos clients (rapport R:V:B ≈ 1 : 0,67 : 0,40).
+      // La texture d'origine est trop orange/saturée : on la corrige par un multiplicateur.
+      if(m && m.name==='WOOD' && m.color){ m.color.setRGB(0.74,0.70,1.12); m.needsUpdate=true; }
       if(m && 'envMapIntensity' in m) m.envMapIntensity=0.5;   // IBL moins "brûlant", lumière plus naturelle
     });
+    // bois des panneaux : matériau dédié + ombre des traverses
+    var p=o, isPanel=false; while(p){ if(/^(Panneau_|Panneaux_2)/.test(p.name)){ isPanel=true; break; } p=p.parent; }
+    if(isPanel && !Array.isArray(o.material) && o.material.name==='WOOD' && !o.material.__cloShade){
+      o.material=o.material.clone(); o.material.name='WOOD'; o.material.__cloShade=true; cloShadePanelWood(o.material);
+    }
   });
 }
 function CFG_APPLY_VIS(){
@@ -11706,12 +11732,12 @@ var CFG_HERO_POSE = { distK:0.92, dir:[-0.28,1], eyeF:0.46, tgtF:0.40 };
 var CFG_BG_TOP = '#f3f1ec';       // haut : blanc cassé chaud
 var CFG_BG_BOTTOM = '#ddd7cd';    // bas : grège doux (ancre la clôture)
 /* Lumière douce de jour (calibrée sur la photo produit) : soleil neutre, ciel diffus, exposition modérée */
-var CFG_EXPOSURE = 0.72;
+var CFG_EXPOSURE = 0.56;
 var CFG_HEMI_SKY = 0xf0f3f7;
 var CFG_HEMI_GROUND = 0xb8b0a0;
-var CFG_HEMI_INT = 0.6;
+var CFG_HEMI_INT = 0.55;
 var CFG_SUN_COLOR = 0xffffff;
-var CFG_SUN_INT = 1.15;
+var CFG_SUN_INT = 1.1;
 
 /* ---- Décor vendeur : haie de feuillage floue derrière la clôture + sol ombragé ----
    Pourquoi : sur fond clair, une clôture ajourée paraît "vide" (on voit à travers).
