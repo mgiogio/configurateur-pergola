@@ -11462,17 +11462,34 @@ function cloFocus(section){
   var box=(typeof visibleBox==='function')?visibleBox():null;
   if(!box || box.isEmpty()){ heroView(false); return; }
   var c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3()), gy=box.min.y;
-  var dir, ty, zoom;
+  var ex=box.min.x;                                        // extrémité gauche (côté de la vue de départ)
   if(section==='type'){                                   // de face : motif ajouré vs occultant
-    dir=new THREE.Vector3(0.32,0.28,1); ty=gy+0.45*sz.y; zoom=0.92;
-  } else if(section==='faces'){                           // arrière 3/4 : fond noir (1 face) vs 2e face bois
-    dir=new THREE.Vector3(0.55,0.33,-1); ty=gy+0.42*sz.y; zoom=0.98;
-  } else if(section==='poteaux'){                         // arrière 3/4 : poteaux visibles
-    dir=new THREE.Vector3(0.5,0.30,-1); ty=gy+0.40*sz.y; zoom=0.98;
-  } else if(section==='support'){                         // arrière, plus bas : pied / fixation au sol
-    dir=new THREE.Vector3(0.5,0.42,-1); ty=gy+0.20*sz.y; zoom=0.72;
-  } else { heroView(false); return; }
-  reframeTo(dir, new THREE.Vector3(c.x, ty, c.z), false, zoom);
+    return reframeTo(new THREE.Vector3(-0.30,0.28,1), new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), false, 0.92);
+  }
+  if(section==='faces'){
+    // double face : on montre le verso bois (vendeur) ; une face : vue de face (on ne montre pas le dos noir)
+    if(state.type==='occultante' && state.faces==='deux')
+      return reframeTo(new THREE.Vector3(-0.45,0.30,-1), new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), false, 0.95);
+    return reframeTo(new THREE.Vector3(-0.30,0.28,1), new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), false, 0.92);
+  }
+  if(section==='poteaux' || section==='support'){
+    // poteaux et pieds sont derrière les panneaux : on les montre par le BOUT de la clôture, côté face
+    // (le poteau d'extrémité et sa fixation sont visibles de profil), jamais par l'arrière.
+    var low = (section==='support');
+    var tgt=new THREE.Vector3(ex+0.15, gy+(low?0.12:0.40)*sz.y, c.z-0.06);
+    var cam=low ? new THREE.Vector3(ex-1.05, gy+0.42, c.z+1.05)
+                : new THREE.Vector3(ex-1.75, gy+0.42*sz.y+0.35, c.z+1.65);
+    return cloFlyTo(cam, tgt);
+  }
+  heroView(false);
+}
+/* Déplacement caméra doux vers une position/cible précises */
+function cloFlyTo(to, tt){
+  var from=camera.position.clone(), ft=controls.target.clone(), t=0;
+  if(typeof tween!=='undefined') cancelAnimationFrame(tween);
+  (function step(){ t=Math.min(1,t+0.04); var e=1-Math.pow(1-t,3);
+    camera.position.lerpVectors(from,to,e); controls.target.lerpVectors(ft,tt,e); controls.update();
+    if(t<1) tween=requestAnimationFrame(step); })();
 }
 /* Rafraichit options + 3D + prix (sans recharger le glb), puis zoom auto soigné sur l'option. */
 function cloRefresh(section){ CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); if(section && typeof cloFocus==='function') cloFocus(section); }
@@ -11690,6 +11707,59 @@ var CFG_HEMI_GROUND = 0xd8cfc0;
 var CFG_HEMI_INT = 0.55;
 var CFG_SUN_COLOR = 0xfff2df;     // soleil chaud
 var CFG_SUN_INT = 1.45;
+
+/* ---- Décor vendeur : haie de feuillage floue derrière la clôture + sol doux ----
+   Pourquoi : sur un fond uni clair, une clôture ajourée paraît "vide" (on voit à travers).
+   Une haie sombre et floue derrière (effet photo produit, profondeur de champ) remplit les
+   ajours de feuillage, donne le contexte jardin et fait ressortir le bois clair.
+   Texture générée en JS (pas d'image à charger, rendu identique sur tous les navigateurs).
+   La haie et le sol se placent toujours du côté opposé à la caméra (vue verso possible). */
+var CLO_DECOR = { hedgeZ:3.4, hedgeW:26, hedgeH:4.6, hedgeTint:0xe2e6da, floorColor:0x8f9a80, floorR:13 };
+function cloRng(seed){ var s=seed%2147483647; if(s<=0) s+=2147483646; return function(){ s=(s*16807)%2147483647; return (s-1)/2147483646; }; }
+function cloHedgeCanvas(){
+  var R=cloRng(918273), rnd=function(a,b){ return a+R()*(b-a); };
+  var W=384, H=128, c=document.createElement('canvas'); c.width=W; c.height=H; var x=c.getContext('2d');
+  // silhouette des cimes (haut irrégulier) puis masse de feuillage
+  var top=[]; for(var i=0;i<=48;i++) top.push(H*rnd(0.05,0.30)+Math.sin(i*0.8)*H*0.05);
+  x.save(); x.beginPath(); x.moveTo(0,H); for(i=0;i<=48;i++) x.lineTo(i*W/48, top[i]); x.lineTo(W,H); x.closePath(); x.clip();
+  var g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,'#46632f'); g.addColorStop(0.55,'#2d4521'); g.addColorStop(1,'#22361a');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  for(var k=0;k<1400;k++){ x.fillStyle='hsla('+rnd(82,118)+','+rnd(25,45)+'%,'+rnd(16,44)+'%,'+rnd(0.3,0.65)+')';
+    x.beginPath(); x.arc(rnd(0,W),rnd(0,H),rnd(1.2,4.5),0,7); x.fill(); }
+  for(k=0;k<260;k++){ x.fillStyle='hsla('+rnd(68,100)+',50%,'+rnd(52,70)+'%,'+rnd(0.25,0.55)+')';      // reflets de lumière
+    x.beginPath(); x.arc(rnd(0,W),rnd(0,H*0.6),rnd(0.8,2.2),0,7); x.fill(); }
+  x.restore();
+  // flou "profondeur de champ" universel : réduction puis agrandissement lissé
+  var s=document.createElement('canvas'); s.width=W/4; s.height=H/4; var sx=s.getContext('2d'); sx.imageSmoothingEnabled=true; sx.drawImage(c,0,0,W/4,H/4);
+  var o=document.createElement('canvas'); o.width=W; o.height=H; var ox=o.getContext('2d'); ox.imageSmoothingEnabled=true; ox.drawImage(s,0,0,W,H);
+  // pied de haie : léger assombrissement (ombre de contact au sol), PAS de transparence
+  // (la haie doit rester opaque à hauteur de clôture pour qu'on ne voie pas "à travers")
+  var fg=ox.createLinearGradient(0,H*0.85,0,H); fg.addColorStop(0,'rgba(15,25,10,0)'); fg.addColorStop(1,'rgba(15,25,10,0.35)');
+  ox.fillStyle=fg; ox.fillRect(0,H*0.85,W,H*0.15);
+  return o;
+}
+function cloFloorAlpha(){
+  var S=256, c=document.createElement('canvas'); c.width=S; c.height=S; var x=c.getContext('2d');
+  var rg=x.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+  rg.addColorStop(0,'#fff'); rg.addColorStop(0.5,'#eee'); rg.addColorStop(1,'#000');
+  x.fillStyle=rg; x.fillRect(0,0,S,S); return c;
+}
+function CFG_SCENE_READY(){
+  try{
+    var D=CLO_DECOR;
+    var ht=new THREE.CanvasTexture(cloHedgeCanvas()); ht.encoding=THREE.sRGBEncoding;
+    var hedge=new THREE.Mesh(new THREE.PlaneGeometry(D.hedgeW,D.hedgeH),
+      new THREE.MeshBasicMaterial({map:ht, transparent:true, depthWrite:false, color:new THREE.Color(D.hedgeTint), toneMapped:false}));
+    hedge.position.set(0, D.hedgeH/2-0.05, -D.hedgeZ); hedge.renderOrder=-1; hedge.name='DecorHaie';
+    var floor=new THREE.Mesh(new THREE.CircleGeometry(D.floorR,64),
+      new THREE.MeshBasicMaterial({color:new THREE.Color(D.floorColor), alphaMap:new THREE.CanvasTexture(cloFloorAlpha()), transparent:true, depthWrite:false, toneMapped:false, opacity:0.55}));
+    floor.rotation.x=-Math.PI/2; floor.position.set(0,-0.03,-1.2); floor.renderOrder=-2; floor.name='DecorSol';
+    // toujours derrière la clôture, du côté opposé à la caméra
+    hedge.onBeforeRender=function(){ var back=camera.position.z<0; hedge.position.z=back?D.hedgeZ:-D.hedgeZ; hedge.rotation.y=back?Math.PI:0; };
+    floor.onBeforeRender=function(){ floor.position.z=camera.position.z<0?1.2:-1.2; };
+    scene.add(hedge); scene.add(floor); window.__cloHedge=hedge; window.__cloFloor=floor;
+  }catch(e){ console.warn('decor cloture:',e); }
+}
 
 /* Titre produit (le squelette affiche "Pergola" par defaut) */
 (function(){
