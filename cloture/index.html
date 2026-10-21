@@ -11494,10 +11494,10 @@ function cloFlyTo(to, tt){
 function cloRefresh(section){ CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); if(section && typeof cloFocus==='function') cloFocus(section); }
 /* Changement de hauteur = rechargement du glb correspondant, sans reset du reste */
 function cloSetHeight(id){
-  if(state.pose===id) return;
+  // choisir une hauteur ramène toujours la vue de départ (même si la hauteur est déjà sélectionnée)
+  if(state.pose===id){ if(typeof heroView==='function') heroView(false); return; }
   state.pose = id; chosen.hauteur = true;
-  // on garde l'angle de vue actuel après le rechargement du modèle (pas de saut de caméra)
-  try{ if(typeof controls!=='undefined' && controls) window.__cloKeepView={az:controls.getAzimuthalAngle(), pol:controls.getPolarAngle()}; }catch(e){}
+  window.__cloKeepView=null;              // pas de conservation d'angle : vue de base après rechargement
   if(root){ scene.remove(root); root=null; }
   CFG_RENDER(); updatePrice();
   loadModel(glbIdFor(id));   // applyVisibility (CFG_APPLY_VIS) est rappele apres chargement
@@ -11732,17 +11732,16 @@ function CFG_APPLY_VIS(){
     'Côté Extérieur Label_Sol','Côté Jardin Label_Sol'], false);
 
   cloUpdateBadge(cloLongueur());
+  if(typeof cloBuildDims==='function') cloBuildDims();
 }
 /* Présentation alignée sur la pergola : fond neutre épuré (grille CSS via canvas transparent),
    caméra, éclairage et sol (capteur d'ombre) par défaut du moteur. Aucune scène ajoutée :
    vue produit propre et cohérente avec le configurateur pergola. */
-/* Livraison offerte à partir de 2 000 € (seuil par défaut si le champ ACF shipping_discount n'est pas transmis) */
-var CFG_SHIP_DEFAULT = 2000;
 var CFG_FRAME_WHOLE = true;       // cadre la clôture entière (objet large)
 var CFG_HERO_ZOOM = 0.62;         // cadrage un peu resserré
 /* Vue de départ validée : frontale, basse, rapprochée sur les lames (belle vue produit).
    dir x négatif = la perspective fuit vers la droite (sens validé par Manuel). */
-var CFG_HERO_POSE = { distK:0.92, dir:[-0.28,1], eyeF:0.46, tgtF:0.40 };
+var CFG_HERO_POSE = { distK:0.92, dir:[-0.28,1], eyeF:0.46, tgtF:0.40, fitTop:1.18 };   // fitTop : le haut toujours visible (2,40 m)
 
 /* Rendu "studio premium" : fond dégradé doux et chaud (produit mis en valeur, moins de
    transparence visuelle qu'un fond grille froid), lumière chaude sur le douglas, ombre portée. */
@@ -11778,6 +11777,21 @@ function cloSideFade(){  // alpha : bords gauche/droite fondus
 function CFG_SCENE_READY(){
   try{
     var D=CLO_DECOR, el=document.getElementById('cfg-trees');
+    // sol "papier millimétré" vert (rappel de la grille pergola), fondu sur les bords
+    var gs=512, gc=document.createElement('canvas'); gc.width=gs; gc.height=gs; var gx=gc.getContext('2d');
+    gx.fillStyle='#eef5e8'; gx.fillRect(0,0,gs,gs);
+    for(var i=0;i<=10;i++){ var p=Math.round(i*gs/10)+0.5; gx.strokeStyle=(i%10===0)?'rgba(4,158,0,0.42)':(i%5===0?'rgba(4,158,0,0.22)':'rgba(4,158,0,0.12)'); gx.lineWidth=(i%10===0)?3:1.4;
+      gx.beginPath(); gx.moveTo(p,0); gx.lineTo(p,gs); gx.stroke(); gx.beginPath(); gx.moveTo(0,p); gx.lineTo(gs,p); gx.stroke(); }
+    var gt=new THREE.CanvasTexture(gc); gt.encoding=THREE.sRGBEncoding; gt.wrapS=gt.wrapT=THREE.RepeatWrapping; gt.repeat.set(30,30);   // 1 carreau = 1 m, sous-lignes 10 cm
+    gt.anisotropy=(renderer.capabilities&&renderer.capabilities.getMaxAnisotropy())||1;
+    var gm=new THREE.MeshBasicMaterial({map:gt, transparent:true, depthWrite:false, toneMapped:false});
+    gm.onBeforeCompile=function(sh){
+      sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWp;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWp=(modelMatrix*vec4(position,1.0)).xyz;');
+      sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vWp;').replace('#include <dithering_fragment>','#include <dithering_fragment>\ngl_FragColor.a*=1.0-smoothstep(5.0,12.0,length(vWp.xz));');
+    };
+    var grid=new THREE.Mesh(new THREE.PlaneGeometry(30,30), gm);
+    grid.rotation.x=-Math.PI/2; grid.position.set(0,-0.032,0); grid.renderOrder=-3; grid.name='DecorSolMillimetre';
+    scene.add(grid); window.__cloGrid=grid;
     // sol ombragé derrière la clôture (bande de "pelouse à l'ombre")
     var ground=new THREE.Mesh(new THREE.PlaneGeometry(D.hedgeW, D.hedgeZ+0.4),
       new THREE.MeshBasicMaterial({color:new THREE.Color(D.groundColor), alphaMap:cloSideFade(), transparent:true, depthWrite:false, toneMapped:false}));
@@ -11797,6 +11811,70 @@ function CFG_SCENE_READY(){
     }
   }catch(e){ console.warn('decor cloture:',e); }
 }
+
+
+/* ---- Bouton "Mesures" : affiche toutes les cotes sur la 3D ----
+   Hauteur totale, largeur de chaque travée (2 m), longueur totale commandée, hauteur d'un panneau
+   (60 cm), section des poteaux. Lignes + étiquettes toujours lisibles (dessinées par-dessus). */
+var __cloDimsOn=false, __cloDims=null;
+function cloFmtM(v){ return v.toFixed(2).replace('.',',')+' m'; }
+function cloLabel(text, strong){
+  var f=44, pad=22, c=document.createElement('canvas'), x=c.getContext('2d');
+  x.font='700 '+f+'px Roboto, Helvetica, Arial, sans-serif'; var w=Math.ceil(x.measureText(text).width)+pad*2, h=f+pad*1.3;
+  c.width=w; c.height=h; x=c.getContext('2d'); x.font='700 '+f+'px Roboto, Helvetica, Arial, sans-serif';
+  var r=h/2; x.fillStyle=strong?'#049e00':'rgba(255,255,255,0.96)'; x.beginPath(); x.moveTo(r,0); x.lineTo(w-r,0); x.arc(w-r,r,r,-Math.PI/2,Math.PI/2); x.lineTo(r,h); x.arc(r,r,r,Math.PI/2,Math.PI*1.5); x.closePath(); x.fill();
+  if(!strong){ x.strokeStyle='rgba(4,158,0,0.55)'; x.lineWidth=3; x.stroke(); }
+  x.fillStyle=strong?'#fff':'#1e211f'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,w/2,h/2+2);
+  var t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.anisotropy=4;
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t, depthTest:false, depthWrite:false, transparent:true, toneMapped:false, sizeAttenuation:false}));
+  var H=0.045; sp.scale.set(H*w/h, H, 1); sp.renderOrder=1000; return sp;   // taille fixe à l'écran : toujours lisible
+}
+function cloDimLine(a,b,tickDir){
+  var t=tickDir.clone().multiplyScalar(0.07), pts=[a,b, a.clone().add(t),a.clone().sub(t), b.clone().add(t),b.clone().sub(t)];
+  var g=new THREE.BufferGeometry().setFromPoints(pts);
+  var l=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0x1e211f, depthTest:false, transparent:true, opacity:0.9, toneMapped:false}));
+  l.renderOrder=999; return l;
+}
+function cloBuildDims(){
+  if(__cloDims){ scene.remove(__cloDims); __cloDims.traverse(function(o){ if(o.geometry) o.geometry.dispose(); if(o.material){ if(o.material.map) o.material.map.dispose(); o.material.dispose(); } }); __cloDims=null; }
+  if(!__cloDimsOn || !root || typeof visibleBox!=='function') return;
+  var box=visibleBox(); if(box.isEmpty()) return;
+  var V=THREE.Vector3, gy=Math.max(0,box.min.y), top=box.max.y, x0=box.min.x, x1=box.max.x, zf=box.max.z+0.10;
+  var G=new THREE.Group(); G.name='Cotes';
+  // hauteur totale (à gauche)
+  var hx=x0-0.28; G.add(cloDimLine(new V(hx,gy,zf), new V(hx,top,zf), new V(1,0,0)));
+  var lh=cloLabel(hLabel(state.pose)); lh.position.set(hx-0.05,(gy+top)/2,zf); G.add(lh);
+  // hauteur d'un panneau (à droite) si plusieurs niveaux
+  var pph=PPH[state.pose]||3;
+  if(pph>1){ var px=x1+0.28; G.add(cloDimLine(new V(px,gy,zf), new V(px,gy+0.60,zf), new V(1,0,0)));
+    var lp=cloLabel('Panneau 60 cm'); lp.position.set(px+0.05,gy+0.30,zf); G.add(lp); }
+  // largeur d'un panneau (2 m) : une seule travée cotée (la 3D montre un tronçon représentatif)
+  var n=Math.max(1,Math.round((x1-x0)/2)), w=(x1-x0)/n, zt=zf+0.30, a=x0, b=x0+w;
+  G.add(cloDimLine(new V(a+0.02,gy+0.02,zt), new V(b-0.02,gy+0.02,zt), new V(0,0,1)));
+  var lt=cloLabel('Panneau 2,00 m'); lt.position.set((a+b)/2, gy+0.13, zt); G.add(lt);
+  // longueur commandée (étiquette seule : le tronçon affiché n'est pas à l'échelle de la longueur)
+  var ll=cloLabel('Longueur commandée : '+cloLongueurLabel(), true); ll.position.set((x0+x1)/2, top+0.28, zf); G.add(ll);
+  // poteaux
+  if(state.poteaux==='avec'){ var lpo=cloLabel('Poteaux 9 × 9 cm'); lpo.position.set(x0+w*1.5, gy+0.55*(top-gy), zf+0.02); G.add(lpo); }
+  scene.add(G); __cloDims=G;
+}
+function cloToggleDims(btn){
+  __cloDimsOn=!__cloDimsOn; if(btn) btn.classList.toggle('on',__cloDimsOn);
+  cloBuildDims();
+  if(__cloDimsOn && typeof reframeTo==='function' && root){   // vue de face d'ensemble pour lire toutes les cotes
+    var b=visibleBox(), c=b.getCenter(new THREE.Vector3()), sz=b.getSize(new THREE.Vector3());
+    reframeTo(new THREE.Vector3(-0.12,0.22,1), new THREE.Vector3(c.x, b.min.y+0.55*sz.y, c.z), false, 0.98);
+  }
+}
+(function(){
+  try{
+    var tools=document.querySelector('.stage-tools'); if(!tools || document.getElementById('dimsBtn')) return;
+    var b=document.createElement('button'); b.className='icon-btn'; b.id='dimsBtn'; b.title='Afficher les mesures';
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15.5 15.5 3 21 8.5 8.5 21z"/><path d="m7 12 2 2M10 9l1.5 1.5M13 6l2 2M16 9.5 14.5 8"/></svg>';
+    b.onclick=function(){ cloToggleDims(b); };
+    tools.insertBefore(b, tools.firstChild);
+  }catch(e){}
+})();
 
 /* Titre produit (le squelette affiche "Pergola" par defaut) */
 (function(){
@@ -11893,9 +11971,10 @@ const fmtEUR=n=>n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractio
 /* Livraison dynamique - champ ACF shipping_discount (transmis par le plugin dans CTX.shippingDiscount) :
    nombre = seuil TTC de livraison offerte ; texte = affiché tel quel ; vide = livraison offerte. */
 function shipInfo(total){
-  // valeur ACF transmise par le plugin ; à défaut, seuil par défaut du produit (CFG_SHIP_DEFAULT)
-  let src=CTX.shippingDiscount;
-  if((src==null || String(src).trim()==='') && typeof CFG_SHIP_DEFAULT!=='undefined') src=CFG_SHIP_DEFAULT;
+  // valeur du champ ACF shipping_discount transmise par le plugin (aucune valeur en dur).
+  // Clé absente = plugin trop ancien : on n'affirme rien sur la gratuité.
+  if(!('shippingDiscount' in CTX)) return {free:false, line:'Frais de livraison calculés au panier', recap:'Calculée au panier', lbl:'hors livraison', rz:'Livraison calculée au panier'};
+  const src=CTX.shippingDiscount;
   const raw=(src==null)?'':String(src).trim();
   const n=parseFloat(raw.replace(/[^0-9.,]/g,'').replace(/\s/g,'').replace(',','.'));
   if(raw && /^[\s0-9.,€]+$/.test(raw) && !isNaN(n) && n>0){
@@ -12446,6 +12525,8 @@ function heroView(instant){
     if(CFG_HERO_POSE.dir){ dx=CFG_HERO_POSE.dir[0]; dz=CFG_HERO_POSE.dir[1]; }
     if(CFG_HERO_POSE.eyeF!==undefined) eye=gy+CFG_HERO_POSE.eyeF*sz.y;
     if(CFG_HERO_POSE.tgtF!==undefined) tgtY=gy+CFG_HERO_POSE.tgtF*sz.y;
+    // garantit que le HAUT de l'objet reste dans le cadre (ex. clôture 2,40 m)
+    if(CFG_HERO_POSE.fitTop){ const need=(gy+sz.y-tgtY)*CFG_HERO_POSE.fitTop/Math.tan(vfov/2); if(dist<need) dist=need; }
     controls.maxDistance=dist*3;                                // suit le nouveau dist
   }
   const L=Math.hypot(dx,dz);
