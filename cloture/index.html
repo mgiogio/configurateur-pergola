@@ -11370,7 +11370,6 @@ const SECTIONS = {
       ["1,80 m","La hauteur la plus demandée : intimité complète côté jardin ou terrasse."],
       ["2,40 m","Protection maximale, pour couper un vis-à-vis élevé ou le vent."] ] } },
   longueur:{ title:"Longueur.", q:"Quelle longueur totale ?",
-    desc:"Composée de panneaux de 2 m. Pour une longueur impaire, on arrondit au panneau supérieur et une traverse de recoupe est fournie.",
     arg:{ intro:"Indiquez la longueur totale de clôture souhaitée.", points:[
       ["Panneaux de 2 m","La clôture se compose de panneaux de 2 m, assemblés entre poteaux."],
       ["Longueur impaire","On arrondit au panneau de 2 m supérieur (facturé) ; vous recoupez le dernier panneau à la bonne longueur."],
@@ -11597,7 +11596,7 @@ function CFG_RENDER(){
   if(typeof buildReassurance==='function') optsEl.appendChild(buildReassurance());
 }
 
-function cloLongueurLabel(){ var Lv=cloLongueur(), f=cloLongueurFacturee(); return (f!==Lv) ? (Lv+' m (facturée '+f+' m)') : (Lv+' m'); }
+function cloLongueurLabel(){ return cloLongueur()+' m'; }   // longueur réelle seulement (pas de "facturée" : prête à confusion)
 function cloLivraisonLabel(){
   var sd = (window.CGP_CTX && CGP_CTX.shippingDiscount);
   var n = parseFloat(String(sd==null?'':sd).replace(/[^0-9.,]/g,'').replace(',','.'));
@@ -11712,6 +11711,10 @@ function CFG_APPLY_VIS(){
     cloLiftY('Panneau_'+N+'_Sol', lift);
     cloLiftY('Occultant_'+N+'_Sol', lift);
     cloLiftY('Panneaux_2ème_Face_'+N+'_Sol', lift);
+    // Sans poteau : les panneaux se jointent bord à bord -> léger chevauchement (6 mm) pour
+    // qu'aucun jour n'apparaisse entre deux panneaux. Avec poteaux : dimensions réelles.
+    var sx=(state.poteaux==='sans')?1.006:1;
+    ['Panneau_','Occultant_','Panneaux_2ème_Face_'].forEach(function(pre){ var o=sceneNode(pre+N+'_Sol'); if(o) o.scale.x=sx; });
     cloShiftZ('Occultant_'+N+'_Sol', 0);   // pas de décalage (le noir reste à sa place, une face uniquement)
   }
   // Poteaux du run principal (1-4), masque le retour (5-6). 60 cm : poteaux a demi-hauteur.
@@ -11829,11 +11832,19 @@ function cloLabel(text, strong){
   var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t, depthTest:false, depthWrite:false, transparent:true, toneMapped:false, sizeAttenuation:false}));
   var H=0.045; sp.scale.set(H*w/h, H, 1); sp.renderOrder=1000; return sp;   // taille fixe à l'écran : toujours lisible
 }
-function cloDimLine(a,b,tickDir){
-  var t=tickDir.clone().multiplyScalar(0.07), pts=[a,b, a.clone().add(t),a.clone().sub(t), b.clone().add(t),b.clone().sub(t)];
-  var g=new THREE.BufferGeometry().setFromPoints(pts);
-  var l=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0x1e211f, depthTest:false, transparent:true, opacity:0.9, toneMapped:false}));
-  l.renderOrder=999; return l;
+function cloBar(a,b,r,mat){
+  var d=new THREE.Vector3().subVectors(b,a), len=d.length();
+  var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,10), mat);
+  m.position.copy(a).addScaledVector(d,0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
+  m.renderOrder=999; return m;
+}
+function cloDimLine(a,b,tickDir){   // cote bien visible : trait épais vert foncé + talons aux extrémités
+  var mat=new THREE.MeshBasicMaterial({color:0x0b6b00, depthTest:false, depthWrite:false, transparent:true, opacity:0.95, toneMapped:false});
+  var g=new THREE.Group(), t=tickDir.clone().normalize().multiplyScalar(0.10);
+  g.add(cloBar(a,b,0.011,mat));
+  g.add(cloBar(a.clone().add(t),a.clone().sub(t),0.011,mat));
+  g.add(cloBar(b.clone().add(t),b.clone().sub(t),0.011,mat));
+  return g;
 }
 function cloBuildDims(){
   if(__cloDims){ scene.remove(__cloDims); __cloDims.traverse(function(o){ if(o.geometry) o.geometry.dispose(); if(o.material){ if(o.material.map) o.material.map.dispose(); o.material.dispose(); } }); __cloDims=null; }
@@ -11863,7 +11874,7 @@ function cloToggleDims(btn){
   cloBuildDims();
   if(__cloDimsOn && typeof reframeTo==='function' && root){   // vue de face d'ensemble pour lire toutes les cotes
     var b=visibleBox(), c=b.getCenter(new THREE.Vector3()), sz=b.getSize(new THREE.Vector3());
-    reframeTo(new THREE.Vector3(-0.12,0.22,1), new THREE.Vector3(c.x, b.min.y+0.55*sz.y, c.z), false, 0.98);
+    reframeTo(new THREE.Vector3(-0.12,0.22,1), new THREE.Vector3(c.x, b.min.y+0.55*sz.y, c.z), false, 1.32);   // assez reculé pour lire les cotes latérales
   }
 }
 (function(){
@@ -11971,29 +11982,29 @@ const fmtEUR=n=>n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractio
 /* Livraison dynamique - champ ACF shipping_discount (transmis par le plugin dans CTX.shippingDiscount) :
    nombre = seuil TTC de livraison offerte ; texte = affiché tel quel ; vide = livraison offerte. */
 function shipInfo(total){
-  // valeur du champ ACF shipping_discount transmise par le plugin (aucune valeur en dur).
-  // Clé absente = plugin trop ancien : on n'affirme rien sur la gratuité.
-  if(!('shippingDiscount' in CTX)) return {free:false, line:'Frais de livraison calculés au panier', recap:'Calculée au panier', lbl:'hors livraison', rz:'Livraison calculée au panier'};
-  const src=CTX.shippingDiscount;
-  const raw=(src==null)?'':String(src).trim();
-  const n=parseFloat(raw.replace(/[^0-9.,]/g,'').replace(/\s/g,'').replace(',','.'));
-  if(raw && /^[\s0-9.,€]+$/.test(raw) && !isNaN(n) && n>0){
+  // Champ ACF shipping_discount transmis par le plugin, affiché tel que le thème l'affiche
+  // (ex. "offerte à partir de 2 000€"). Aucune valeur en dur, aucune phrase inventée.
+  const del=CTX.delivery||'5 à 8 jours ouvrés';
+  if(!('shippingDiscount' in CTX) || CTX.shippingDiscount==null || String(CTX.shippingDiscount).trim()==='')
+    return {line:'', recap:'', lbl:'', rz:'', del:del};          // pas de valeur : on n'affirme rien
+  const raw=String(CTX.shippingDiscount).trim();
+  const n=parseFloat(raw.replace(/[^0-9.,]/g,'').replace(',','.'));
+  if(/^[\s0-9.,€]+$/.test(raw) && !isNaN(n) && n>0){              // champ numérique = seuil
     const lim=Math.round(n).toLocaleString('fr-FR')+' €';
-    if(total>=n) return {free:true, line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte'};
-    // sous le seuil : la livraison est PAYANTE (calculée au panier) - on ne dit jamais "offerte" seul
-    return {free:false, line:'Livraison offerte dès '+lim+' d\'achat', recap:'Calculée au panier · offerte dès '+lim+' (encore '+fmtEUR(n-total)+')', lbl:'hors livraison', rz:'Livraison offerte dès '+lim};
+    if(total>=n) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
+    return {line:'Livraison offerte à partir de '+lim, recap:'Offerte à partir de '+lim, lbl:'Livraison offerte à partir de '+lim, rz:'Livraison offerte à partir de '+lim, del:del};
   }
-  if(raw) return {free:false, line:raw, recap:raw, lbl:raw, rz:raw};
-  return {free:true, line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte'};
+  const t=/^livraison/i.test(raw)?raw:('Livraison '+raw);            // champ texte : repris mot pour mot
+  return {line:t, recap:raw.charAt(0).toUpperCase()+raw.slice(1), lbl:t, rz:t, del:del};
 }
 /* Met à jour tous les affichages livraison (bandeau, barre prix, réassurance, récap) */
 function applyShipping(total){
   const s=shipInfo(total);
   const dl=document.getElementById('delivLine');
-  if(dl){ const del=CTX.delivery||'5 à 8 jours ouvrés'; dl.innerHTML=s.line+' · expédiée sous <b>'+del+'</b>'; dl.style.display='inline-block'; }
-  const lb=document.getElementById('shipLbl'); if(lb) lb.textContent='Total TTC · '+s.lbl;
-  document.querySelectorAll('.rz-ship-t').forEach(e=>e.textContent=s.rz);
-  document.querySelectorAll('.ship-recap').forEach(e=>e.textContent=s.recap);
+  if(dl){ dl.innerHTML=(s.line?s.line+' · expédiée sous ':'Expédiée sous ')+'<b>'+s.del+'</b>'; dl.style.display='inline-block'; }
+  const lb=document.getElementById('shipLbl'); if(lb) lb.textContent='Total TTC'+(s.lbl?' · '+s.lbl:'');
+  document.querySelectorAll('.rz-ship-t').forEach(e=>e.textContent=s.rz||'Expédition rapide');
+  document.querySelectorAll('.ship-recap').forEach(e=>{ e.textContent=s.recap; const row=e.closest('.recap-row'); if(row) row.style.display=s.recap?'':'none'; });
 }
 
 /* ===== Rendu options ===== */
@@ -12129,7 +12140,7 @@ const RZ_SVG={
 };
 function buildReassurance(){
   const items=[
-    {ic:RZ_SVG.truck, t:'<span class="rz-ship-t">'+shipInfo(computePrice()).rz+'</span>', s:'Expédiée sous '+(CTX.delivery||'5 à 8 jours ouvrés')},
+    {ic:RZ_SVG.truck, t:'<span class="rz-ship-t">'+(shipInfo(computePrice()).rz||'Expédition rapide')+'</span>', s:'Expédiée sous '+(CTX.delivery||'5 à 8 jours ouvrés')},
     {ic:RZ_SVG.ret,   t:'15 jours',          s:"Pour changer d'avis"},
     {ic:RZ_SVG.leaf,  t:'Lamellé-collé',     s:'Transformé en France'}
   ];
