@@ -11468,12 +11468,15 @@ function cloFocus(section){
     reframeTo(dir, target, false, zoom);
   } else heroView(false);
 }
-/* Rafraichit options + 3D + prix (sans recharger le glb), puis cadre sur l'option modifiée */
-function cloRefresh(section){ CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); if(section) cloFocus(section); }
+/* Rafraichit options + 3D + prix (sans recharger le glb). La caméra NE BOUGE PAS :
+   l'utilisateur garde sa vue, le produit se met à jour sur place. */
+function cloRefresh(section){ CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); }
 /* Changement de hauteur = rechargement du glb correspondant, sans reset du reste */
 function cloSetHeight(id){
   if(state.pose===id) return;
   state.pose = id; chosen.hauteur = true;
+  // on garde l'angle de vue actuel après le rechargement du modèle (pas de saut de caméra)
+  try{ if(typeof controls!=='undefined' && controls) window.__cloKeepView={az:controls.getAzimuthalAngle(), pol:controls.getPolarAngle()}; }catch(e){}
   if(root){ scene.remove(root); root=null; }
   CFG_RENDER(); updatePrice();
   loadModel(glbIdFor(id));   // applyVisibility (CFG_APPLY_VIS) est rappele apres chargement
@@ -12295,6 +12298,10 @@ function heroView(instant){
   const L=Math.hypot(dx,dz);
   const to=new THREE.Vector3(c.x+dx/L*dist, eye, c.z+dz/L*dist);
   const tt=new THREE.Vector3(c.x, tgtY, c.z);
+  // Conserver l'angle de vue courant (ex. changement de hauteur) : même azimut/polaire, nouveau cadrage.
+  if(window.__cloKeepView){ try{ var kv=window.__cloKeepView, sp=Math.sin(kv.pol);
+      to.set(tt.x+dist*sp*Math.sin(kv.az), tt.y+dist*Math.cos(kv.pol), tt.z+dist*sp*Math.cos(kv.az)); }catch(e){}
+    window.__cloKeepView=null; }
   if(groundMesh) groundMesh.position.y=__groundY(gy+0.002);
   if(instant){ camera.position.copy(to); controls.target.copy(tt); controls.update(); return; }
   const from=camera.position.clone(), ft=controls.target.clone(); let t=0; cancelAnimationFrame(tween);
