@@ -10183,6 +10183,17 @@ var qrcode = function() {
 .clo-face-lbl.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .cgp-root.cg-alt .clo-face-chip,.cgp-root.cg-alt .clo-face-lbl{display:none!important}
 @media (max-width:880px){.stage:not(.fs) .clo-face-chip{left:auto;right:10px;transform:none}}
+
+/* Image instantanée pendant le chargement de la 3D */
+.stage-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:7;transition:opacity .5s;pointer-events:none}
+.stage-poster.hide{opacity:0}
+.stage.has-poster .loader:not(.err){background:transparent;place-items:end center;padding-bottom:16px;font-size:0;pointer-events:none}
+.stage.has-poster .loader:not(.err) .spin{margin:0 auto}
+
+/* Prix unitaire sous le total (ex. « soit 70,63 €/m » pour la clôture) */
+.cgp-root .price-block .unit{font-size:12.5px;color:var(--cg-ink-soft);font-weight:500;margin-top:1px}
+.cgp-root .price-block .unit:empty{display:none}
+@media (max-width:880px){.cgp-root .price-block .unit{display:none}}
 </style>
 </head>
 <body>
@@ -10219,7 +10230,7 @@ var qrcode = function() {
 </div>
 
 <div class="footbar"><div class="wrap">
-  <div class="price-block"><div class="lbl" id="shipLbl">Total TTC · Livraison offerte</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div></div>
+  <div class="price-block"><div class="lbl" id="shipLbl">Total TTC · Livraison offerte</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div><div class="unit" id="unitPrice"></div></div>
   <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Sauver</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
@@ -10413,6 +10424,8 @@ function CFG_PRICE_TEXT(p){
   var mn=Math.min.apply(null, HAUTEURS.map(function(h){ return H_CALC[h.id]; }));
   return { main: mn.toFixed(2).replace('.',',')+' €/m', sub:'Prix au mètre', label:'À partir de' };
 }
+/* Prix au mètre (comparaison facile avec la concurrence / les devis) */
+function CFG_PRICE_UNIT(p){ var L=cloLongueur(); return L>0 ? 'soit '+(p/L).toFixed(2).replace('.',',')+' €/m' : ''; }
 function computePrice(){
   var h = PPH[state.pose] ? state.pose : '180';
   var Lpaid = cloLongueur();   // comme MKL (formule officielle « longueur ») : prix au mètre sur la longueur réelle, impaire comprise
@@ -10647,7 +10660,7 @@ function cloRecap(){
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
     +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
-    +(function(){ var ov=CFG_PRICE_TEXT(computePrice()); return `<div class="recap-row total"><span>${ov?'Prix au mètre TTC':'Total TTC'}</span><b>${ov?ov.main:fmtEUR(computePrice())}</b></div>`; })();
+    +(function(){ var p=computePrice(), ov=CFG_PRICE_TEXT(p); return `<div class="recap-row total"><span>${ov?'Prix au mètre TTC':'Total TTC'}</span><b>${ov?ov.main:fmtEUR(p)}</b></div>`+(ov?'':`<div class="recap-row"><span></span><span style="font-size:13px;color:var(--cg-ink-soft)">${CFG_PRICE_UNIT(p)}</span></div>`); })();
   return w;
 }
 
@@ -11116,7 +11129,7 @@ var CFG_AB_ALT = {
   }
 };
 
-function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; l.style.display='grid';
+function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; l.style.display='grid'; l.classList.toggle('err',!!err);
   l.innerHTML=(err?'<div style="max-width:88%;color:#a33;font-size:13px;white-space:pre-wrap;text-align:left">':'<div><div class="spin"></div>')+msg+'</div>';}
 __status('THREE='+(typeof THREE)+' · GLTFLoader='+(typeof (window.THREE&&THREE.GLTFLoader))+' · Meshopt='+(typeof window.MeshoptDecoder));
 
@@ -11469,7 +11482,10 @@ function updatePrice(){ const p=computePrice();
   const ov=(typeof CFG_PRICE_TEXT==='function') ? CFG_PRICE_TEXT(p) : null;
   document.getElementById('totalPrice').textContent= ov ? ov.main : fmtEUR(p);
   const sp=document.getElementById('splitPay');
-  if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*';
+  // Produit : prix unitaire sous le total (ex. clôture « soit 70,63 €/m ») ; sur mobile, à côté de la mensualité
+  const unit=(!ov && typeof CFG_PRICE_UNIT==='function') ? CFG_PRICE_UNIT(p) : '';
+  const up=document.getElementById('unitPrice'); if(up) up.textContent=unit;
+  if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*'+((unit && isMobile())?' · '+unit.replace(/^soit /,''):'');
   try{ applyShipping(p); }catch(e){}
   if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
 
@@ -11610,6 +11626,7 @@ function loadModel(glbId){
     applyVisibility(); frameModel(); renderAngles(); applyMode();
     document.getElementById('loader').style.display='none';
     window.__loaded=true;
+    if(window.__posterEl){ var __pe=window.__posterEl; window.__posterEl=null; __pe.classList.add('hide'); stage.classList.remove('has-poster'); setTimeout(function(){ __pe.remove(); },600); }
     if(isHandheld()){ setTimeout(prepareAR,4000); if(/[#&]ar=1/.test(location.hash)){ setTimeout(function(){ try{launchAR();}catch(e){} }, 1100); } }
     }catch(e){ __status('Erreur après chargement :\n'+e.message,true); console.error(e); }
    },err=>{ clearTimeout(watchdog); __status('Erreur de parsing GLTF :\n'+(err&&(err.message||err)),true); console.error('GLTF parse error:',err); });
@@ -12178,6 +12195,17 @@ function __abPreviewBar(){
 try{ fetchGlb(glbIdFor(state.pose)); getDraco(); }catch(e){}   // téléchargements lancés tout de suite, en parallèle
 __altInit();
 __abPreviewBar();
+/* Image instantanée : rendu de la vue de départ (poster.webp, ~30 Ko) affiché tout de suite, remplacé par la 3D dès
+   qu'elle est prête. Pas d'image si on rouvre une configuration sauvegardée (elle ne correspondrait pas) ni en variante A. */
+(function(){
+  try{
+    if(__alt || RESTORE) return;
+    var st=document.getElementById('stage'); if(!st) return;
+    var im=new Image(); im.className='stage-poster'; im.alt=''; im.decoding='async';
+    im.onerror=function(){ im.remove(); st.classList.remove('has-poster'); window.__posterEl=null; };
+    im.src=CGP_BASE+'poster.webp'; st.appendChild(im); st.classList.add('has-poster'); window.__posterEl=im;
+  }catch(e){}
+})();
 cgTrack('cg_config_view');
 applyCtx(); detectStickyTop(); buildStories(); renderOptions(); updatePrice(); initScene();
 var __cgReady=function(){ var r=document.getElementById('cgpRoot'); if(r) r.classList.add('cgp-ready'); };
