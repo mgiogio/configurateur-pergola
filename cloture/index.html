@@ -10338,6 +10338,7 @@ const CLO_MANIFEST = {
   perSize:{ std:{ root:'Scène_Sol', always:[], hidden:[], groups:[] } }
 };
 let MANIFEST = CLO_MANIFEST;
+var CFG_MODEL_IDS = ['glb-120','glb-180','glb-240'];   // préchargés en fond : changement de hauteur instantané
 function glbIdFor(pose){ return 'glb-' + (GLB_HEIGHT[pose]||'180'); }
 function manifestFor(pose){ return CLO_MANIFEST; }
 
@@ -10543,7 +10544,7 @@ function cloSetHeight(id){
   if(state.pose===id){ window.__cloXray=false; if(typeof heroView==='function') heroView(false); return; }
   state.pose = id; chosen.hauteur = true; window.__cloPriced=true;
   window.__cloKeepView=null; window.__cloXray=false;   // vue de base après rechargement
-  if(root){ scene.remove(root); root=null; }
+  // l'ancien modèle reste affiché pendant le chargement de la nouvelle hauteur (le moteur le remplace une fois prêt)
   CFG_RENDER(); updatePrice();
   if(typeof __alt!=='undefined' && __alt){ try{ __alt.update(); }catch(e){} }   // variante A : image tout de suite
   loadModel(glbIdFor(id));   // applyVisibility (CFG_APPLY_VIS) est rappele apres chargement
@@ -10960,7 +10961,7 @@ function CFG_DIMS(G, box){
   var f=document.getElementById('fromLine'); if(f) f.innerHTML='À partir de <b style="color:var(--cg-green)">'+mn.toFixed(2).replace('.',',')+'&nbsp;€/m</b> · douglas français';
 })();
 
-/* ---- Double face : rendre explicite le passage avant / arrière ----
+/* ---- Occultante (une ou deux faces) : rendre explicite le passage avant / arrière ----
    La caméra passe PAR-DESSUS la clôture (on voit qu'on tourne autour), un repère indique la face montrée,
    et deux boutons « Avant / Arrière » permettent de comparer à volonté (comme Recto / Verso sur MKL). */
 window.__cloFace='front';
@@ -10977,7 +10978,7 @@ function cloFaceTurn(side){
     t=Math.min(1,t+0.018); var e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;          // départ et arrivée en douceur
     var k=Math.min(1,t*4);                                                     // rejoint d'abord l'arc
     var p=arc(phi0+(phi1-phi0)*e); camera.position.copy(from.clone().lerp(p,k)); controls.target.copy(ft.clone().lerp(tt,k)); controls.update();
-    if(t>0.45 && t<0.5) cloFaceLabel(toBack ? 'Face arrière : 2e face en bois' : 'Face avant');
+    if(t>0.45 && t<0.5) cloFaceLabel(toBack ? (state.faces==='deux' ? 'Face arrière : 2e face en bois' : 'Face arrière : côté traverses') : 'Face avant');
     if(t<1) tween=requestAnimationFrame(step); else setTimeout(function(){ cloFaceLabel(''); }, 1800);
   })();
 }
@@ -10988,12 +10989,12 @@ function cloFaceLabel(txt){
 }
 function cloFaceChip(){
   if(!stage) return; var w=document.getElementById('cloFaceChip');
-  var show=(state.type==='occultante' && state.faces==='deux');
+  var show=(state.type==='occultante');   // occultante une ou deux faces : on peut toujours comparer avant / arrière
   if(!w){ w=document.createElement('div'); w.id='cloFaceChip'; w.className='clo-face-chip';
     w.innerHTML='<button data-s="front">Avant</button><button data-s="back">Arrière</button>';
     w.querySelectorAll('button').forEach(function(b){ b.onclick=function(ev){ ev.stopPropagation(); var s=b.getAttribute('data-s'); if(s!==window.__cloFace) cloFaceTurn(s); if(typeof cgVisual==='function') cgVisual('recto_verso'); }; });
     stage.appendChild(w); }
-  if(!show && window.__cloFace==='back' && state.type!=='occultante') window.__cloFace='front';
+  if(!show && window.__cloFace==='back'){ window.__cloFace='front'; }
   w.style.display=show?'flex':'none';
   w.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-s')===window.__cloFace); });
 }
@@ -11129,7 +11130,7 @@ var CFG_AB_ALT = {
   }
 };
 
-function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; l.style.display='grid'; l.classList.toggle('err',!!err);
+function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; if(window.__swap && !err) return; l.style.display='grid'; l.classList.toggle('err',!!err);
   l.innerHTML=(err?'<div style="max-width:88%;color:#a33;font-size:13px;white-space:pre-wrap;text-align:left">':'<div><div class="spin"></div>')+msg+'</div>';}
 __status('THREE='+(typeof THREE)+' · GLTFLoader='+(typeof (window.THREE&&THREE.GLTFLoader))+' · Meshopt='+(typeof window.MeshoptDecoder));
 
@@ -11568,8 +11569,7 @@ function switchModel(){
   if(!MANIFEST.perSize[state.taille]) state.taille = MANIFEST.dimensions.taille.values[0];
   initState();
   FAMILY_ORDER.forEach(f=>chosen[f]=false); chosen.pieds=false;
-  if(root){ scene.remove(root); root=null; }
-  renderOptions(); updatePrice();
+  renderOptions(); updatePrice();   // l'ancien modèle reste affiché jusqu'à ce que le nouveau soit prêt (pas de flash)
   loadModel(glbIdFor(state.pose));
 }
 /* ===== Chargement rapide =====
@@ -11594,7 +11594,8 @@ function getDraco(){
 }
 function loadModel(glbId){
   glbId=glbId||'glb-auto'; window.__glbWanted=glbId;
-  document.getElementById('loader').style.display='grid'; window.__loaded=false;
+  window.__swap=!!root;   // changement de modèle : l'ancien reste visible, pas d'écran de chargement
+  if(!window.__swap) document.getElementById('loader').style.display='grid'; window.__loaded=false;
   __status('Chargement du modèle 3D…');
   let buf;
   const inl=document.getElementById(glbId);
@@ -11608,7 +11609,8 @@ function loadModel(glbId){
    loader.parse(buf.buffer,'',gltf=>{
     clearTimeout(watchdog);
     try{
-    root=gltf.scene; scene.add(root);
+    if(root && root!==gltf.scene) scene.remove(root);   // on remplace l'ancien modèle seulement maintenant
+    root=gltf.scene; scene.add(root); window.__swap=false;
     // Murale : le mur est modélisé côté +X (face à la caméra par défaut). On pivote de 180° pour l'envoyer au fond, vue par défaut sur la façade ouverte.
     root.rotation.y = (state.pose==='murale') ? Math.PI : 0;
     root.updateMatrixWorld(true);
@@ -11626,6 +11628,7 @@ function loadModel(glbId){
     applyVisibility(); frameModel(); renderAngles(); applyMode();
     document.getElementById('loader').style.display='none';
     window.__loaded=true;
+    if(typeof CFG_MODEL_IDS!=='undefined' && !window.__prefetchedAll){ window.__prefetchedAll=true; setTimeout(function(){ CFG_MODEL_IDS.forEach(function(id){ try{ fetchGlb(id); }catch(e){} }); }, 2500); }
     if(window.__posterEl){ var __pe=window.__posterEl; window.__posterEl=null; __pe.classList.add('hide'); stage.classList.remove('has-poster'); setTimeout(function(){ __pe.remove(); },600); }
     if(isHandheld()){ setTimeout(prepareAR,4000); if(/[#&]ar=1/.test(location.hash)){ setTimeout(function(){ try{launchAR();}catch(e){} }, 1100); } }
     }catch(e){ __status('Erreur après chargement :\n'+e.message,true); console.error(e); }
@@ -12149,7 +12152,7 @@ function cgTrack(ev, params, cb){
     var p={event:ev, cg_product:CG_PRODUCT};
     if(AB){ p.ab_test=AB.test; p.ab_variant=AB.label; }
     if(params) for(var k in params) p[k]=params[k];
-    if(cb){ p.eventCallback=fin; p.eventTimeout=900; setTimeout(fin,1000); }
+    if(cb){ p.eventCallback=fin; p.eventTimeout=300; setTimeout(fin,350); }   // on n'attend jamais plus de 0,35 s le suivi avant d'aller au panier
     window.dataLayer.push(p);
   }catch(e){ fin(); }
   try{ cgBeacon(ev, params||{}); }catch(e){}

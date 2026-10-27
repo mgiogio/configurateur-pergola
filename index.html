@@ -10956,6 +10956,7 @@ const MANIFEST_MURALE = {
  }
 };
 let MANIFEST = MANIFEST_AUTO;
+var CFG_MODEL_IDS = ['glb-auto','glb-murale'];   // préchargés en fond : changement de pose instantané
 function glbIdFor(pose){ return pose==='murale'?'glb-murale':'glb-auto'; }
 function manifestFor(pose){ return pose==='murale'?MANIFEST_MURALE:MANIFEST_AUTO; }
 
@@ -11100,7 +11101,7 @@ function CFG_DIMS(G, box){
   var c=dimLabel('Hauteur '+ht); c.position.set(xl-0.05,(gy+top)/2,zf); G.add(c);
 }
 
-function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; l.style.display='grid'; l.classList.toggle('err',!!err);
+function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; if(window.__swap && !err) return; l.style.display='grid'; l.classList.toggle('err',!!err);
   l.innerHTML=(err?'<div style="max-width:88%;color:#a33;font-size:13px;white-space:pre-wrap;text-align:left">':'<div><div class="spin"></div>')+msg+'</div>';}
 __status('THREE='+(typeof THREE)+' · GLTFLoader='+(typeof (window.THREE&&THREE.GLTFLoader))+' · Meshopt='+(typeof window.MeshoptDecoder));
 
@@ -11539,8 +11540,7 @@ function switchModel(){
   if(!MANIFEST.perSize[state.taille]) state.taille = MANIFEST.dimensions.taille.values[0];
   initState();
   FAMILY_ORDER.forEach(f=>chosen[f]=false); chosen.pieds=false;
-  if(root){ scene.remove(root); root=null; }
-  renderOptions(); updatePrice();
+  renderOptions(); updatePrice();   // l'ancien modèle reste affiché jusqu'à ce que le nouveau soit prêt (pas de flash)
   loadModel(glbIdFor(state.pose));
 }
 /* ===== Chargement rapide =====
@@ -11565,7 +11565,8 @@ function getDraco(){
 }
 function loadModel(glbId){
   glbId=glbId||'glb-auto'; window.__glbWanted=glbId;
-  document.getElementById('loader').style.display='grid'; window.__loaded=false;
+  window.__swap=!!root;   // changement de modèle : l'ancien reste visible, pas d'écran de chargement
+  if(!window.__swap) document.getElementById('loader').style.display='grid'; window.__loaded=false;
   __status('Chargement du modèle 3D…');
   let buf;
   const inl=document.getElementById(glbId);
@@ -11579,7 +11580,8 @@ function loadModel(glbId){
    loader.parse(buf.buffer,'',gltf=>{
     clearTimeout(watchdog);
     try{
-    root=gltf.scene; scene.add(root);
+    if(root && root!==gltf.scene) scene.remove(root);   // on remplace l'ancien modèle seulement maintenant
+    root=gltf.scene; scene.add(root); window.__swap=false;
     // Murale : le mur est modélisé côté +X (face à la caméra par défaut). On pivote de 180° pour l'envoyer au fond, vue par défaut sur la façade ouverte.
     root.rotation.y = (state.pose==='murale') ? Math.PI : 0;
     root.updateMatrixWorld(true);
@@ -11597,6 +11599,7 @@ function loadModel(glbId){
     applyVisibility(); frameModel(); renderAngles(); applyMode();
     document.getElementById('loader').style.display='none';
     window.__loaded=true;
+    if(typeof CFG_MODEL_IDS!=='undefined' && !window.__prefetchedAll){ window.__prefetchedAll=true; setTimeout(function(){ CFG_MODEL_IDS.forEach(function(id){ try{ fetchGlb(id); }catch(e){} }); }, 2500); }
     if(window.__posterEl){ var __pe=window.__posterEl; window.__posterEl=null; __pe.classList.add('hide'); stage.classList.remove('has-poster'); setTimeout(function(){ __pe.remove(); },600); }
     if(isHandheld()){ setTimeout(prepareAR,4000); if(/[#&]ar=1/.test(location.hash)){ setTimeout(function(){ try{launchAR();}catch(e){} }, 1100); } }
     }catch(e){ __status('Erreur après chargement :\n'+e.message,true); console.error(e); }
@@ -12120,7 +12123,7 @@ function cgTrack(ev, params, cb){
     var p={event:ev, cg_product:CG_PRODUCT};
     if(AB){ p.ab_test=AB.test; p.ab_variant=AB.label; }
     if(params) for(var k in params) p[k]=params[k];
-    if(cb){ p.eventCallback=fin; p.eventTimeout=900; setTimeout(fin,1000); }
+    if(cb){ p.eventCallback=fin; p.eventTimeout=300; setTimeout(fin,350); }   // on n'attend jamais plus de 0,35 s le suivi avant d'aller au panier
     window.dataLayer.push(p);
   }catch(e){ fin(); }
   try{ cgBeacon(ev, params||{}); }catch(e){}
