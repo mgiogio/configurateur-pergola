@@ -10431,7 +10431,7 @@ const SECTIONS = {
       ["Panneaux de 2 m","La clôture se compose de panneaux de 2 m, assemblés entre poteaux."],
       ["Longueur impaire","Vous payez la longueur réelle. Vous recevez des panneaux de 2 m et recoupez le dernier à la bonne longueur."],
       ["Recoupe","Les panneaux se recoupent proprement en longueur, liteau de maintien et traverse de recoupe fournis."],
-      ["Angles","Chaque angle demande un poteau d'angle en plus : indiquez le nombre total d'angles juste en dessous, les poteaux sont ajoutés à votre kit."] ] } },
+      ["Angles","La clôture s'adapte aux angles : si vous prenez les poteaux, indiquez le nombre d'angles à l'étape Poteaux, nous ajoutons un poteau par angle."] ] } },
   type:{ title:"Type de clôture.", q:"Ajourée ou occultante ?",
     arg:{ items:[
       {t:"Ajourée", img:"", b:"Les lames laissent passer l'air et la lumière, avec un espacement régulier. Le vent passe au travers : c'est le bon choix en zone très exposée."},
@@ -10521,6 +10521,7 @@ function CFG_INIT_STATE(){
 function hLabel(id){ var o=HAUTEURS.find(x=>x.id===id); return o?o.label:id; }
 function typeLabel(){ return state.type==='occultante'?'Occultante':'Ajourée'; }
 function facesLabel(){ return state.faces==='deux'?'Deux faces bois':'Une face bois'; }
+function cloAnglesMax(){ return Math.ceil(cloLongueur()/2); }   // au plus un angle par panneau de 2 m (recoupe possible)
 function cloAnglesLabel(){ var n=state.angles||0; return n+' angle'+(n>1?'s':''); }
 function poteauxLabel(){ return state.poteaux==='avec'?'Avec poteaux':'Sans poteau'; }
 function supportLabel(){ return {sans:'Sans support',pieux:'Pieux pour sol souple',platines:'Platines pour sol dur'}[state.support]||'Sans support'; }
@@ -10575,6 +10576,7 @@ function cloFlyTo(to, tt){
 /* Rafraichit options + 3D + prix (sans recharger le glb), puis zoom auto soigné sur l'option. */
 function cloRefresh(section){
   window.__cloPriced=true; window.__cloExK=0;
+  if((state.angles||0)>cloAnglesMax()) state.angles=cloAnglesMax();   // longueur réduite : on ajuste le nombre d'angles
   // type : on garde la vue en cours SI on est de face ; depuis une vue de détail (poteaux, fixations, arrière) on revient de face
   var backToHero=(section==='type' && window.__cloView && window.__cloView!=='hero');
   if(section!=='type' || backToHero){ window.__cloXray=false; window.__cloExtHideNeg=false; }
@@ -10640,13 +10642,6 @@ function CFG_RENDER(){
     var tc=document.createElement('div'); tc.className='reco-box';
     tc.innerHTML='Les panneaux sont recoupables en longueur comme en largeur. Si vous effectuez des découpes, pensez à appliquer un <a href="https://cover.green/produit-de-traitement-de-coupe-marron/" target="_blank" rel="noopener" style="color:var(--cg-green-dk);text-decoration:underline">produit de traitement de coupe</a> sur les zones coupées.';
     wrap.appendChild(tc);
-    // Angles : nombre total d'angles de la clôture ; chaque angle ajoute un poteau (et sa fixation) au kit
-    var an=document.createElement('div'); an.className='clo-angles';
-    var na=state.angles||0;
-    an.innerHTML='<span class="clo-angles-l">Nombre d\'angles<small>Un poteau d\'angle ajouté par angle</small></span>'
-      +'<span class="clo-step"><button type="button" data-d="-1" aria-label="Un angle de moins">−</button><b>'+na+'</b><button type="button" data-d="1" aria-label="Un angle de plus">+</button></span>';
-    an.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ var v=Math.max(0,Math.min(20,(state.angles||0)+parseInt(b.getAttribute('data-d'),10))); if(v===(state.angles||0)) return; state.angles=v; chosen.angles=true; cloRefresh('angles'); }; });
-    wrap.appendChild(an);
     return wrap;
   });
 
@@ -10660,7 +10655,11 @@ function CFG_RENDER(){
       }));
     });
     var w2=document.createElement('div'); w2.appendChild(c);
-    var hn=document.createElement('div'); hn.className='reco-box'; hn.innerHTML='<b>Zone ventée ?</b> L\'ajourée laisse passer le vent. En occultant au-delà de 1,80 m, prévoyez une fixation dans le béton.'; w2.appendChild(hn);
+    var hn=document.createElement('div'); hn.className='reco-box';
+    hn.innerHTML = (state.type==='occultante' && state.pose==='240') ? '<b>2,40 m en occultant</b> : la clôture prend beaucoup de vent. Prévoyez des platines chevillées dans le béton ou des poteaux scellés.'
+                 : (state.type==='occultante') ? '<b>Zone ventée ?</b> L\'occultante prend plus le vent que l\'ajourée : soignez la fixation de vos poteaux.'
+                 : '<b>Zone ventée ?</b> L\'ajourée laisse passer le vent : c\'est le bon choix en zone exposée.';
+    w2.appendChild(hn);
     return w2;
   });
 
@@ -10684,6 +10683,15 @@ function CFG_RENDER(){
       }));
     });
     var w2=document.createElement('div'); w2.appendChild(c);
+    if(state.poteaux==='avec'){
+      // Angles : nombre total d'angles de la clôture ; chaque angle ajoute un poteau (et sa fixation) au kit
+      var an=document.createElement('div'); an.className='clo-angles';
+      var na=state.angles||0;
+      an.innerHTML='<span class="clo-angles-l">Nombre d\'angles<small>Votre clôture fait un angle ? Indiquez combien : nous ajoutons 1 poteau par angle</small></span>'
+        +'<span class="clo-step"><button type="button" data-d="-1" aria-label="Un angle de moins">−</button><b>'+na+'</b><button type="button" data-d="1" aria-label="Un angle de plus">+</button></span>';
+      an.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ var v=Math.max(0,Math.min(cloAnglesMax(),(state.angles||0)+parseInt(b.getAttribute('data-d'),10))); if(v===(state.angles||0)) return; state.angles=v; chosen.angles=true; cloRefresh('angles'); }; });
+      w2.appendChild(an);
+    }
     if(state.poteaux==='sans'){
       var hn=document.createElement('div'); hn.className='reco-box'; hn.innerHTML='<b>Sans poteau</b> : panneaux fixés sur vos poteaux existants ou plaqués contre un mur solide (traverses au dos). Pas sur un grillage, trop fragile.'; w2.appendChild(hn);
     }
@@ -10699,7 +10707,8 @@ function CFG_RENDER(){
       var w2=document.createElement('div'); w2.appendChild(c);
       var hn=document.createElement('div'); hn.className='reco-box';
       hn.innerHTML= state.support==='platines' ? '<b>Sur un muret</b> : les platines conviennent si le muret est plat et large d\'au moins 15 cm. En zone ventée, chevillez-les dans du béton.'
-                  : state.support==='pieux' ? '<b>Sol meuble</b> : les pieux s\'enfoncent sans béton. En zone très ventée ou au-delà de 1,80 m en occultant, préférez des poteaux scellés.'
+                  : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les pieux ne suffisent pas face au vent. Préférez les platines chevillées dans le béton ou des poteaux scellés.'
+                  : state.support==='pieux' ? '<b>Sol meuble</b> : les pieux s\'enfoncent sans béton. En zone très ventée, préférez des poteaux scellés.'
                   : '<b>Sans support</b> : vous scellez vous-même les poteaux de 2,50 m ou les fixez sur un support existant.';
       w2.appendChild(hn);
       return w2;
@@ -10742,7 +10751,7 @@ function cloRecap(){
   if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
   rows.push(['Poteaux',poteauxLabel()]);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
-  if(state.angles) rows.push(['Angles',cloAnglesLabel()]);
+  if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
     +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
@@ -11145,7 +11154,7 @@ function CFG_CART_SUMMARY(){
   if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
   rows.push(['Poteaux',poteauxLabel()]);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
-  if(state.angles) rows.push(['Angles',cloAnglesLabel()]);
+  if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
   return rows;
 }
 
