@@ -10436,7 +10436,7 @@ const SECTIONS = {
     arg:{ items:[
       {t:"Ajourée", img:"", b:"Les lames laissent passer l'air et la lumière, avec un espacement régulier. Le vent passe au travers : c'est le bon choix en zone très exposée."},
       {t:"Occultante", img:"", b:"Une membrane occultante (Delta-Fassade, garantie 30 ans) est fixée au dos des lames : aucun vis-à-vis. Vous pouvez ajouter une 2e face bois pour habiller et protéger la membrane côté voisin."},
-      {t:"Et le vent ?", img:"", b:"L'occultante a plus de prise au vent que l'ajourée mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez les poteaux sur platines chevillées dans le béton ou scellez-les."} ] } },
+      {t:"Et le vent ?", img:"", b:"L'occultante a plus de prise au vent que l'ajourée mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez la clôture dans le béton : platines chevillées dans le béton, ou pieux enfoncés directement dans du béton frais."} ] } },
   faces:{ title:"Faces.", q:"Une ou deux faces bois ?",
     arg:{ items:[
       {t:"Une face bois", img:"", b:"Le bois habille la face que vous choisissez ; la structure reste visible de l'autre côté."},
@@ -10449,7 +10449,7 @@ const SECTIONS = {
     cta:"Comment choisir ma fixation ?",
     arg:{ items:[
       {t:"Sans support", img:"", b:"Vous posez sur un support existant (muret, longrine) ou scellez vous-même les poteaux."},
-      {t:"Pieux pour sol souple", img:"", b:"Des pieux à enfoncer dans la terre : parfait pour un sol meuble, sans béton."},
+      {t:"Pieux pour sol souple", img:"", b:"Des pieux à enfoncer dans la terre : parfait pour un sol meuble, sans béton. Pour plus de tenue (zone ventée, grande hauteur), ils peuvent être scellés en les enfonçant directement dans du béton."},
       {t:"Platines pour sol dur", img:"", b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } }
 };
 
@@ -10579,7 +10579,8 @@ function cloRefresh(section){
   if((state.angles||0)>cloAnglesMax()) state.angles=cloAnglesMax();   // longueur réduite : on ajuste le nombre d'angles
   // type : on garde la vue en cours SI on est de face ; depuis une vue de détail (poteaux, fixations, arrière) on revient de face
   var backToHero=(section==='type' && window.__cloView && window.__cloView!=='hero');
-  if(section!=='type' || backToHero){ window.__cloXray=false; window.__cloExtHideNeg=false; }
+  // angles : rien ne change en 3D, on garde exactement la vue en cours (vue des poteaux comprise)
+  if((section!=='type' && section!=='angles') || backToHero){ window.__cloXray=false; window.__cloExtHideNeg=false; }
   CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice();
   cloFaceChip();
   if(section==='angles') return;   // les angles ne changent pas la 3D : on ne bouge pas la vue
@@ -10589,8 +10590,8 @@ function cloRefresh(section){
 /* Changement de hauteur = rechargement du glb correspondant, sans reset du reste */
 function cloSetHeight(id){
   // choisir une hauteur ramène toujours la vue de départ (même si la hauteur est déjà sélectionnée)
-  if(state.pose===id){ window.__cloXray=false; if(typeof heroView==='function') heroView(false); return; }
-  state.pose = id; chosen.hauteur = true; window.__cloPriced=true;
+  if(state.pose===id){ window.__cloXray=false; window.__cloExtHideNeg=false; if(window.__cloExK){ window.__cloExK=0; cloApplyExplode(); cloFaceLabel(''); } cloSyncExt(); CFG_RENDER(); if(typeof heroView==='function') heroView(false); return; }
+  state.pose = id; chosen.hauteur = true; window.__cloPriced=true; window.__cloExK=0; cloFaceLabel('');
   window.__cloKeepView=null; window.__cloXray=false;   // vue de base après rechargement
   // l'ancien modèle reste affiché pendant le chargement de la nouvelle hauteur (le moteur le remplace une fois prêt)
   CFG_RENDER(); updatePrice();
@@ -10622,7 +10623,7 @@ function CFG_RENDER(){
     var wrap=document.createElement('div');
     var row=document.createElement('div'); row.className='clo-long';
     var sel=document.createElement('select'); sel.className='clo-select';
-    sel.style.cssText='width:100%;max-width:220px;padding:13px 14px;font:inherit;font-size:16px;font-weight:600;color:#1E211F;background:#fff;border:1.5px solid var(--cg-line,#e2e5dd);border-radius:12px;cursor:pointer;-webkit-appearance:menulist';
+    sel.style.cssText="width:100%;max-width:220px;padding:13px 44px 13px 14px;font:inherit;font-size:16px;font-weight:600;line-height:1.2;color:#1E211F;background-color:#fff;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23037d00' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 14px center;background-size:18px 18px;border:1.5px solid var(--cg-line,#e2e5dd);border-radius:12px;cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none";
     for(var m=LONG_MIN;m<=LONG_MAX;m++){
       var opt=document.createElement('option'); opt.value=m; opt.textContent=m+' m';
       if(parseInt(state.longueur,10)===m) opt.selected=true; sel.appendChild(opt);
@@ -10656,7 +10657,7 @@ function CFG_RENDER(){
     });
     var w2=document.createElement('div'); w2.appendChild(c);
     var hn=document.createElement('div'); hn.className='reco-box';
-    hn.innerHTML = (state.type==='occultante' && state.pose==='240') ? '<b>2,40 m en occultant</b> : la clôture prend beaucoup de vent. Prévoyez des platines chevillées dans le béton ou des poteaux scellés.'
+    hn.innerHTML = (state.type==='occultante' && state.pose==='240') ? '<b>2,40 m en occultant</b> : la clôture prend beaucoup de vent. Prévoyez une fixation dans le béton : platines chevillées, ou pieux enfoncés directement dans le béton.'
                  : (state.type==='occultante') ? '<b>Zone ventée ?</b> L\'occultante prend plus le vent que l\'ajourée : soignez la fixation de vos poteaux.'
                  : '<b>Zone ventée ?</b> L\'ajourée laisse passer le vent : c\'est le bon choix en zone exposée.';
     w2.appendChild(hn);
@@ -10707,8 +10708,8 @@ function CFG_RENDER(){
       var w2=document.createElement('div'); w2.appendChild(c);
       var hn=document.createElement('div'); hn.className='reco-box';
       hn.innerHTML= state.support==='platines' ? '<b>Sur un muret</b> : les platines conviennent si le muret est plat et large d\'au moins 15 cm. En zone ventée, chevillez-les dans du béton.'
-                  : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les pieux ne suffisent pas face au vent. Préférez les platines chevillées dans le béton ou des poteaux scellés.'
-                  : state.support==='pieux' ? '<b>Sol meuble</b> : les pieux s\'enfoncent sans béton. En zone très ventée, préférez des poteaux scellés.'
+                  : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les pieux simplement plantés dans la terre ne suffisent pas face au vent. Enfoncez-les directement dans du béton (scellement), ou choisissez les platines chevillées dans le béton.'
+                  : state.support==='pieux' ? '<b>Sol meuble</b> : les pieux s\'enfoncent sans béton. En zone très ventée, vous pouvez les sceller en les enfonçant directement dans du béton.'
                   : '<b>Sans support</b> : vous scellez vous-même les poteaux de 2,50 m ou les fixez sur un support existant.';
       w2.appendChild(hn);
       return w2;
@@ -11036,6 +11037,7 @@ function CFG_SCENE_READY(){
 var CFG_DIMS_COLOR = 0x9be37f;   // cotes vert clair : lisibles sur le fond vert foncé
 var CFG_DIMS_VIEW = { dir:[-0.12,0.22,1], zoom:1.32, tgtF:0.55 };   // vue de face d'ensemble
 function CFG_DIMS(G, box){
+  cloLeaveEndView(); window.__cloView='dims';
   var V=THREE.Vector3, gy=Math.max(0,box.min.y), top=box.max.y, x0=box.min.x, x1=box.max.x, zf=box.max.z+0.10;
   var hx=x0-0.28; G.add(dimLine(new V(hx,gy,zf), new V(hx,top,zf), new V(1,0,0)));
   var lh=dimLabel(hLabel(state.pose)); lh.position.set(hx-0.05,(gy+top)/2,zf); G.add(lh);
@@ -11057,6 +11059,8 @@ function CFG_DIMS(G, box){
   var f=document.getElementById('fromLine'); if(f) f.innerHTML='À partir de <b style="color:var(--cg-green)">'+mn.toFixed(2).replace('.',',')+'&nbsp;€/m</b> · douglas français';
 })();
 
+/* Quitter la vue « bout de clôture » (poteaux / fixations) : on rend la clôture prolongée et le sol normal */
+function cloLeaveEndView(){ if(window.__cloExtHideNeg || window.__cloXray){ window.__cloExtHideNeg=false; window.__cloXray=false; cloSyncExt(); } }
 /* ---- Vue d'assemblage : les panneaux de 60 cm s'écartent pour montrer l'empilement ---- */
 window.__cloExK=0;
 function cloApplyExplode(){
@@ -11071,7 +11075,7 @@ function cloApplyExplode(){
 }
 function cloExplodeToggle(){
   if(!root) return; var to=(window.__cloExK>0.5)?0:1, from=window.__cloExK, t=0, pph=PPH[GLB_HEIGHT[state.pose]]||3;
-  if(to===1){ window.__cloExtHideNeg=false; if(typeof heroView==='function') heroView(false);
+  if(to===1){ cloLeaveEndView(); if(typeof heroView==='function') heroView(false);
     cloFaceLabel(pph+' panneau'+(pph>1?'x':'')+' de 60 cm empilé'+(pph>1?'s':'')+' par travée de 2 m'); }
   else cloFaceLabel('');
   var btn=document.querySelector('.clo-kit-btn'); if(btn) btn.textContent= to? 'Revenir à la clôture montée' : 'Voir comment les panneaux s\'assemblent';
@@ -11089,6 +11093,7 @@ function cloFaceTurn(side){
   var box=visibleBox(), c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3()), gy=box.min.y;
   var tt=new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), R=Math.max(3.2, sz.y*1.9), dx=-0.30*R, base=0.10;
   var toBack=(side==='back'), from=camera.position.clone(), ft=controls.target.clone(), t=0;
+  cloLeaveEndView();
   window.__cloFace=side; window.__cloView=(side==='back')?'back':'hero'; cloFaceChip(); cloFaceLabel(toBack ? 'On passe derrière…' : 'On revient devant…');
   var phi0=toBack?base:Math.PI-base, phi1=toBack?Math.PI-base:base;
   function arc(ph){ return new THREE.Vector3(tt.x+dx, tt.y+R*Math.sin(ph)*0.85, tt.z+R*Math.cos(ph)); }
