@@ -10138,6 +10138,18 @@ var qrcode = function() {
 .ab-recette{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px auto 0;width:fit-content;background:#fff7ef;border:1px dashed var(--cg-orange);border-radius:999px;padding:5px 6px 5px 14px;font:600 12.5px Roboto,Arial,sans-serif;color:#7a3a00}
 .ab-recette button{border:1px solid #f0c9a8;background:#fff;color:#1E211F;font:600 12.5px Roboto,Arial,sans-serif;padding:6px 12px;border-radius:999px;cursor:pointer}
 .ab-recette button.on{background:var(--cg-orange);border-color:var(--cg-orange);color:#fff}
+
+/* Témoignages en carrousel (plus de 4) : 4 visibles + le 5e coupé, flèches */
+.cgp-root .stories-wrap{position:relative;margin:0 0 24px}
+.cgp-root .stories.is-carousel{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0;padding:2px 0}
+.cgp-root .stories.is-carousel::-webkit-scrollbar{display:none}
+.cgp-root .stories.is-carousel .story{flex:0 0 calc((100% - 64px)/4.4);width:auto;scroll-snap-align:start}
+.cgp-root .stories.is-carousel .story-bubble{width:100%;max-width:68px;height:auto;aspect-ratio:1}
+.cgp-root .st-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:#fff;color:var(--cg-ink);box-shadow:0 2px 10px rgba(0,0,0,.18);display:grid;place-items:center;cursor:pointer;padding:0;transition:opacity .2s}
+.cgp-root .st-arrow svg{width:17px;height:17px}
+.cgp-root .st-arrow.next{right:-4px}.cgp-root .st-arrow.prev{left:-4px}
+.cgp-root .stories-wrap.at-end .st-arrow.next,.cgp-root .stories-wrap.at-start .st-arrow.prev{opacity:0;pointer-events:none}
+.cgp-root .st-arrow:hover{background:#fff;color:var(--cg-green)}
 </style>
 </head>
 <body>
@@ -12320,21 +12332,32 @@ const CARD_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 function buildStories(){
   const el=document.getElementById('stories'); if(!el) return;
   el.innerHTML=STORIES.map((s,i)=>{
-    const gif = cfGif(s.video);
+    const gif = s.gif || cfGif(s.video);     // s.gif : mini-animation légère (webp ~20 Ko) fournie par le produit
     const media = gif
       ? `<img class="story-gif" src="${gif}" alt="" loading="lazy" decoding="async"${s.poster?` onerror="this.onerror=null;this.src='${s.poster}'"`:''}>`
       : (s.poster?`<img src="${s.poster}" alt="" loading="lazy" decoding="async">`:`<span class="story-ph"></span>`);
-    return `<button type="button" class="story" data-i="${i}">`
+    return `<button type="button" class="story" data-i="${i}" aria-label="Voir le témoignage ${i+1}">`
       +`<span class="story-bubble">${media}<span class="story-play"><i>${PLAY_SVG}</i></span></span>`
       +(s.label?`<span class="story-label">${s.label}</span>`:'')+`</button>`;
   }).join('');
   el.querySelectorAll('.story').forEach(b=>b.onclick=()=>openVid(+b.dataset.i));
+  // Plus de 4 témoignages : carrousel (4 visibles + le 5e coupé) avec flèches
+  if(STORIES.length>4 && !el.parentNode.classList.contains('stories-wrap')){
+    const w=document.createElement('div'); w.className='stories-wrap';
+    el.parentNode.insertBefore(w,el); w.appendChild(el); el.classList.add('is-carousel');
+    const mk=(dir)=>{ const b=document.createElement('button'); b.type='button'; b.className='st-arrow '+dir; b.setAttribute('aria-label',dir==='next'?'Témoignages suivants':'Témoignages précédents');
+      b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="'+(dir==='next'?'M9 5l7 7-7 7':'M15 5l-7 7 7 7')+'"/></svg>';
+      b.onclick=()=>{ el.scrollBy({left:(dir==='next'?1:-1)*el.clientWidth*0.8, behavior:'smooth'}); if(typeof cgInteract==='function') cgInteract('stories'); }; w.appendChild(b); return b; };
+    const nx=mk('next'), pv=mk('prev');
+    const upd=()=>{ const max=el.scrollWidth-el.clientWidth-4; w.classList.toggle('at-start',el.scrollLeft<=4); w.classList.toggle('at-end',el.scrollLeft>=max); };
+    el.addEventListener('scroll',upd,{passive:true}); window.addEventListener('resize',upd); upd();
+  }
 }
 function openVid(i){
   const s=STORIES[i]||{}, fr=document.getElementById('vidFrame');
   const url=s.video||s.preview;
   if(url){
-    if(/youtube|youtu\.be|vimeo/.test(url)) fr.innerHTML=`<iframe src="${url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+    if(/youtube|youtu\.be|vimeo|cloudflarestream\.com\/[^\/]+\/iframe/.test(url)) fr.innerHTML=`<iframe src="${url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
     else fr.innerHTML=`<video src="${url}" ${s.poster?`poster="${s.poster}"`:''} controls autoplay playsinline></video>`;
   } else fr.innerHTML=`<div class="vid-ph">Emplacement vidéo<br><small>Ajoute l'URL dans STORIES.</small></div>`;
   document.getElementById('vidModal').classList.add('show');

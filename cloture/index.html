@@ -10138,6 +10138,18 @@ var qrcode = function() {
 .ab-recette{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px auto 0;width:fit-content;background:#fff7ef;border:1px dashed var(--cg-orange);border-radius:999px;padding:5px 6px 5px 14px;font:600 12.5px Roboto,Arial,sans-serif;color:#7a3a00}
 .ab-recette button{border:1px solid #f0c9a8;background:#fff;color:#1E211F;font:600 12.5px Roboto,Arial,sans-serif;padding:6px 12px;border-radius:999px;cursor:pointer}
 .ab-recette button.on{background:var(--cg-orange);border-color:var(--cg-orange);color:#fff}
+
+/* Témoignages en carrousel (plus de 4) : 4 visibles + le 5e coupé, flèches */
+.cgp-root .stories-wrap{position:relative;margin:0 0 24px}
+.cgp-root .stories.is-carousel{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0;padding:2px 0}
+.cgp-root .stories.is-carousel::-webkit-scrollbar{display:none}
+.cgp-root .stories.is-carousel .story{flex:0 0 calc((100% - 64px)/4.4);width:auto;scroll-snap-align:start}
+.cgp-root .stories.is-carousel .story-bubble{width:100%;max-width:68px;height:auto;aspect-ratio:1}
+.cgp-root .st-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:#fff;color:var(--cg-ink);box-shadow:0 2px 10px rgba(0,0,0,.18);display:grid;place-items:center;cursor:pointer;padding:0;transition:opacity .2s}
+.cgp-root .st-arrow svg{width:17px;height:17px}
+.cgp-root .st-arrow.next{right:-4px}.cgp-root .st-arrow.prev{left:-4px}
+.cgp-root .stories-wrap.at-end .st-arrow.next,.cgp-root .stories-wrap.at-start .st-arrow.prev{opacity:0;pointer-events:none}
+.cgp-root .st-arrow:hover{background:#fff;color:var(--cg-green)}
 </style>
 </head>
 <body>
@@ -11383,15 +11395,28 @@ function manifestFor(pose){ return CLO_MANIFEST; }
 
 /* Le moteur reference ces globals au boot : on les neutralise pour la cloture */
 const FAMILY_ORDER = [];
-// Témoignages clients (vidéos de marque Cover Green, mêmes que pergola/catégorie)
+// Témoignages clients CLÔTURE (8 vidéos clients). Miniature animée très légère (webp ~20 Ko, hébergée
+// sur GitHub Pages, chargée en différé) ; la vidéo Cloudflare Stream ne se charge qu'au clic.
+// Pour activer une vidéo : coller son identifiant Cloudflare Stream dans CLO_VIDEOS.
 const CFV = 'https://customer-vnge7i59cxj9ym3o.cloudflarestream.com/';
-const MINI = 'https://cover.green/wp-content/uploads/2026/04/miniature_video-';
-const STORIES = [
-  {label:'', poster:MINI+'01.webp', video:CFV+'9e32daf6ed46ca720cd80564ffa08753/downloads/default.mp4'},
-  {label:'', poster:MINI+'02.webp', video:CFV+'96331c1a6ee58c8bf3755eada6c2cdc5/downloads/default.mp4'},
-  {label:'', poster:MINI+'03.webp', video:CFV+'47a645c8567203918678a3e61e0d1b2c/downloads/default.mp4'},
-  {label:'', poster:MINI+'04.webp', video:CFV+'bea4d6424c1d1cdd007e333c0d20880e/downloads/default.mp4'}
+const CLO_STORY_DIR = 'https://mgiogio.github.io/configurateur-pergola/cloture/stories/';
+const CLO_VIDEOS = [   // [miniature, identifiant Cloudflare Stream]
+  ['delafuente','cf8458befb2abc78195b485aa6b7e707'], ['lebigre','e90ad1c524ab1886c9954e387fa61e72'], ['gerbier','9b821de8ede2027967c9ac7681121bcf'], ['tordoir','b48b3cdbc845a1d41a38b3ea26a25829'],
+  ['marchand','52f9190d713a9aac9a9eb083d1d8046f'], ['terrien','1790b779a35d815d34f6017a943288c3'], ['debrugrave','ff77fbb4c8123cd7c8e0eb9f9099774c'], ['piffeteau','701eb8d9b9975e67296768f8cce290d0']
 ];
+const MINI = 'https://cover.green/wp-content/uploads/2026/04/miniature_video-';
+const STORIES = (function(){
+  var own = CLO_VIDEOS.filter(function(v){ return v[1]; }).map(function(v){
+    return {label:'', gif:CLO_STORY_DIR+v[0]+'.webp', video:CFV+v[1]+'/iframe?autoplay=true&letterboxColor=transparent'}; });
+  if(own.length) return own;
+  // en attendant les identifiants Cloudflare : vidéos de marque (mêmes que pergola)
+  return [
+    {label:'', poster:MINI+'01.webp', video:CFV+'9e32daf6ed46ca720cd80564ffa08753/downloads/default.mp4'},
+    {label:'', poster:MINI+'02.webp', video:CFV+'96331c1a6ee58c8bf3755eada6c2cdc5/downloads/default.mp4'},
+    {label:'', poster:MINI+'03.webp', video:CFV+'47a645c8567203918678a3e61e0d1b2c/downloads/default.mp4'},
+    {label:'', poster:MINI+'04.webp', video:CFV+'bea4d6424c1d1cdd007e333c0d20880e/downloads/default.mp4'}
+  ];
+})();
 function cfGif(){ return ''; }
 const CFG_NOUN = (window.CGP_CTX && CGP_CTX.noun) ? String(CGP_CTX.noun) : 'clôture';
 
@@ -11889,7 +11914,13 @@ var CFG_SUN_INT = 1.25;
 
 /* ---- Studio : toile de fond sombre + sol d'ombre derrière la clôture, éclairage de studio (softboxes) ----
    La toile et l'ombre se placent toujours du côté opposé à la caméra (vue verso possible). */
-var CLO_STUDIO = { flatZ:0.9, dark:[0.020,0.023,0.019] };   // couleur en linéaire (≈ #2a2e29 à l'écran)
+var CLO_STUDIO = { flatZ:0.9, dark:[0.0152,0.0331,0.0144] };   // vert foncé, en linéaire (≈ #213320 à l'écran)
+/* Vue plongeante (de dessus) : la toile et son ombre n'ont plus d'utilité -> elles s'effacent en douceur */
+function cloStudioFade(){
+  var t=(typeof controls!=='undefined'&&controls)?controls.target:new THREE.Vector3(), d=camera.position.clone().sub(t);
+  var pitch=Math.atan2(d.y, Math.hypot(d.x,d.z))*180/Math.PI;     // 0° = à hauteur d'homme, 90° = vue de dessus
+  return 1-THREE.MathUtils.smoothstep(pitch, 22, 42);
+}
 function cloAlphaCanvas(draw){ var c=document.createElement('canvas'); c.width=256; c.height=256; var x=c.getContext('2d'); x.fillStyle='#000'; x.fillRect(0,0,256,256); draw(x); return new THREE.CanvasTexture(c); }
 function cloStudioEnv(){
   var ec=document.createElement('canvas'); ec.width=512; ec.height=256; var ex=ec.getContext('2d');
@@ -11936,13 +11967,13 @@ function CFG_SCENE_READY(){
     flat.onBeforeRender=function(){
       flat.__n=(flat.__n||0)+1; if(flat.__r!==root || flat.__n%30===0){ flat.__r=root; flat.__top=(root?visibleBox().max.y:1.8); }
       var top=flat.__top||1.8; if(flat.__h!==top){ flat.__h=top; flat.scale.set(30, top, 1); flat.position.y=top/2-0.03; }
-      var back=camera.position.z<0; flat.position.z=back?D.flatZ:-D.flatZ; flat.material.opacity=window.__cloXray?0.3:1; };
+      var back=camera.position.z<0; flat.position.z=back?D.flatZ:-D.flatZ; var f=cloStudioFade(); flat.material.opacity=(window.__cloXray?0.3:1)*f; };
     scene.add(flat); window.__cloFlat=flat;
     // sol d'ombre entre la clôture et la toile
     var shA=cloAlphaCanvas(function(x){ var v=x.createLinearGradient(0,0,0,256); v.addColorStop(0,'#000'); v.addColorStop(1,'#fff'); x.fillStyle=v; x.fillRect(0,0,256,256); });
     var sf=new THREE.Mesh(new THREE.PlaneGeometry(30, D.flatZ), new THREE.MeshBasicMaterial({color:dark, alphaMap:shA, transparent:true, opacity:0.85, depthWrite:false, toneMapped:false}));
     sf.rotation.x=-Math.PI/2; sf.position.set(0,-0.025,-D.flatZ/2); sf.renderOrder=-2; sf.name='StudioOmbre';
-    sf.onBeforeRender=function(){ var back=camera.position.z<0; sf.position.z=(back?1:-1)*D.flatZ/2; sf.rotation.z=back?Math.PI:0; sf.material.opacity=window.__cloXray?0.25:0.85; };
+    sf.onBeforeRender=function(){ var back=camera.position.z<0; sf.position.z=(back?1:-1)*D.flatZ/2; sf.rotation.z=back?Math.PI:0; var f=cloStudioFade(); sf.material.opacity=(window.__cloXray?0.25:0.6)*f; };
     scene.add(sf); window.__cloShadeFloor=sf;
   }catch(e){ console.warn('studio cloture:',e); }
 }
@@ -12261,21 +12292,32 @@ const CARD_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 function buildStories(){
   const el=document.getElementById('stories'); if(!el) return;
   el.innerHTML=STORIES.map((s,i)=>{
-    const gif = cfGif(s.video);
+    const gif = s.gif || cfGif(s.video);     // s.gif : mini-animation légère (webp ~20 Ko) fournie par le produit
     const media = gif
       ? `<img class="story-gif" src="${gif}" alt="" loading="lazy" decoding="async"${s.poster?` onerror="this.onerror=null;this.src='${s.poster}'"`:''}>`
       : (s.poster?`<img src="${s.poster}" alt="" loading="lazy" decoding="async">`:`<span class="story-ph"></span>`);
-    return `<button type="button" class="story" data-i="${i}">`
+    return `<button type="button" class="story" data-i="${i}" aria-label="Voir le témoignage ${i+1}">`
       +`<span class="story-bubble">${media}<span class="story-play"><i>${PLAY_SVG}</i></span></span>`
       +(s.label?`<span class="story-label">${s.label}</span>`:'')+`</button>`;
   }).join('');
   el.querySelectorAll('.story').forEach(b=>b.onclick=()=>openVid(+b.dataset.i));
+  // Plus de 4 témoignages : carrousel (4 visibles + le 5e coupé) avec flèches
+  if(STORIES.length>4 && !el.parentNode.classList.contains('stories-wrap')){
+    const w=document.createElement('div'); w.className='stories-wrap';
+    el.parentNode.insertBefore(w,el); w.appendChild(el); el.classList.add('is-carousel');
+    const mk=(dir)=>{ const b=document.createElement('button'); b.type='button'; b.className='st-arrow '+dir; b.setAttribute('aria-label',dir==='next'?'Témoignages suivants':'Témoignages précédents');
+      b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="'+(dir==='next'?'M9 5l7 7-7 7':'M15 5l-7 7 7 7')+'"/></svg>';
+      b.onclick=()=>{ el.scrollBy({left:(dir==='next'?1:-1)*el.clientWidth*0.8, behavior:'smooth'}); if(typeof cgInteract==='function') cgInteract('stories'); }; w.appendChild(b); return b; };
+    const nx=mk('next'), pv=mk('prev');
+    const upd=()=>{ const max=el.scrollWidth-el.clientWidth-4; w.classList.toggle('at-start',el.scrollLeft<=4); w.classList.toggle('at-end',el.scrollLeft>=max); };
+    el.addEventListener('scroll',upd,{passive:true}); window.addEventListener('resize',upd); upd();
+  }
 }
 function openVid(i){
   const s=STORIES[i]||{}, fr=document.getElementById('vidFrame');
   const url=s.video||s.preview;
   if(url){
-    if(/youtube|youtu\.be|vimeo/.test(url)) fr.innerHTML=`<iframe src="${url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+    if(/youtube|youtu\.be|vimeo|cloudflarestream\.com\/[^\/]+\/iframe/.test(url)) fr.innerHTML=`<iframe src="${url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
     else fr.innerHTML=`<video src="${url}" ${s.poster?`poster="${s.poster}"`:''} controls autoplay playsinline></video>`;
   } else fr.innerHTML=`<div class="vid-ph">Emplacement vidéo<br><small>Ajoute l'URL dans STORIES.</small></div>`;
   document.getElementById('vidModal').classList.add('show');
