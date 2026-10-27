@@ -10202,6 +10202,17 @@ var qrcode = function() {
 .cgp-root .clo-kit ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--cg-ink-soft);line-height:1.6}
 .cgp-root .clo-kit-btn{margin-top:10px;border:1.5px solid var(--cg-green);background:#fff;color:var(--cg-green-dk);font:600 13.5px Roboto,Arial,sans-serif;padding:9px 14px;border-radius:999px;cursor:pointer}
 .cgp-root .clo-kit-btn:hover,.cgp-root .clo-kit-btn:focus{background:var(--cg-green-soft)!important;color:var(--cg-green-dk)!important;border-color:var(--cg-green)!important}
+
+.cgp-root .clo-kit-p{font-size:13.5px;color:var(--cg-ink-soft);margin:0 0 6px;line-height:1.5}
+.cgp-root .clo-angles{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 4px;padding:10px 14px;border:1.5px solid var(--cg-line,#e2e5dd);border-radius:12px;background:#fff}
+.cgp-root .clo-angles-l{font-size:14px;font-weight:600;color:var(--cg-ink);display:flex;flex-direction:column}
+.cgp-root .clo-angles-l small{font-size:12px;font-weight:400;color:var(--cg-ink-soft)}
+.cgp-root .clo-step{display:flex;align-items:center;gap:10px}
+.cgp-root .clo-step b{min-width:22px;text-align:center;font-size:17px}
+.cgp-root .clo-step button{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--cg-green);background:#fff;color:var(--cg-green-dk);font-size:20px;line-height:1;cursor:pointer;padding:0}
+.cgp-root .clo-step button:hover,.cgp-root .clo-step button:focus{background:var(--cg-green-soft)!important;color:var(--cg-green-dk)!important;border-color:var(--cg-green)!important}
+.cgp-root .q-callout{margin-top:10px;display:flex;align-items:center;gap:10px;background:var(--cg-green-soft);color:var(--cg-green-dk);border-radius:12px;padding:10px 14px;font-size:13.5px;line-height:1.45}
+.cgp-root .q-callout svg{width:22px;height:22px;flex:none}
 </style>
 </head>
 <body>
@@ -11010,6 +11021,8 @@ const QUALITY = {
   head:"Une qualité qui traverse les années.",
   sub:"Des matériaux choisis pour l'extérieur, sans compromis.",
   tags:["Bois lamellé-collé classe 4","Acier galvanisé thermolaqué","Visserie inox A2","Notice interactive 3D"],
+  // mis en avant sous les pastilles (retour Manuel : pas de lien, mais montrer la notice interactive)
+  callout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6 20 7v10l-8 4.4L4 17V7z"/><path d="M12 12 20 7M12 12v9.4M12 12 4 7"/></svg><span><b>Montage guidé</b> : votre pergola est livrée avec une notice interactive en 3D qui vous accompagne pièce par pièce.</span>',
   text:"Nos pergolas sont en <b>bois lamellé-collé classe 4</b>, assemblées par des connecteurs haute qualité en <b>acier galvanisé thermolaqué</b>, avec toute la <b>visserie en inox A2</b>.",
   items:[
     {t:"Bois lamellé-collé classe 4", img:"", b:"Des lamelles de bois collées dont les tensions internes se neutralisent : le bois ne vrille pas, ne se fend pas et ne se déforme pas avec le temps, là où le massif finit par travailler. La classe 4 le destine à un usage extérieur exposé, y compris à l'humidité."},
@@ -11226,7 +11239,7 @@ function openArg(id){ const s=SECTIONS[id]||{}, a=s.arg; if(!a) return;
 function buildQuality(){
   const w=document.createElement('div'); w.className='quality';
   w.innerHTML=`<div class="q-tags">${QUALITY.tags.map((t,i)=>
-    `<button type="button" class="q-chip" data-i="${i}"><span>${t}</span><span class="q-loupe" aria-label="En savoir plus">🔍</span></button>`).join('')}</div>`;
+    `<button type="button" class="q-chip" data-i="${i}"><span>${t}</span><span class="q-loupe" aria-label="En savoir plus">🔍</span></button>`).join('')}</div>`+(QUALITY.callout?`<div class="q-callout">${QUALITY.callout}</div>`:'');
   w.querySelectorAll('.q-chip').forEach(b=>b.onclick=()=>openQuality(+b.dataset.i));
   return w;
 }
