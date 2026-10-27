@@ -10150,6 +10150,17 @@ var qrcode = function() {
 .cgp-root .st-arrow.next{right:-4px}.cgp-root .st-arrow.prev{left:-4px}
 .cgp-root .stories-wrap.at-end .st-arrow.next,.cgp-root .stories-wrap.at-start .st-arrow.prev{opacity:0;pointer-events:none}
 .cgp-root .st-arrow:hover{background:#fff;color:var(--cg-green)}
+
+/* Fenêtres au-dessus de tout (en-tête du thème compris) */
+.cgp-portal .vid-modal,.cgp-portal .qr-modal{z-index:2147482000}
+.cgp-portal .toast{z-index:2147482001}
+
+/* Variante A : image carrée MKL élargie au format du cadre (fond = même image floutée, bords fondus) */
+.alt-vis .alt-bg{position:absolute;inset:-30px;overflow:hidden;filter:blur(22px) saturate(1.05) brightness(.92)}
+.alt-vis .alt-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.alt-vis .alt-img{z-index:1}
+.alt-vis .alt-sq{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%)}
+.cgp-root .alt-vis{overflow:hidden;border-radius:inherit}
 </style>
 </head>
 <body>
@@ -11373,7 +11384,7 @@ const POT_CALC = { 'sans':0, 'avec':32.95 };
 const GLB_HEIGHT = { '060':'120', '120':'120', '180':'180', '240':'240' };
 
 const HAUTEURS = [
-  { id:'060', label:'0,60 m', sub:'1 panneau',   m:0.60 },
+  // 0,60 m retiré de la v1 (2026-10-27) : on reste iso avec les 3 hauteurs du configurateur MKL pour le test A/B
   { id:'120', label:'1,20 m', sub:'2 panneaux',  m:1.20 },
   { id:'180', label:'1,80 m', sub:'3 panneaux',  m:1.80 },
   { id:'240', label:'2,40 m', sub:'4 panneaux',  m:2.40 }
@@ -11509,12 +11520,12 @@ function CFG_INIT_STATE(){
     if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su;
     try{ ['hauteur','longueur','type','faces','poteaux','support'].forEach(function(k){ chosen[k]=true; }); }catch(e){}
   }
-  if(!PPH[state.pose]) state.pose = '180';
+  if(!PPH[state.pose] || state.pose==='060') state.pose = '180';
   if(state.longueur==null) state.longueur = 2;
   if(state.type==null)     state.type = 'ajouree';
   if(state.faces==null)    state.faces = 'une';
   if(state.poteaux==null)  state.poteaux = 'sans';   // le projet démarre sans poteau
-  if(state.support==null)  state.support = 'platines';
+  if(state.support==null)  state.support = 'sans';      // comme MKL : pas de fixation présélectionnée quand on ajoute les poteaux
 }
 
 /* Libelle clair d'une valeur */
@@ -11843,19 +11854,28 @@ function cloSyncExt(){
     root.children.forEach(function(ch){
       if(/^Sc[eè]ne|Label/i.test(ch.name)) return;
       [-CLO_EXT, CLO_EXT].forEach(function(dx){
-        var cl=ch.clone(true); cl.matrixAutoUpdate=false; E.g.add(cl); E.pairs.push({a:ch, b:cl, dx:dx});
+        var cl=ch.clone(true); cl.matrixAutoUpdate=false; E.g.add(cl);
+        // poteaux / pieds / pieux : la copie démarre sur le poteau de jonction déjà présent -> on coupe ses fixations
+        // de bout (sinon platines / pieux en double à la jonction)
+        var clip=/poteau|pieds|pieux/i.test(ch.name) ? new THREE.Plane(new THREE.Vector3(dx>0?1:-1,0,0), 0) : null;
+        E.pairs.push({a:ch, b:cl, dx:dx, clip:clip});
       });
     });
     scene.add(E.g);
+    if(typeof renderer!=='undefined' && renderer) renderer.localClippingEnabled=true;
   }
   root.updateMatrixWorld(true);
   var o0=root.localToWorld(new THREE.Vector3(0,0,0));
   E.pairs.forEach(function(p){
     var off=root.localToWorld(new THREE.Vector3(p.dx,0,0)).sub(o0);
+    if(p.clip){ var jx=root.localToWorld(new THREE.Vector3((p.dx>0?1:-1)*3.14,0,0)).x; p.clip.constant=(p.dx>0)?-jx:jx; }
     (function sync(a,b,top){
       b.visible=a.visible;
       if(!top){ b.position.copy(a.position); b.quaternion.copy(a.quaternion); b.scale.copy(a.scale); }
-      if(a.material) b.material=a.material;
+      if(a.material){
+        if(p.clip){ if(b.__src!==a.material){ b.__src=a.material; b.__mc=a.material.clone(); b.__mc.clippingPlanes=[p.clip]; } b.material=b.__mc; }
+        else b.material=a.material;
+      }
       var nm=String(b.name).replace(/\s+/g,'_');
       if((p.dx>0 && nm==='Poteau_1_Sol') || (p.dx<0 && nm==='Poteau_4_Sol')) b.visible=false;   // poteau de jonction déjà présent
       for(var i=0;i<a.children.length && i<b.children.length;i++) sync(a.children[i], b.children[i], false);
@@ -11900,11 +11920,12 @@ function CFG_HERO_ADJUST(to, tt, box, cam){
   tt.set(tt.x+s*best.m, tt.y+best.dty, tt.z); to.copy(tt).addScaledVector(off, best.k);
 }
 
-/* Rendu STUDIO (choix Manuel 2026-10-27) : pas de faux décor, fond clair neutre, lumière de studio douce.
-   Pour ne pas « voir à travers » : une toile de fond sombre juste derrière la clôture (comme en studio photo),
-   les ajours se lisent alors en fines lignes sombres, comme sur les photos clients. */
-var CFG_BG_TOP = '#e4e6e2';
-var CFG_BG_BOTTOM = '#f4f5f1';
+/* Rendu STUDIO vert sapin (2026-10-27) : fond de studio sans décor, vert foncé de la marque.
+   Pourquoi : derrière une clôture ajourée on voit le fond ; un fond foncé rend les ajours sombres et la clôture
+   paraît pleine (comme dans un jardin à l'ombre), le douglas ressort, et ça marche sous tous les angles
+   (y compris de dessus) sans toile ni artifice. */
+var CFG_BG_TOP = '#18261c';
+var CFG_BG_BOTTOM = '#33493a';
 var CFG_EXPOSURE = 0.9;
 var CFG_HEMI_SKY = 0xf4f4f2;
 var CFG_HEMI_GROUND = 0x9c9a94;
@@ -11914,14 +11935,7 @@ var CFG_SUN_INT = 1.25;
 
 /* ---- Studio : toile de fond sombre + sol d'ombre derrière la clôture, éclairage de studio (softboxes) ----
    La toile et l'ombre se placent toujours du côté opposé à la caméra (vue verso possible). */
-var CLO_STUDIO = { flatZ:0.9, dark:[0.0152,0.0331,0.0144] };   // vert foncé, en linéaire (≈ #213320 à l'écran)
-/* Vue plongeante (de dessus) : la toile et son ombre n'ont plus d'utilité -> elles s'effacent en douceur */
-function cloStudioFade(){
-  var t=(typeof controls!=='undefined'&&controls)?controls.target:new THREE.Vector3(), d=camera.position.clone().sub(t);
-  var pitch=Math.atan2(d.y, Math.hypot(d.x,d.z))*180/Math.PI;     // 0° = à hauteur d'homme, 90° = vue de dessus
-  return 1-THREE.MathUtils.smoothstep(pitch, 22, 42);
-}
-function cloAlphaCanvas(draw){ var c=document.createElement('canvas'); c.width=256; c.height=256; var x=c.getContext('2d'); x.fillStyle='#000'; x.fillRect(0,0,256,256); draw(x); return new THREE.CanvasTexture(c); }
+/* Éclairage d'environnement de studio (softboxes) : reflets doux sur le bois */
 function cloStudioEnv(){
   var ec=document.createElement('canvas'); ec.width=512; ec.height=256; var ex=ec.getContext('2d');
   var g=ex.createLinearGradient(0,0,0,256); g.addColorStop(0,'#c9ccc8'); g.addColorStop(0.5,'#b4b7b2'); g.addColorStop(1,'#8d8f8a'); ex.fillStyle=g; ex.fillRect(0,0,512,256);
@@ -11933,7 +11947,6 @@ function cloStudioEnv(){
 }
 function CFG_SCENE_READY(){
   try{
-    var D=CLO_STUDIO;
     cloStudioEnv();
     window.__cloXray=false;   // sol en « coupe » quand on montre les pieux
     // ombres nettes : carte d'ombre resserrée sur la clôture
@@ -11943,8 +11956,8 @@ function CFG_SCENE_READY(){
       n.shadow.bias=-0.0004; n.shadow.normalBias=0.012; n.shadow.radius=2; });
     // sol "papier millimétré" vert (rappel de la grille pergola), fondu sur les bords
     var gs=512, gc=document.createElement('canvas'); gc.width=gs; gc.height=gs; var gx=gc.getContext('2d');
-    gx.fillStyle='#eef5e8'; gx.fillRect(0,0,gs,gs);
-    for(var i=0;i<=10;i++){ var p=Math.round(i*gs/10)+0.5; gx.strokeStyle=(i%10===0)?'rgba(4,158,0,0.42)':(i%5===0?'rgba(4,158,0,0.22)':'rgba(4,158,0,0.12)'); gx.lineWidth=(i%10===0)?3:1.4;
+    gx.fillStyle='#30463a'; gx.fillRect(0,0,gs,gs);   // sol vert foncé, trame millimétrée verte discrète
+    for(var i=0;i<=10;i++){ var p=Math.round(i*gs/10)+0.5; gx.strokeStyle=(i%10===0)?'rgba(150,215,120,0.32)':(i%5===0?'rgba(150,215,120,0.16)':'rgba(150,215,120,0.08)'); gx.lineWidth=(i%10===0)?3:1.4;
       gx.beginPath(); gx.moveTo(p,0); gx.lineTo(p,gs); gx.stroke(); gx.beginPath(); gx.moveTo(0,p); gx.lineTo(gs,p); gx.stroke(); }
     var gt=new THREE.CanvasTexture(gc); gt.encoding=THREE.sRGBEncoding; gt.wrapS=gt.wrapT=THREE.RepeatWrapping; gt.repeat.set(30,30);
     gt.anisotropy=(renderer.capabilities&&renderer.capabilities.getMaxAnisotropy())||1;
@@ -11957,24 +11970,6 @@ function CFG_SCENE_READY(){
     grid.rotation.x=-Math.PI/2; grid.position.set(0,-0.032,0); grid.renderOrder=-3; grid.name='DecorSolMillimetre';
     grid.onBeforeRender=function(){ grid.material.opacity=window.__cloXray?0.3:1; };
     scene.add(grid); window.__cloGrid=grid;
-    var dark=new THREE.Color().setRGB(D.dark[0],D.dark[1],D.dark[2]);
-    // toile de fond sombre (hauteur = clôture ; haut et côtés fondus) : coupe la vue à travers les ajours
-    var flatA=cloAlphaCanvas(function(x){
-      var v=x.createLinearGradient(0,0,0,256); v.addColorStop(0,'#000'); v.addColorStop(0.18,'#fff'); v.addColorStop(1,'#fff'); x.fillStyle=v; x.fillRect(0,0,256,256);
-      var h=x.createLinearGradient(0,0,256,0); h.addColorStop(0,'rgba(0,0,0,1)'); h.addColorStop(0.08,'rgba(0,0,0,0)'); h.addColorStop(0.92,'rgba(0,0,0,0)'); h.addColorStop(1,'rgba(0,0,0,1)'); x.fillStyle=h; x.fillRect(0,0,256,256); });
-    var flat=new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({color:dark, alphaMap:flatA, transparent:true, depthWrite:false, toneMapped:false}));
-    flat.renderOrder=-1; flat.name='StudioToile';
-    flat.onBeforeRender=function(){
-      flat.__n=(flat.__n||0)+1; if(flat.__r!==root || flat.__n%30===0){ flat.__r=root; flat.__top=(root?visibleBox().max.y:1.8); }
-      var top=flat.__top||1.8; if(flat.__h!==top){ flat.__h=top; flat.scale.set(30, top, 1); flat.position.y=top/2-0.03; }
-      var back=camera.position.z<0; flat.position.z=back?D.flatZ:-D.flatZ; var f=cloStudioFade(); flat.material.opacity=(window.__cloXray?0.3:1)*f; };
-    scene.add(flat); window.__cloFlat=flat;
-    // sol d'ombre entre la clôture et la toile
-    var shA=cloAlphaCanvas(function(x){ var v=x.createLinearGradient(0,0,0,256); v.addColorStop(0,'#000'); v.addColorStop(1,'#fff'); x.fillStyle=v; x.fillRect(0,0,256,256); });
-    var sf=new THREE.Mesh(new THREE.PlaneGeometry(30, D.flatZ), new THREE.MeshBasicMaterial({color:dark, alphaMap:shA, transparent:true, opacity:0.85, depthWrite:false, toneMapped:false}));
-    sf.rotation.x=-Math.PI/2; sf.position.set(0,-0.025,-D.flatZ/2); sf.renderOrder=-2; sf.name='StudioOmbre';
-    sf.onBeforeRender=function(){ var back=camera.position.z<0; sf.position.z=(back?1:-1)*D.flatZ/2; sf.rotation.z=back?Math.PI:0; var f=cloStudioFade(); sf.material.opacity=(window.__cloXray?0.25:0.6)*f; };
-    scene.add(sf); window.__cloShadeFloor=sf;
   }catch(e){ console.warn('studio cloture:',e); }
 }
 
@@ -11982,6 +11977,7 @@ function CFG_SCENE_READY(){
 /* ---- Mesures (bouton commun du moteur) : cotes propres à la clôture ----
    Hauteur totale, hauteur d'un panneau (60 cm), largeur d'un panneau (2 m), longueur commandée,
    section des poteaux. Le moteur fournit dimLabel / dimLine et le bouton. */
+var CFG_DIMS_COLOR = 0x9be37f;   // cotes vert clair : lisibles sur le fond vert foncé
 var CFG_DIMS_VIEW = { dir:[-0.12,0.22,1], zoom:1.32, tgtF:0.55 };   // vue de face d'ensemble
 function CFG_DIMS(G, box){
   var V=THREE.Vector3, gy=Math.max(0,box.min.y), top=box.max.y, x0=box.min.x, x1=box.max.x, zf=box.max.z+0.10;
@@ -12070,7 +12066,7 @@ var CFG_AB_ALT = {
   view:'recto', prev:null, el:null,
   init:function(st){
     var self=this, d=document.createElement('div'); d.className='alt-vis';
-    d.innerHTML='<div class="alt-img"><div class="alt-sq"></div></div>'+
+    d.innerHTML='<div class="alt-bg"></div><div class="alt-img"><div class="alt-sq"></div></div>'+
       '<div class="alt-views"><button data-v="recto" class="on">Recto</button><button data-v="verso">Verso</button></div>'+
       '<div class="alt-dims"></div>';
     st.insertBefore(d, st.firstChild); this.el=d;
@@ -12090,6 +12086,7 @@ var CFG_AB_ALT = {
     if(!this.el) return; var sq=this.el.querySelector('.alt-sq'), files=cloMklLayers(this.view), html='';
     files.forEach(function(f){ html+='<img alt="" src="'+CLO_MKL_DIR+f+'">'; });
     sq.innerHTML=html;
+    var bg=this.el.querySelector('.alt-bg'); if(bg) bg.innerHTML=html;   // même image, floutée, pour remplir la largeur du cadre
     var vb=this.el.querySelector('.alt-views'); vb.style.display=(state.type==='occultante')?'flex':'none';
     var self=this; vb.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-v')===self.view); });
   },
@@ -12934,7 +12931,7 @@ function dimBar(a,b,r,mat){
   m.renderOrder=999; return m;
 }
 function dimLine(a,b,tickDir){   // trait épais vert foncé + talons aux extrémités
-  var mat=new THREE.MeshBasicMaterial({color:0x0b6b00, depthTest:false, depthWrite:false, transparent:true, opacity:0.95, toneMapped:false});
+  var mat=new THREE.MeshBasicMaterial({color:(typeof CFG_DIMS_COLOR!=='undefined'?CFG_DIMS_COLOR:0x0b6b00), depthTest:false, depthWrite:false, transparent:true, opacity:0.95, toneMapped:false});
   var g=new THREE.Group(), t=tickDir.clone().normalize().multiplyScalar(0.10);
   g.add(dimBar(a,b,0.011,mat)); g.add(dimBar(a.clone().add(t),a.clone().sub(t),0.011,mat)); g.add(dimBar(b.clone().add(t),b.clone().sub(t),0.011,mat));
   return g;
@@ -13132,6 +13129,15 @@ function __abPreviewBar(){
     var u=new URL(location.href); u.searchParams.set('cgab', b.getAttribute('data-v')); location.href=u.toString(); }; });
   col.appendChild(bar);
 }
+
+/* Fenêtres (vidéo, sauvegarde, infos, QR, AR) sorties dans <body> : sinon l'en-tête collant du thème
+   (z-index élevé) passe devant. Le conteneur garde la classe cgp-root pour conserver les styles. */
+(function(){
+  var pr=document.createElement('div'); pr.className='cgp-root cgp-portal cgp-ready';
+  pr.style.cssText='background:none;position:static;height:0;margin:0;padding:0;opacity:1';
+  ['vidModal','infoModal','qrModal','saveModal','arTuto','toast'].forEach(function(id){ var e=document.getElementById(id); if(e) pr.appendChild(e); });
+  document.body.appendChild(pr);
+})();
 
 /* ===== BOOT ===== */
 __altInit();

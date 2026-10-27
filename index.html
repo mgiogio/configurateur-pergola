@@ -10150,6 +10150,17 @@ var qrcode = function() {
 .cgp-root .st-arrow.next{right:-4px}.cgp-root .st-arrow.prev{left:-4px}
 .cgp-root .stories-wrap.at-end .st-arrow.next,.cgp-root .stories-wrap.at-start .st-arrow.prev{opacity:0;pointer-events:none}
 .cgp-root .st-arrow:hover{background:#fff;color:var(--cg-green)}
+
+/* Fenêtres au-dessus de tout (en-tête du thème compris) */
+.cgp-portal .vid-modal,.cgp-portal .qr-modal{z-index:2147482000}
+.cgp-portal .toast{z-index:2147482001}
+
+/* Variante A : image carrée MKL élargie au format du cadre (fond = même image floutée, bords fondus) */
+.alt-vis .alt-bg{position:absolute;inset:-30px;overflow:hidden;filter:blur(22px) saturate(1.05) brightness(.92)}
+.alt-vis .alt-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.alt-vis .alt-img{z-index:1}
+.alt-vis .alt-sq{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%)}
+.cgp-root .alt-vis{overflow:hidden;border-radius:inherit}
 </style>
 </head>
 <body>
@@ -12974,7 +12985,7 @@ function dimBar(a,b,r,mat){
   m.renderOrder=999; return m;
 }
 function dimLine(a,b,tickDir){   // trait épais vert foncé + talons aux extrémités
-  var mat=new THREE.MeshBasicMaterial({color:0x0b6b00, depthTest:false, depthWrite:false, transparent:true, opacity:0.95, toneMapped:false});
+  var mat=new THREE.MeshBasicMaterial({color:(typeof CFG_DIMS_COLOR!=='undefined'?CFG_DIMS_COLOR:0x0b6b00), depthTest:false, depthWrite:false, transparent:true, opacity:0.95, toneMapped:false});
   var g=new THREE.Group(), t=tickDir.clone().normalize().multiplyScalar(0.10);
   g.add(dimBar(a,b,0.011,mat)); g.add(dimBar(a.clone().add(t),a.clone().sub(t),0.011,mat)); g.add(dimBar(b.clone().add(t),b.clone().sub(t),0.011,mat));
   return g;
@@ -13172,6 +13183,15 @@ function __abPreviewBar(){
     var u=new URL(location.href); u.searchParams.set('cgab', b.getAttribute('data-v')); location.href=u.toString(); }; });
   col.appendChild(bar);
 }
+
+/* Fenêtres (vidéo, sauvegarde, infos, QR, AR) sorties dans <body> : sinon l'en-tête collant du thème
+   (z-index élevé) passe devant. Le conteneur garde la classe cgp-root pour conserver les styles. */
+(function(){
+  var pr=document.createElement('div'); pr.className='cgp-root cgp-portal cgp-ready';
+  pr.style.cssText='background:none;position:static;height:0;margin:0;padding:0;opacity:1';
+  ['vidModal','infoModal','qrModal','saveModal','arTuto','toast'].forEach(function(id){ var e=document.getElementById(id); if(e) pr.appendChild(e); });
+  document.body.appendChild(pr);
+})();
 
 /* ===== BOOT ===== */
 __altInit();
