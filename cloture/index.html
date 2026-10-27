@@ -11492,9 +11492,17 @@ const SECTIONS = {
 function supportEff(){ return (state.poteaux==='avec') ? state.support : 'sans'; }
 function cloLongueur(){ return Math.max(LONG_MIN, Math.min(LONG_MAX, parseInt(state.longueur,10)||LONG_MIN)); }
 function cloLongueurFacturee(){ return 2*Math.ceil(cloLongueur()/2); } // arrondi au pair sup (panneaux de 2 m)
+/* Merchant Center : au chargement, MKL affichait 47,09 € (= prix produit WooCommerce = prix du flux et des
+   données structurées). On affiche donc le prix au mètre de départ tant que le client n'a touché à rien ;
+   dès la première option, c'est le vrai total. */
+function CFG_PRICE_TEXT(p){
+  if(window.__cloPriced) return null;
+  var mn=Math.min.apply(null, HAUTEURS.map(function(h){ return H_CALC[h.id]; }));
+  return { main: mn.toFixed(2).replace('.',',')+' €/m', sub:'Prix au mètre', label:'À partir de' };
+}
 function computePrice(){
   var h = PPH[state.pose] ? state.pose : '180';
-  var Lpaid = cloLongueurFacturee();            // 5 m -> facture 6 m
+  var Lpaid = cloLongueur();   // comme MKL (formule officielle « longueur ») : prix au mètre sur la longueur réelle, impaire comprise
   var occ = (state.type==='occultante') ? 1 : 0;
   var faces = (state.type==='occultante' && state.faces==='deux') ? 1 : 0;
   var coeff = H_CALC[h] + SUP_CALC[supportEff()] + POT_CALC[state.poteaux]
@@ -11529,11 +11537,11 @@ function CFG_ENCODE(){ return {p:state.pose, t:state.taille, c:{l:state.longueur
 function CFG_INIT_STATE(){
   // restauration depuis un lien sauvegardé (une seule fois)
   if(!window.__cloRestored && typeof RESTORE!=='undefined' && RESTORE && RESTORE.c){
-    window.__cloRestored=true; var r=RESTORE.c;
+    window.__cloRestored=true; window.__cloPriced=true; var r=RESTORE.c;
     if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su;
     try{ ['hauteur','longueur','type','faces','poteaux','support'].forEach(function(k){ chosen[k]=true; }); }catch(e){}
   }
-  if(!PPH[state.pose] || state.pose==='060') state.pose = '180';
+  if(!PPH[state.pose] || state.pose==='060') state.pose = '120';   // départ 1,20 m comme MKL (prix = flux Merchant Center)
   if(state.longueur==null) state.longueur = 2;
   if(state.type==null)     state.type = 'ajouree';
   if(state.faces==null)    state.faces = 'une';
@@ -11595,12 +11603,12 @@ function cloFlyTo(to, tt){
     if(t<1) tween=requestAnimationFrame(step); })();
 }
 /* Rafraichit options + 3D + prix (sans recharger le glb), puis zoom auto soigné sur l'option. */
-function cloRefresh(section){ window.__cloXray=false; window.__cloExtHideNeg=false; CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); if(section && typeof cloFocus==='function') cloFocus(section); }
+function cloRefresh(section){ window.__cloPriced=true; window.__cloXray=false; window.__cloExtHideNeg=false; CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); if(section && typeof cloFocus==='function') cloFocus(section); }
 /* Changement de hauteur = rechargement du glb correspondant, sans reset du reste */
 function cloSetHeight(id){
   // choisir une hauteur ramène toujours la vue de départ (même si la hauteur est déjà sélectionnée)
   if(state.pose===id){ window.__cloXray=false; if(typeof heroView==='function') heroView(false); return; }
-  state.pose = id; chosen.hauteur = true;
+  state.pose = id; chosen.hauteur = true; window.__cloPriced=true;
   window.__cloKeepView=null; window.__cloXray=false;   // vue de base après rechargement
   if(root){ scene.remove(root); root=null; }
   CFG_RENDER(); updatePrice();
@@ -11719,7 +11727,559 @@ function cloRecap(){
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
     +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
-    +`<div class="recap-row total"><span>Total TTC</span><b>${fmtEUR(computePrice())}</b></div>`;
+    +(function(){ var ov=CFG_PRICE_TEXT(computePrice()); return `<div class="recap-row total"><span>${ov?'Prix au mètre TTC':'Total TTC'}</span><b>${ov?ov.main:fmtEUR(computePrice())}</b></div>`; })();
+  return w;
+}
+
+/* ---- Visibilite 3D ----
+   Tronçon représentatif FIXE (3 travées du run principal) + annotation longueur,
+   pour éviter l'effet déroutant "1 panneau puis 3". Bois = Panneau (toujours) ;
+   Occultant = plaque noire derrière pour boucher les ajours (occultante) ;
+   2ème face bois = face arrière (occultante deux faces). */
+function cloSetMany(names,v){ names.forEach(function(n){ setVis(n,v); }); }
+function cloScaleY(name,s){ var o=sceneNode(name); if(o) o.scale.y=s; }
+function cloLiftY(name,lift){ var o=sceneNode(name); if(o){ if(o.__oy===undefined) o.__oy=o.position.y; o.position.y=o.__oy+lift; } }
+function cloShiftZ(name,dz){ var o=sceneNode(name); if(o){ if(o.__oz===undefined) o.__oz=o.position.z; o.position.z=o.__oz+dz; } }
+/* Réchauffe la teinte du bois (douglas) : le matériau WOOD rend trop pâle/citron par défaut */
+/* Ombre des traverses : dans la réalité les liteaux verticaux sont DERRIÈRE les lames, à l'ombre,
+   et les ajours se lisent comme de fines lignes sombres. Le glb n'a pas d'occlusion ambiante :
+   on l'ajoute dans le shader du bois des panneaux, à partir de la profondeur locale
+   (lames : z de -0,005 à 0,020 ; traverses : z de -0,030 à -0,005, identique pour les 2 faces). */
+function cloShadePanelWood(m, seed){
+  m.onBeforeCompile=function(sh){
+    sh.uniforms.uSeed={ value: seed||0 };
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>','#include <common>\nvarying float vLZ; varying float vLY; varying vec3 vLN;')
+      .replace('#include <begin_vertex>','#include <begin_vertex>\nvLZ=position.z; vLY=position.y; vLN=normal;');
+    sh.fragmentShader=sh.fragmentShader
+      .replace('#include <common>','#include <common>\nvarying float vLZ; varying float vLY; varying vec3 vLN; uniform float uSeed;\nfloat h1_(float n){ return fract(sin(n)*43758.5453); }')
+      // Bois naturel : chaque lame lit une zone différente de la texture (plus de nœuds répétés),
+      // a sa propre teinte (comme de vraies lames de douglas) ; nœuds adoucis, couleur un peu plus riche.
+      .replace('#include <map_fragment>',
+         '#ifdef USE_MAP\n'
+        +'  float sl_=floor((vLY+0.5)/0.0667);\n'
+        +'  vec2 off_=vec2(h1_(sl_*12.9898+uSeed*78.233), h1_(sl_*39.425+uSeed*11.13));\n'
+        +'  vec2 uv_=vUv+off_;\n'
+        +'  vec4 tx_=texture2D(map,uv_); vec4 bl_=texture2D(map,uv_,4.0);\n'
+        +'  tx_.rgb=mix(bl_.rgb,tx_.rgb,0.78);\n'
+        +'  tx_=mapTexelToLinear(tx_);\n'
+        +'  float lum_=dot(tx_.rgb,vec3(0.299,0.587,0.114));\n'
+        +'  tx_.rgb=mix(vec3(lum_),tx_.rgb,1.10);\n'
+        +'  float v_=h1_(sl_*7.31+uSeed*3.7);\n'
+        +'  tx_.rgb*=mix(vec3(0.88,0.86,0.84),vec3(1.08,1.06,1.03),v_);\n'
+        +'  diffuseColor*=tx_;\n'
+        +'#endif\n'
+        // Ombres de contact (le glb n'a pas d'occlusion) : traverses à l'ombre derrière les lames,
+        // dessus des lames qui prend la lumière, dessous dans l'ombre.
+        +'  float occ_=1.0;\n'
+        +'  if(vLN.z>0.5 && vLZ<-0.003) occ_=0.26;\n'
+        +'  else if(abs(vLN.x)>0.5 && vLZ<-0.004) occ_=mix(0.22,0.5,smoothstep(-0.030,-0.004,vLZ));\n'
+        +'  else if(vLN.y>0.5) occ_=mix(0.6,1.08,smoothstep(-0.005,0.020,vLZ));\n'
+        +'  else if(vLN.y<-0.5) occ_=mix(0.35,0.8,smoothstep(-0.005,0.020,vLZ));\n'
+        +'  diffuseColor.rgb*=occ_;')
+      // satiné du bois : veine claire un peu plus lisse que les zones sombres
+      .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n#ifdef USE_MAP\n  roughnessFactor*=mix(1.06,0.9,smoothstep(0.15,0.6,dot(diffuseColor.rgb,vec3(0.333))));\n#endif');
+  };
+  m.customProgramCacheKey=function(){ return 'cloShadePanelWood3'; };
+  m.needsUpdate=true;
+}
+function cloSeedOf(name){ var h=0; for(var i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%9973; return h/97.0; }
+function CFG_TUNE_MATS(r){
+  if(typeof THREE==='undefined' || !r) return;
+  r.traverse(function(o){
+    if(!o.isMesh || !o.material) return;
+    var mats = Array.isArray(o.material) ? o.material : [o.material];
+    mats.forEach(function(m){
+      // Douglas marron chaud, calibré sur les photos clients (rapport R:V:B ≈ 1 : 0,67 : 0,40).
+      // La texture d'origine est trop orange/saturée : on la corrige par un multiplicateur.
+      if(m && m.name==='WOOD' && m.color){ m.color.setRGB(0.56,0.54,1.30); m.needsUpdate=true; }
+      if(m && 'envMapIntensity' in m) m.envMapIntensity=0.85;   // IBL moins "brûlant", lumière plus naturelle
+      // netteté des textures en perspective (lames qui fuient) : filtrage anisotrope maximal
+      if(m && m.map && typeof renderer!=='undefined' && renderer.capabilities){ m.map.anisotropy=renderer.capabilities.getMaxAnisotropy(); m.map.needsUpdate=true; }
+      if(m && m.name==='WOOD') m.roughness=0.74;               // léger satiné du bois, moins "plâtre"
+      // pan occultant (plastique noir) : vraiment sombre, sans reflet -> l'intérieur de la clôture paraît plein
+      if(m && m.name==='PLASTIC' && m.color){ m.color.setRGB(0.012,0.014,0.010); m.roughness=1; m.metalness=0; m.envMapIntensity=0.05; m.needsUpdate=true; }
+    });
+    // bois des panneaux : matériau dédié + ombre des traverses
+    var p=o, isPanel=false; while(p){ if(/^(Panneau_|Panneaux_2)/.test(p.name)){ isPanel=true; break; } p=p.parent; }
+    if(isPanel && !Array.isArray(o.material) && o.material.name==='WOOD' && !o.material.__cloShade){
+      o.material=o.material.clone(); o.material.name='WOOD'; o.material.__cloShade=true; cloShadePanelWood(o.material, cloSeedOf(p.name));
+    }
+  });
+}
+function CFG_APPLY_VIS(){
+  if(!root) return;
+  var h = PPH[state.pose] ? state.pose : '180';
+  var glbPph = PPH[GLB_HEIGHT[h]];              // niveaux presents dans le glb (60 cm -> glb 120 = 2)
+  var showLevels = PPH[h];                       // niveaux a montrer (60 cm -> 1)
+  var mainMax = 3*glbPph;                        // N<=mainMax = run principal (3 travées) ; au-dela = retour d'angle
+  var isOcc = state.type==='occultante';
+  var deux  = isOcc && state.faces==='deux';
+  var is60  = (state.pose==='060');
+
+  // Masque le terrain du glb : on cadre et on affiche uniquement la clôture
+  cloSetMany(['Scène_Sol'], false);
+
+  // Sans poteau : clôture fixée au sol avec un léger espace sous le 1er panneau (pas de plot béton)
+  var lift = (state.poteaux==='sans') ? 0.02 : 0;
+  for(var N=1; N<=4*glbPph; N++){
+    var levelOK = Math.floor((N-1)/3) < showLevels;
+    var shown = (N<=mainMax) && levelOK;         // 3 travées principales, niveaux selon hauteur
+    setVis('Panneau_'+N+'_Sol', shown);                       // bois (toujours)
+    setVis('Visserie Panneaux_'+N+'_Sol', shown);
+    // Occultante UNE face : fond noir pour boucher les ajours côté arrière.
+    // Occultante : pan occultant sombre au milieu, en UNE face comme en DEUX faces
+    // (double face = recto occultant + verso ajouré ; l'intérieur sombre rend le pan ajouré occultant).
+    setVis('Occultant_'+N+'_Sol', shown && isOcc);
+    setVis('Panneaux_2ème_Face_'+N+'_Sol', shown && deux);    // face arriere bois (deux faces)
+    setVis('Visserie Panneaux_2ème_Face_'+N+'_Sol', shown && deux);
+    cloLiftY('Panneau_'+N+'_Sol', lift);
+    cloLiftY('Occultant_'+N+'_Sol', lift);
+    cloLiftY('Panneaux_2ème_Face_'+N+'_Sol', lift);
+    // Sans poteau : les panneaux se jointent bord à bord -> léger chevauchement (6 mm) pour
+    // qu'aucun jour n'apparaisse entre deux panneaux. Avec poteaux : dimensions réelles.
+    var sx=(state.poteaux==='sans')?1.006:1;
+    ['Panneau_','Occultant_','Panneaux_2ème_Face_'].forEach(function(pre){ var o=sceneNode(pre+N+'_Sol'); if(o) o.scale.x=sx; });
+    cloShiftZ('Occultant_'+N+'_Sol', 0);   // pas de décalage (le noir reste à sa place, une face uniquement)
+  }
+  // Poteaux du run principal (1-4), masque le retour (5-6). 60 cm : poteaux a demi-hauteur.
+  var avec = state.poteaux==='avec';
+  for(var p=1; p<=6; p++){
+    var pv = avec && p<=4;
+    setVis('Poteau_'+p+'_Sol', pv);
+    if(pv) cloScaleY('Poteau_'+p+'_Sol', is60 ? 0.5 : 1);
+  }
+  // Fixations au sol. Plots béton JAMAIS affichés (fixation directe). Platines = pieds/goujons boulonnés.
+  cloSetMany(['Pieds pour sol dur_Sol','Pieds_Sol','Goujons Pieds_Sol','Visserie Pieds_Sol'], avec && state.support==='platines');
+  cloSetMany(['Pieux pour sol souple_Sol','Pieux_Sol','Visserie Pieux_Sol'], avec && state.support==='pieux');
+  cloSetMany(['Plots Béton_Sol'], false);   // plots béton toujours masqués
+  // Retour d'angle + variantes d'angle + etiquettes : masques
+  cloSetMany(['Plots Béton_Angle_5_Sol','Plots Béton_Angle_6_Sol','Pieds_Angle_5_Sol','Pieds_Angle_6_Sol',
+    'Goujons Pieds_Angle_5_Sol','Goujons Pieds_Angle_6_Sol','Visserie Pieds_Angle_5_Sol','Visserie Pieds_Angle_6_Sol',
+    'Pieux_Angle_5_Sol','Pieux_Angle_6_Sol','Visserie Pieux_Angle_5_Sol','Visserie Pieux_Angle_6_Sol',
+    'Côté Extérieur Label_Sol','Côté Jardin Label_Sol'], false);
+
+  cloSyncExt();
+  cloUpdateBadge(cloLongueur());
+}
+/* Clôture « qui continue » : copies décoratives du tronçon de 3 travées de chaque côté (±6 m),
+   hors de root -> n'entrent ni dans le cadrage, ni dans les mesures, ni dans le prix.
+   Elles suivent exactement le tronçon réel (options, matériaux, visibilité). */
+var CLO_EXT = 6;
+function cloSyncExt(){
+  if(!root || typeof scene==='undefined') return;
+  var E=window.__cloExt;
+  if(!E || E.src!==root){
+    if(E && E.g && E.g.parent) E.g.parent.remove(E.g);
+    E=window.__cloExt={src:root, g:new THREE.Group(), pairs:[]};
+    E.g.name='cloExt';
+    root.children.forEach(function(ch){
+      if(/^Sc[eè]ne|Label/i.test(ch.name)) return;
+      [-CLO_EXT, CLO_EXT].forEach(function(dx){
+        var cl=ch.clone(true); cl.matrixAutoUpdate=false; E.g.add(cl);
+        // poteaux / pieds / pieux : la copie démarre sur le poteau de jonction déjà présent -> on coupe ses fixations
+        // de bout (sinon platines / pieux en double à la jonction)
+        var clip=/poteau|pieds|pieux/i.test(ch.name) ? new THREE.Plane(new THREE.Vector3(dx>0?1:-1,0,0), 0) : null;
+        E.pairs.push({a:ch, b:cl, dx:dx, clip:clip});
+      });
+    });
+    scene.add(E.g);
+    if(typeof renderer!=='undefined' && renderer) renderer.localClippingEnabled=true;
+  }
+  root.updateMatrixWorld(true);
+  var o0=root.localToWorld(new THREE.Vector3(0,0,0));
+  E.pairs.forEach(function(p){
+    var off=root.localToWorld(new THREE.Vector3(p.dx,0,0)).sub(o0);
+    if(p.clip){ var jx=root.localToWorld(new THREE.Vector3((p.dx>0?1:-1)*3.14,0,0)).x; p.clip.constant=(p.dx>0)?-jx:jx; }
+    (function sync(a,b,top){
+      b.visible=a.visible;
+      if(!top){ b.position.copy(a.position); b.quaternion.copy(a.quaternion); b.scale.copy(a.scale); }
+      if(a.material){
+        if(p.clip){ if(b.__src!==a.material){ b.__src=a.material; b.__mc=a.material.clone(); b.__mc.clippingPlanes=[p.clip]; } b.material=b.__mc; }
+        else b.material=a.material;
+      }
+      var nm=String(b.name).replace(/\s+/g,'_');
+      if((p.dx>0 && nm==='Poteau_1_Sol') || (p.dx<0 && nm==='Poteau_4_Sol')) b.visible=false;   // poteau de jonction déjà présent
+      for(var i=0;i<a.children.length && i<b.children.length;i++) sync(a.children[i], b.children[i], false);
+    })(p.a, p.b, true);
+    if(p.dx<0 && window.__cloExtHideNeg) p.b.visible=false;   // vue poteaux / fixations : on montre le bout de la clôture
+    p.b.matrix.makeTranslation(off.x,off.y,off.z).multiply(p.a.matrixWorld);
+    p.b.matrixWorldNeedsUpdate=true;
+  });
+}
+/* Présentation alignée sur la pergola : fond neutre épuré (grille CSS via canvas transparent),
+   caméra, éclairage et sol (capteur d'ombre) par défaut du moteur. Aucune scène ajoutée :
+   vue produit propre et cohérente avec le configurateur pergola. */
+var CFG_FRAME_WHOLE = true;       // cadre la clôture entière (objet large)
+var CFG_HERO_ZOOM = 0.62;         // cadrage un peu resserré
+/* Vue de départ validée : frontale, basse, rapprochée sur les lames (belle vue produit).
+   dir x négatif = la perspective fuit vers la droite (sens validé par Manuel). */
+var CFG_HERO_POSE = { distK:0.92, dir:[-0.28,1], eyeF:0.46, tgtF:0.40, fitTop:1.18 };   // fitTop : le haut toujours visible (2,40 m)
+/* Composition validée (cadre ~1.3) : la clôture traverse toute l'image, les deux bouts hors champ, le haut visible.
+   Sur un cadre plus large on garde le même angle et on se rapproche / décale juste ce qu'il faut. */
+function CFG_HERO_ADJUST(to, tt, box, cam){
+  if(window.__cloExtHideNeg){ window.__cloExtHideNeg=false; cloSyncExt(); }   // retour vue de base : clôture prolongée
+  var V=THREE.Vector3, s=(to.x<tt.x)?-1:1, zc=(box.min.z+box.max.z)/2, h=box.max.y-box.min.y, gy=box.min.y;
+  var ext=(typeof CLO_EXT!=='undefined')?CLO_EXT:0;       // la clôture continue (copies décoratives)
+  var xFar=(s<0)?box.max.x+ext:box.min.x-ext, xNear=(s<0)?box.min.x-ext:box.max.x+ext, ym=gy+h/2;
+  var C=new THREE.PerspectiveCamera(cam.fov, cam.aspect, 0.05, 200), off=to.clone().sub(tt);
+  function ok(k, dty, m){
+    var t=new V(tt.x+s*m, tt.y+dty, tt.z); C.position.copy(t).addScaledVector(off,k); C.lookAt(t); C.updateMatrixWorld();
+    if(new V(xFar,ym,zc).project(C).x*(-s)<1.06) return false;
+    if(new V(xNear,ym,zc).project(C).x*s<1.06) return false;
+    var top=-9, bot=9, a, b;
+    for(var x=box.min.x; x<=box.max.x; x+=0.05){
+      a=new V(x,box.max.y,zc).project(C); b=new V(x,gy,zc).project(C);
+      if(a.x>=-1&&a.x<=1) top=Math.max(top,a.y); if(b.x>=-1&&b.x<=1) bot=Math.min(bot,b.y);
+    }
+    return top<=0.88 && bot>=-0.90;
+  }
+  if(ok(1,0,0)) return;                                   // déjà la composition validée
+  var best=null;
+  for(var k=1; k>=0.6; k-=0.025) for(var f=0; f<=0.25; f+=0.025) for(var m=0; m<=1.2; m+=0.1){
+    var cost=(1-k)+0.3*m+0.6*f; if(best && cost>=best.cost) continue;
+    if(ok(k, f*h, m)) best={cost:cost, k:k, dty:f*h, m:m};
+  }
+  if(!best) return;                                        // cadre trop large : on garde la pose validée
+  tt.set(tt.x+s*best.m, tt.y+best.dty, tt.z); to.copy(tt).addScaledVector(off, best.k);
+}
+
+/* Rendu STUDIO vert sapin (2026-10-27) : fond de studio sans décor, vert foncé de la marque.
+   Pourquoi : derrière une clôture ajourée on voit le fond ; un fond foncé rend les ajours sombres et la clôture
+   paraît pleine (comme dans un jardin à l'ombre), le douglas ressort, et ça marche sous tous les angles
+   (y compris de dessus) sans toile ni artifice. */
+var CFG_BG_TOP = '#18261c';
+var CFG_BG_BOTTOM = '#33493a';
+var CFG_EXPOSURE = 0.9;
+var CFG_HEMI_SKY = 0xf4f4f2;
+var CFG_HEMI_GROUND = 0x9c9a94;
+var CFG_HEMI_INT = 0.45;
+var CFG_SUN_COLOR = 0xffffff;
+var CFG_SUN_INT = 1.25;
+
+/* ---- Studio : toile de fond sombre + sol d'ombre derrière la clôture, éclairage de studio (softboxes) ----
+   La toile et l'ombre se placent toujours du côté opposé à la caméra (vue verso possible). */
+/* Éclairage d'environnement de studio (softboxes) : reflets doux sur le bois */
+function cloStudioEnv(){
+  var ec=document.createElement('canvas'); ec.width=512; ec.height=256; var ex=ec.getContext('2d');
+  var g=ex.createLinearGradient(0,0,0,256); g.addColorStop(0,'#c9ccc8'); g.addColorStop(0.5,'#b4b7b2'); g.addColorStop(1,'#8d8f8a'); ex.fillStyle=g; ex.fillRect(0,0,512,256);
+  function soft(x,y,w,h,a){ var rg=ex.createRadialGradient(x+w/2,y+h/2,2,x+w/2,y+h/2,Math.max(w,h)/1.6); rg.addColorStop(0,'rgba(255,255,255,'+a+')'); rg.addColorStop(1,'rgba(255,255,255,0)');
+    ex.fillStyle=rg; ex.fillRect(x-w,y-h,w*3,h*3); ex.fillStyle='rgba(255,255,255,'+a+')'; ex.fillRect(x,y,w,h); }
+  soft(40,60,90,60,1); soft(300,50,110,70,0.95); soft(180,4,150,26,0.9);   // 2 softboxes + bande de plafond
+  var et=new THREE.CanvasTexture(ec); et.encoding=THREE.sRGBEncoding; et.mapping=THREE.EquirectangularReflectionMapping;
+  try{ var pm=new THREE.PMREMGenerator(renderer); scene.environment=pm.fromEquirectangular(et).texture; pm.dispose(); }catch(e){}
+}
+function CFG_SCENE_READY(){
+  try{
+    cloStudioEnv();
+    window.__cloXray=false;   // sol en « coupe » quand on montre les pieux
+    // ombres nettes : carte d'ombre resserrée sur la clôture
+    scene.traverse(function(n){ if(!n.isDirectionalLight || !n.castShadow) return;
+      n.shadow.mapSize.set(2048,2048); if(n.shadow.map){ n.shadow.map.dispose(); n.shadow.map=null; }
+      var sc=n.shadow.camera; sc.left=-5; sc.right=5; sc.top=5; sc.bottom=-5; sc.near=1; sc.far=40; sc.updateProjectionMatrix();
+      n.shadow.bias=-0.0004; n.shadow.normalBias=0.012; n.shadow.radius=2; });
+    // sol "papier millimétré" vert (rappel de la grille pergola), fondu sur les bords
+    var gs=512, gc=document.createElement('canvas'); gc.width=gs; gc.height=gs; var gx=gc.getContext('2d');
+    gx.fillStyle='#30463a'; gx.fillRect(0,0,gs,gs);   // sol vert foncé, trame millimétrée verte discrète
+    for(var i=0;i<=10;i++){ var p=Math.round(i*gs/10)+0.5; gx.strokeStyle=(i%10===0)?'rgba(150,215,120,0.32)':(i%5===0?'rgba(150,215,120,0.16)':'rgba(150,215,120,0.08)'); gx.lineWidth=(i%10===0)?3:1.4;
+      gx.beginPath(); gx.moveTo(p,0); gx.lineTo(p,gs); gx.stroke(); gx.beginPath(); gx.moveTo(0,p); gx.lineTo(gs,p); gx.stroke(); }
+    var gt=new THREE.CanvasTexture(gc); gt.encoding=THREE.sRGBEncoding; gt.wrapS=gt.wrapT=THREE.RepeatWrapping; gt.repeat.set(30,30);
+    gt.anisotropy=(renderer.capabilities&&renderer.capabilities.getMaxAnisotropy())||1;
+    var gm=new THREE.MeshBasicMaterial({map:gt, transparent:true, depthWrite:false, toneMapped:false});
+    gm.onBeforeCompile=function(sh){
+      sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWp;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWp=(modelMatrix*vec4(position,1.0)).xyz;');
+      sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vWp;').replace('#include <dithering_fragment>','#include <dithering_fragment>\ngl_FragColor.a*=1.0-smoothstep(5.0,12.0,length(vWp.xz));');
+    };
+    var grid=new THREE.Mesh(new THREE.PlaneGeometry(30,30), gm);
+    grid.rotation.x=-Math.PI/2; grid.position.set(0,-0.032,0); grid.renderOrder=-3; grid.name='DecorSolMillimetre';
+    grid.onBeforeRender=function(){ grid.material.opacity=window.__cloXray?0.3:1; };
+    scene.add(grid); window.__cloGrid=grid;
+  }catch(e){ console.warn('studio cloture:',e); }
+}
+
+
+/* ---- Mesures (bouton commun du moteur) : cotes propres à la clôture ----
+   Hauteur totale, hauteur d'un panneau (60 cm), largeur d'un panneau (2 m), longueur commandée,
+   section des poteaux. Le moteur fournit dimLabel / dimLine et le bouton. */
+var CFG_DIMS_COLOR = 0x9be37f;   // cotes vert clair : lisibles sur le fond vert foncé
+var CFG_DIMS_VIEW = { dir:[-0.12,0.22,1], zoom:1.32, tgtF:0.55 };   // vue de face d'ensemble
+function CFG_DIMS(G, box){
+  var V=THREE.Vector3, gy=Math.max(0,box.min.y), top=box.max.y, x0=box.min.x, x1=box.max.x, zf=box.max.z+0.10;
+  var hx=x0-0.28; G.add(dimLine(new V(hx,gy,zf), new V(hx,top,zf), new V(1,0,0)));
+  var lh=dimLabel(hLabel(state.pose)); lh.position.set(hx-0.05,(gy+top)/2,zf); G.add(lh);
+  var pph=PPH[state.pose]||3;
+  if(pph>1){ var px=x1+0.28; G.add(dimLine(new V(px,gy,zf), new V(px,gy+0.60,zf), new V(1,0,0)));
+    var lp=dimLabel('Panneau 60 cm'); lp.position.set(px+0.05,gy+0.30,zf); G.add(lp); }
+  var n=Math.max(1,Math.round((x1-x0)/2)), w=(x1-x0)/n, zt=zf+0.30, a=x0, b=x0+w;
+  G.add(dimLine(new V(a+0.02,gy+0.02,zt), new V(b-0.02,gy+0.02,zt), new V(0,0,1)));
+  var lt=dimLabel('Panneau 2,00 m'); lt.position.set((a+b)/2, gy+0.13, zt); G.add(lt);
+  var ll=dimLabel('Longueur commandée : '+cloLongueurLabel(), true); ll.position.set((x0+x1)/2, top+0.28, zf); G.add(ll);
+  if(state.poteaux==='avec'){ var lpo=dimLabel('Poteaux 9 × 9 cm'); lpo.position.set(x0+w*1.5, gy+0.55*(top-gy), zf+0.02); G.add(lpo); }
+}
+
+/* Titre produit (le squelette affiche "Pergola" par defaut) */
+(function(){
+  var t=document.getElementById('cgTitle'); if(t) t.innerHTML='Clôture bois <span style="color:var(--cg-green)">en kit</span>';
+  // prix plancher calculé sur les hauteurs réellement proposées (0,60 m retiré -> 1,20 m ajourée, sans option)
+  var mn=Math.min.apply(null, HAUTEURS.map(function(h){ return H_CALC[h.id]; }));
+  var f=document.getElementById('fromLine'); if(f) f.innerHTML='À partir de <b style="color:var(--cg-green)">'+mn.toFixed(2).replace('.',',')+'&nbsp;€/m</b> · douglas français';
+})();
+
+function cloUpdateBadge(L){
+  if(!stage) return;
+  var b=document.getElementById('cloLenBadge');
+  if(!b){
+    b=document.createElement('div'); b.id='cloLenBadge';
+    b.style.cssText='position:absolute;left:12px;bottom:12px;z-index:4;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:700;color:#1E211F;box-shadow:0 2px 9px rgba(0,0,0,.12)';
+    stage.appendChild(b);
+  }
+  b.textContent='Longueur : '+L+' m';
+}
+
+/* ---- Panier ---- */
+function CFG_CART_LABEL(){
+  var L=Math.max(LONG_MIN, Math.min(LONG_MAX, parseInt(state.longueur,10)||LONG_MIN));
+  return 'Clôture bois '+hLabel(state.pose)+' - '+L+' m';
+}
+/* SKU des composants (produits liés MKL, vérifiés sur le staging le 27/10/2026) : ajoutés au panier en lignes
+   masquées au client, à 0 € (le kit principal porte le prix total) -> le stock de chaque pièce est décompté
+   et la commande liste les pièces pour la préparation / l'ERP. */
+var CLO_SKU = {
+  ajoure:'0210-00016', occultant:'0210-00023', poteau:'0200-00030',
+  platine:'0300-00268', pieu:'0300-00267', traverse:'0300-00316', vis:'0300-00064', clou:'0300-00202'
+};
+function CFG_CART_PAYLOAD(){
+  var b=cloBOM(), items=[{ sku:SKU_PARENT, qty:1, role:'main' }];
+  function add(k,q){ if(q>0) items.push({ sku:CLO_SKU[k], qty:q, role:'component' }); }
+  add('ajoure', b.ajoures); add('occultant', b.occultants); add('poteau', b.poteaux);
+  add('platine', b.platines); add('pieu', b.pieux); add('traverse', b.traverses); add('vis', b.vis); add('clou', b.clous);
+  return items;
+}
+/* Ce que voit le client (panier, commande, e-mails) : uniquement ses choix, comme sur MKL. */
+function CFG_CART_SUMMARY(){
+  var rows=[['Hauteur',hLabel(state.pose)],['Longueur',cloLongueurLabel()],['Type',typeLabel()]];
+  if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
+  rows.push(['Poteaux',poteauxLabel()]);
+  if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
+  return rows;
+}
+function cloBOM(){
+  var h = PPH[state.pose] ? state.pose : '180';
+  var pph = PPH[h];
+  var L = Math.max(LONG_MIN, Math.min(LONG_MAX, parseInt(state.longueur,10)||LONG_MIN));
+  var R = Math.ceil(L/2);
+  var occ = (state.type==='occultante') ? pph*R : 0;
+  var ajo = (state.type==='ajouree') ? pph*R
+          : ((state.type==='occultante' && state.faces==='deux') ? pph*R : 0);
+  var poteaux  = (state.poteaux==='avec') ? R+1 : 0;
+  var platines = (state.poteaux==='avec' && state.support==='platines') ? poteaux : 0;
+  var pieux    = (state.poteaux==='avec' && state.support==='pieux')    ? poteaux : 0;
+  var vis      = (state.poteaux==='avec') ? 6*(occ+ajo) : 0;
+  var traverse = pph * ((state.type==='occultante' && state.faces==='deux') ? 2 : 1);
+  var clou     = 12 * traverse;
+  return { rangees:R, ajoures:ajo, occultants:occ, poteaux:poteaux,
+           platines:platines, pieux:pieux, vis:vis, traverses:traverse, clous:clou };
+}
+
+/* ======================= HOOKS MOTEUR ======================= */
+
+/* Etat initial (le moteur appelle initState -> CFG_INIT_STATE si defini) */
+/* Sauvegarde : encodage propre à la clôture (lien #cfg=... qui restaure la configuration) */
+function CFG_ENCODE(){ return {p:state.pose, t:state.taille, c:{l:state.longueur, ty:state.type, fa:state.faces, po:state.poteaux, su:state.support}}; }
+function CFG_INIT_STATE(){
+  // restauration depuis un lien sauvegardé (une seule fois)
+  if(!window.__cloRestored && typeof RESTORE!=='undefined' && RESTORE && RESTORE.c){
+    window.__cloRestored=true; window.__cloPriced=true; var r=RESTORE.c;
+    if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su;
+    try{ ['hauteur','longueur','type','faces','poteaux','support'].forEach(function(k){ chosen[k]=true; }); }catch(e){}
+  }
+  if(!PPH[state.pose] || state.pose==='060') state.pose = '120';   // départ 1,20 m comme MKL (prix = flux Merchant Center)
+  if(state.longueur==null) state.longueur = 2;
+  if(state.type==null)     state.type = 'ajouree';
+  if(state.faces==null)    state.faces = 'une';
+  if(state.poteaux==null)  state.poteaux = 'sans';   // le projet démarre sans poteau
+  if(state.support==null)  state.support = 'sans';      // comme MKL : pas de fixation présélectionnée quand on ajoute les poteaux
+}
+
+/* Libelle clair d'une valeur */
+function hLabel(id){ var o=HAUTEURS.find(x=>x.id===id); return o?o.label:id; }
+function typeLabel(){ return state.type==='occultante'?'Occultante':'Ajourée'; }
+function facesLabel(){ return state.faces==='deux'?'Deux faces bois':'Une face bois'; }
+function poteauxLabel(){ return state.poteaux==='avec'?'Avec poteaux':'Sans poteau'; }
+function supportLabel(){ return {sans:'Sans support',pieux:'Pieux pour sol souple',platines:'Platines pour sol dur'}[state.support]||'Sans support'; }
+
+/* Boîte des nodes visibles (pour cadrer la partie modifiée) */
+function cloBoxOf(names){
+  if(!root || typeof THREE==='undefined') return null;
+  var box=new THREE.Box3(), tmp=new THREE.Box3(), any=false;
+  names.forEach(function(nm){ var o=sceneNode(nm); if(o && o.visible){ o.updateWorldMatrix(true,true); tmp.setFromObject(o); if(!tmp.isEmpty()){ box.union(tmp); any=true; } } });
+  return any?box:null;
+}
+/* Zoom auto soigné : on cadre la partie concernée par l'option, à un angle naturel.
+   IMPORTANT : poteaux, pieds et 2e face sont DERRIÈRE les panneaux -> on les montre depuis
+   l'arrière 3/4 (seul endroit où ils sont visibles) ; le type (ajouré/occultant) se voit de face. */
+function cloFocus(section){
+  if(!root || typeof reframeTo!=='function' || typeof THREE==='undefined'){ if(typeof heroView==='function') heroView(false); return; }
+  var box=(typeof visibleBox==='function')?visibleBox():null;
+  if(!box || box.isEmpty()){ heroView(false); return; }
+  var c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3()), gy=box.min.y;
+  var ex=box.min.x;                                        // extrémité gauche (côté de la vue de départ)
+  if(section==='type') return;                            // ajouré / occultant : on garde l'angle et le zoom actuels
+  if(section==='faces'){
+    // double face : on montre le verso bois (vendeur) ; une face : vue de face (on ne montre pas le dos noir)
+    if(state.type==='occultante' && state.faces==='deux')
+      return reframeTo(new THREE.Vector3(-0.45,0.30,-1), new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), false, 0.95);
+    return reframeTo(new THREE.Vector3(-0.30,0.28,1), new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), false, 0.92);
+  }
+  if(section==='poteaux' || section==='support'){
+    // poteaux et pieds sont derrière les panneaux : on les montre par le BOUT de la clôture, côté face
+    // (le poteau d'extrémité et sa fixation sont visibles de profil), jamais par l'arrière.
+    var low = (section==='support');
+    var pieux = low && state.poteaux==='avec' && state.support==='pieux';
+    window.__cloXray = pieux;                                   // sol translucide : le pieu se voit enfoncé
+    window.__cloExtHideNeg = true; cloSyncExt();               // la clôture prolongée masquerait le poteau d'extrémité
+    var tgt=new THREE.Vector3(ex+0.15, pieux?0.10:(gy+(low?0.12:0.40)*sz.y), c.z-0.06);
+    var cam=pieux ? new THREE.Vector3(ex-1.7, 0.80, c.z+1.75)
+          : low   ? new THREE.Vector3(ex-1.05, gy+0.42, c.z+1.05)
+                  : new THREE.Vector3(ex-1.75, gy+0.42*sz.y+0.35, c.z+1.65);
+    return cloFlyTo(cam, tgt);
+  }
+  heroView(false);
+}
+/* Déplacement caméra doux vers une position/cible précises */
+function cloFlyTo(to, tt){
+  var from=camera.position.clone(), ft=controls.target.clone(), t=0;
+  if(typeof tween!=='undefined') cancelAnimationFrame(tween);
+  (function step(){ t=Math.min(1,t+0.04); var e=1-Math.pow(1-t,3);
+    camera.position.lerpVectors(from,to,e); controls.target.lerpVectors(ft,tt,e); controls.update();
+    if(t<1) tween=requestAnimationFrame(step); })();
+}
+/* Rafraichit options + 3D + prix (sans recharger le glb), puis zoom auto soigné sur l'option. */
+function cloRefresh(section){ window.__cloPriced=true; window.__cloXray=false; window.__cloExtHideNeg=false; CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice(); if(section && typeof cloFocus==='function') cloFocus(section); }
+/* Changement de hauteur = rechargement du glb correspondant, sans reset du reste */
+function cloSetHeight(id){
+  // choisir une hauteur ramène toujours la vue de départ (même si la hauteur est déjà sélectionnée)
+  if(state.pose===id){ window.__cloXray=false; if(typeof heroView==='function') heroView(false); return; }
+  state.pose = id; chosen.hauteur = true; window.__cloPriced=true;
+  window.__cloKeepView=null; window.__cloXray=false;   // vue de base après rechargement
+  if(root){ scene.remove(root); root=null; }
+  CFG_RENDER(); updatePrice();
+  if(typeof __alt!=='undefined' && __alt){ try{ __alt.update(); }catch(e){} }   // variante A : image tout de suite
+  loadModel(glbIdFor(id));   // applyVisibility (CFG_APPLY_VIS) est rappele apres chargement
+}
+
+/* ---- Rendu des options (remplace renderOptions pour la cloture) ---- */
+function CFG_RENDER(){
+  optsEl.innerHTML=''; __stepN=0;
+
+  section('hauteur', function(){
+    var c=document.createElement('div'); c.className='choices cols-3';
+    HAUTEURS.forEach(function(o){
+      c.appendChild(choiceCard(o.label, o.sub, '', state.pose===o.id, function(){ cloSetHeight(o.id); }));
+    });
+    return c;
+  });
+
+  // Encart qualite apres la 1ere etape
+  var gh=document.getElementById('group-hauteur'); if(gh) gh.classList.add('no-sep');
+  optsEl.appendChild(buildQuality());
+
+  section('longueur', function(){
+    var wrap=document.createElement('div');
+    var row=document.createElement('div'); row.className='clo-long';
+    var sel=document.createElement('select'); sel.className='clo-select';
+    sel.style.cssText='width:100%;max-width:220px;padding:13px 14px;font:inherit;font-size:16px;font-weight:600;color:#1E211F;background:#fff;border:1.5px solid var(--cg-line,#e2e5dd);border-radius:12px;cursor:pointer;-webkit-appearance:menulist';
+    for(var m=LONG_MIN;m<=LONG_MAX;m++){
+      var opt=document.createElement('option'); opt.value=m; opt.textContent=m+' m';
+      if(parseInt(state.longueur,10)===m) opt.selected=true; sel.appendChild(opt);
+    }
+    sel.onchange=function(){ state.longueur=parseInt(sel.value,10); chosen.longueur=true; cloRefresh(); };
+    row.appendChild(sel);
+    wrap.appendChild(row);
+    // Transparence longueur impaire : panneaux de 2 m -> longueur recue arrondie + recoupe
+    var Lv=cloLongueur();
+    var recu=cloLongueurFacturee();
+    if(recu!==Lv){
+      var nt=document.createElement('div'); nt.className='reco-box';
+      nt.innerHTML='Les panneaux font 2 m. Pour <b>'+Lv+' m</b>, vous recevez <b>'+recu+' m</b> de panneaux et des <b>traverses de recoupe</b> pour ajuster le dernier panneau à <b>'+Lv+' m</b>.';
+      wrap.appendChild(nt);
+    }
+    // Message recoupe + produit de traitement de coupe (toujours visible)
+    var tc=document.createElement('div'); tc.className='reco-box';
+    tc.innerHTML='Les panneaux sont recoupables en longueur comme en largeur. Si vous effectuez des découpes, pensez à appliquer un <a href="https://cover.green/produit-de-traitement-de-coupe-marron/" target="_blank" rel="noopener" style="color:var(--cg-green-dk);text-decoration:underline">produit de traitement de coupe</a> sur les zones coupées.';
+    wrap.appendChild(tc);
+    return wrap;
+  });
+
+  section('type', function(){
+    var c=document.createElement('div'); c.className='choices cols-2';
+    [['ajouree','Ajourée'],['occultante','Occultante']].forEach(function(o){
+      c.appendChild(choiceCard(o[1],'','', state.type===o[0], function(){
+        state.type=o[0]; chosen.type=true;
+        if(state.type!=='occultante') state.faces='une';
+        cloRefresh('type');
+      }));
+    });
+    return c;
+  });
+
+  if(state.type==='occultante'){
+    section('faces', function(){
+      var c=document.createElement('div'); c.className='choices cols-2';
+      [['une','Une face bois'],['deux','Deux faces bois']].forEach(function(o){
+        c.appendChild(choiceCard(o[1],'','', state.faces===o[0], function(){ state.faces=o[0]; chosen.faces=true; cloRefresh('faces'); }));
+      });
+      return c;
+    });
+  }
+
+  section('poteaux', function(){
+    var c=document.createElement('div'); c.className='choices cols-2';
+    [['sans','Sans poteau'],['avec','Avec poteaux']].forEach(function(o){
+      c.appendChild(choiceCard(o[1],'','', state.poteaux===o[0], function(){
+        state.poteaux=o[0]; chosen.poteaux=true;
+        if(state.poteaux!=='avec') state.support='sans';
+        else if(state.support==='sans') state.support='platines';
+        cloRefresh('poteaux');
+      }));
+    });
+    return c;
+  });
+
+  if(state.poteaux==='avec'){
+    section('support', function(){
+      var c=document.createElement('div'); c.className='choices cols-3';
+      [['sans','Sans support'],['pieux','Pieux pour sol souple'],['platines','Platines pour sol dur']].forEach(function(o){
+        c.appendChild(choiceCard(o[1],'','', state.support===o[0], function(){ state.support=o[0]; chosen.support=true; cloRefresh('support'); }));
+      });
+      return c;
+    });
+  }
+
+  var gs=optsEl.querySelectorAll('.group'); if(gs.length) gs[gs.length-1].classList.add('no-sep');
+  optsEl.appendChild(cloRecap());
+  if(typeof buildSimulator==='function') optsEl.appendChild(buildSimulator());
+  if(typeof buildReassurance==='function') optsEl.appendChild(buildReassurance());
+}
+
+function cloLongueurLabel(){ return cloLongueur()+' m'; }   // longueur réelle seulement (pas de "facturée" : prête à confusion)
+function cloLivraisonLabel(){
+  var sd = (window.CGP_CTX && CGP_CTX.shippingDiscount);
+  var n = parseFloat(String(sd==null?'':sd).replace(/[^0-9.,]/g,'').replace(',','.'));
+  if(!isNaN(n) && n>0) return (computePrice() >= n) ? 'Offerte' : ('Offerte dès '+Math.round(n).toLocaleString('fr-FR')+' €');
+  if(sd) return String(sd);
+  return 'Offerte';
+}
+function cloRecap(){
+  var w=document.createElement('div'); w.className='recap';
+  var rows=[['Hauteur',hLabel(state.pose)],['Longueur',cloLongueurLabel()],['Type',typeLabel()]];
+  if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
+  rows.push(['Poteaux',poteauxLabel()]);
+  if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
+  w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
+    +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
+    +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
+    +(function(){ var ov=CFG_PRICE_TEXT(computePrice()); return `<div class="recap-row total"><span>${ov?'Prix au mètre TTC':'Total TTC'}</span><b>${ov?ov.main:fmtEUR(computePrice())}</b></div>`; })();
   return w;
 }
 
@@ -12496,10 +13056,13 @@ function initStateKeepSize(){ const sz=state.taille; const ps=MANIFEST.perSize[s
   ps.groups.forEach(g=>{ if(g.type==='exclusive')state[g.id]=(g.id==='pieds')?'sans':g.options[0].id; else if(g.type==='onoff')state[g.id]=!!g.defaultOn; else if(g.type==='cumulative')state[g.id]=0; else if(g.type==='panels')state[g.id]=new Set(); });
   if(typeof CFG_INIT_STATE==='function') CFG_INIT_STATE(); }
 function updatePrice(){ const p=computePrice();
-  document.getElementById('totalPrice').textContent=fmtEUR(p);
+  // Produit : prix d'affichage au chargement (ex. prix au mètre = prix du flux Merchant Center), avant toute interaction
+  const ov=(typeof CFG_PRICE_TEXT==='function') ? CFG_PRICE_TEXT(p) : null;
+  document.getElementById('totalPrice').textContent= ov ? ov.main : fmtEUR(p);
   const sp=document.getElementById('splitPay');
-  if(sp) sp.textContent = fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*';
-  try{ applyShipping(p); }catch(e){} }
+  if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*';
+  try{ applyShipping(p); }catch(e){}
+  if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
 
 /* ============================================================================
    SCENE 3D + chargement du .glb embarqué

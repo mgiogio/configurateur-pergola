@@ -12524,10 +12524,13 @@ function initStateKeepSize(){ const sz=state.taille; const ps=MANIFEST.perSize[s
   ps.groups.forEach(g=>{ if(g.type==='exclusive')state[g.id]=(g.id==='pieds')?'sans':g.options[0].id; else if(g.type==='onoff')state[g.id]=!!g.defaultOn; else if(g.type==='cumulative')state[g.id]=0; else if(g.type==='panels')state[g.id]=new Set(); });
   if(typeof CFG_INIT_STATE==='function') CFG_INIT_STATE(); }
 function updatePrice(){ const p=computePrice();
-  document.getElementById('totalPrice').textContent=fmtEUR(p);
+  // Produit : prix d'affichage au chargement (ex. prix au mètre = prix du flux Merchant Center), avant toute interaction
+  const ov=(typeof CFG_PRICE_TEXT==='function') ? CFG_PRICE_TEXT(p) : null;
+  document.getElementById('totalPrice').textContent= ov ? ov.main : fmtEUR(p);
   const sp=document.getElementById('splitPay');
-  if(sp) sp.textContent = fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*';
-  try{ applyShipping(p); }catch(e){} }
+  if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*';
+  try{ applyShipping(p); }catch(e){}
+  if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
 
 /* ============================================================================
    SCENE 3D + chargement du .glb embarqué
