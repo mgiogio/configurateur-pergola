@@ -10194,6 +10194,14 @@ var qrcode = function() {
 .cgp-root .price-block .unit{font-size:12.5px;color:var(--cg-ink-soft);font-weight:500;margin-top:1px}
 .cgp-root .price-block .unit:empty{display:none}
 @media (max-width:880px){.cgp-root .price-block .unit{display:none}}
+
+/* Clôture : sous-question (angles) et contenu du kit */
+.cgp-root .clo-sub-q{font-size:14px;font-weight:600;color:var(--cg-ink);margin:16px 0 8px}
+.cgp-root .clo-kit{background:#f6f8f4;border:1px solid var(--cg-line,#e2e5dd);border-radius:12px;padding:12px 14px;margin:10px 0}
+.cgp-root .clo-kit-h{font-size:13px;font-weight:700;color:var(--cg-ink);margin-bottom:6px}
+.cgp-root .clo-kit ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--cg-ink-soft);line-height:1.6}
+.cgp-root .clo-kit-btn{margin-top:10px;border:1.5px solid var(--cg-green);background:#fff;color:var(--cg-green-dk);font:600 13.5px Roboto,Arial,sans-serif;padding:9px 14px;border-radius:999px;cursor:pointer}
+.cgp-root .clo-kit-btn:hover,.cgp-root .clo-kit-btn:focus{background:var(--cg-green-soft)!important;color:var(--cg-green-dk)!important;border-color:var(--cg-green)!important}
 </style>
 </head>
 <body>
@@ -10386,17 +10394,20 @@ const SECTIONS = {
     arg:{ intro:"La hauteur détermine le nombre de panneaux empilés.", points:[
       ["1,20 m","Pour délimiter sans fermer : jardinet, massif, séparation basse."],
       ["1,80 m","La hauteur la plus demandée : intimité complète côté jardin ou terrasse."],
-      ["2,40 m","Protection maximale, pour couper un vis-à-vis élevé ou le vent."] ] } },
+      ["2,40 m","Protection maximale, pour couper un vis-à-vis élevé ou le vent."],
+      ["Hauteur intermédiaire","Pour 1,60 m ou 2,20 m par exemple, choisissez la hauteur au-dessus et recoupez les panneaux en hauteur (scie sauteuse). Les poteaux de 2,50 m se recoupent aussi. Traitez les coupes avec un produit de traitement."],
+      ["Sur un muret","Choisissez la hauteur à ajouter au-dessus du muret, puis des poteaux avec platines pour sol dur. Le muret doit être plat et large d'au moins 15 cm (socle de la platine)."] ] } },
   longueur:{ title:"Longueur.", q:"Quelle longueur totale ?",
     arg:{ intro:"Indiquez la longueur totale de clôture souhaitée.", points:[
       ["Panneaux de 2 m","La clôture se compose de panneaux de 2 m, assemblés entre poteaux."],
-      ["Longueur impaire","On arrondit au panneau de 2 m supérieur (facturé) ; vous recoupez le dernier panneau à la bonne longueur."],
+      ["Longueur impaire","Vous payez la longueur réelle. Vous recevez des panneaux de 2 m et recoupez le dernier à la bonne longueur."],
       ["Recoupe","Les panneaux se recoupent proprement en longueur, liteau de maintien et traverse de recoupe fournis."],
-      ["Angles","La clôture s'adapte aux angles si votre terrain en comporte."] ] } },
+      ["Angles","En L ou en U, chaque angle demande un poteau d'angle en plus : indiquez vos angles juste en dessous, ils sont ajoutés à votre kit."] ] } },
   type:{ title:"Type de clôture.", q:"Ajourée ou occultante ?",
     arg:{ items:[
-      {t:"Ajourée", img:"", b:"Les lames laissent passer l'air et la lumière, avec un espacement régulier. Idéale pour délimiter en gardant de la transparence."},
-      {t:"Occultante", img:"", b:"Les lames sont jointives : intimité totale, aucun vis-à-vis. Vous pouvez l'habiller sur une ou deux faces."} ] } },
+      {t:"Ajourée", img:"", b:"Les lames laissent passer l'air et la lumière, avec un espacement régulier. Le vent passe au travers : c'est le bon choix en zone très exposée."},
+      {t:"Occultante", img:"", b:"Une membrane occultante (Delta-Fassade, garantie 30 ans) est fixée au dos des lames : aucun vis-à-vis. Vous pouvez ajouter une 2e face bois pour habiller et protéger la membrane côté voisin."},
+      {t:"Et le vent ?", img:"", b:"L'occultante a plus de prise au vent que l'ajourée mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez les poteaux sur platines chevillées dans le béton ou scellez-les."} ] } },
   faces:{ title:"Faces.", q:"Une ou deux faces bois ?",
     arg:{ items:[
       {t:"Une face bois", img:"", b:"Le bois habille la face que vous choisissez ; la structure reste visible de l'autre côté."},
@@ -10404,13 +10415,13 @@ const SECTIONS = {
   poteaux:{ title:"Poteaux.", q:"Avec ou sans poteaux ?",
     arg:{ items:[
       {t:"Avec poteaux", img:"", b:"Les poteaux bois sont fournis : clôture complète et autoportante. Choisissez ensuite la fixation au sol."},
-      {t:"Sans poteau", img:"", b:"Vous réutilisez des poteaux existants (maçonnés, métalliques...). Seuls les panneaux sont fournis."} ] } },
+      {t:"Sans poteau", img:"", b:"Vous fixez les panneaux sur un support existant et solide : poteaux maçonnés, bois ou métal, ou directement plaqués contre un mur (les traverses au dos font un tasseau de 2,5 cm). Fixations adaptées à votre support non fournies. Un grillage n'est pas assez solide."} ] } },
   support:{ title:"Fixation au sol.", q:"Sur quel type de sol ?",
     cta:"Comment choisir ma fixation ?",
     arg:{ items:[
       {t:"Sans support", img:"", b:"Vous posez sur un support existant (muret, longrine) ou scellez vous-même les poteaux."},
       {t:"Pieux pour sol souple", img:"", b:"Des pieux à enfoncer dans la terre : parfait pour un sol meuble, sans béton."},
-      {t:"Platines pour sol dur", img:"", b:"Des platines à cheviller sur dalle, terrasse ou plots béton : pour un sol dur."} ] } }
+      {t:"Platines pour sol dur", img:"", b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } }
 };
 
 /* ============================ PRIX ============================ */
@@ -10446,7 +10457,7 @@ function cloBOM(){
   var occ = (state.type==='occultante') ? pph*R : 0;
   var ajo = (state.type==='ajouree') ? pph*R
           : ((state.type==='occultante' && state.faces==='deux') ? pph*R : 0);
-  var poteaux  = (state.poteaux==='avec') ? R+1 : 0;
+  var poteaux  = (state.poteaux==='avec') ? R+1+(state.angles||0) : 0;   // + 1 poteau d'angle par angle
   var platines = (state.poteaux==='avec' && state.support==='platines') ? poteaux : 0;
   var pieux    = (state.poteaux==='avec' && state.support==='pieux')    ? poteaux : 0;
   var vis      = (state.poteaux==='avec') ? 6*(occ+ajo) : 0;
@@ -10460,12 +10471,12 @@ function cloBOM(){
 
 /* Etat initial (le moteur appelle initState -> CFG_INIT_STATE si defini) */
 /* Sauvegarde : encodage propre à la clôture (lien #cfg=... qui restaure la configuration) */
-function CFG_ENCODE(){ return {p:state.pose, t:state.taille, c:{l:state.longueur, ty:state.type, fa:state.faces, po:state.poteaux, su:state.support}}; }
+function CFG_ENCODE(){ return {p:state.pose, t:state.taille, c:{l:state.longueur, ty:state.type, fa:state.faces, po:state.poteaux, su:state.support, an:state.angles}}; }
 function CFG_INIT_STATE(){
   // restauration depuis un lien sauvegardé (une seule fois)
   if(!window.__cloRestored && typeof RESTORE!=='undefined' && RESTORE && RESTORE.c){
     window.__cloRestored=true; window.__cloPriced=true; var r=RESTORE.c;
-    if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su;
+    if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su; if(r.an!=null) state.angles=parseInt(r.an,10)||0;
     try{ ['hauteur','longueur','type','faces','poteaux','support'].forEach(function(k){ chosen[k]=true; }); }catch(e){}
   }
   if(!PPH[state.pose] || state.pose==='060') state.pose = '120';   // départ 1,20 m comme MKL (prix = flux Merchant Center)
@@ -10474,12 +10485,14 @@ function CFG_INIT_STATE(){
   if(state.faces==null)    state.faces = 'une';
   if(state.poteaux==null)  state.poteaux = 'sans';   // le projet démarre sans poteau
   if(state.support==null)  state.support = 'sans';      // comme MKL : pas de fixation présélectionnée quand on ajoute les poteaux
+  if(state.angles==null)   state.angles = 0;          // 0 = droite, 1 = en L, 2 = en U
 }
 
 /* Libelle clair d'une valeur */
 function hLabel(id){ var o=HAUTEURS.find(x=>x.id===id); return o?o.label:id; }
 function typeLabel(){ return state.type==='occultante'?'Occultante':'Ajourée'; }
 function facesLabel(){ return state.faces==='deux'?'Deux faces bois':'Une face bois'; }
+function cloAnglesLabel(){ return state.angles===2?'2 angles (en U)':(state.angles===1?'1 angle (en L)':'Aucun (droite)'); }
 function poteauxLabel(){ return state.poteaux==='avec'?'Avec poteaux':'Sans poteau'; }
 function supportLabel(){ return {sans:'Sans support',pieux:'Pieux pour sol souple',platines:'Platines pour sol dur'}[state.support]||'Sans support'; }
 
@@ -10513,6 +10526,7 @@ function cloFocus(section){
     var pieux = low && state.poteaux==='avec' && state.support==='pieux';
     window.__cloXray = pieux;                                   // sol translucide : le pieu se voit enfoncé
     window.__cloExtHideNeg = true; cloSyncExt();               // la clôture prolongée masquerait le poteau d'extrémité
+    window.__cloView='end';
     var tgt=new THREE.Vector3(ex+0.15, pieux?0.10:(gy+(low?0.12:0.40)*sz.y), c.z-0.06);
     var cam=pieux ? new THREE.Vector3(ex-1.7, 0.80, c.z+1.75)
           : low   ? new THREE.Vector3(ex-1.05, gy+0.42, c.z+1.05)
@@ -10531,11 +10545,13 @@ function cloFlyTo(to, tt){
 }
 /* Rafraichit options + 3D + prix (sans recharger le glb), puis zoom auto soigné sur l'option. */
 function cloRefresh(section){
-  window.__cloPriced=true;
-  if(section!=='type'){ window.__cloXray=false; window.__cloExtHideNeg=false; }   // type : on garde exactement la vue en cours
+  window.__cloPriced=true; window.__cloExK=0;
+  // type : on garde la vue en cours SI on est de face ; depuis une vue de détail (poteaux, fixations, arrière) on revient de face
+  var backToHero=(section==='type' && window.__cloView && window.__cloView!=='hero');
+  if(section!=='type' || backToHero){ window.__cloXray=false; window.__cloExtHideNeg=false; }
   CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice();
   cloFaceChip();
-  if(section==='longueur'){ if(typeof heroView==='function') heroView(false); return; }   // longueur : retour à la vue de départ
+  if(section==='longueur' || section==='angles' || backToHero){ if(typeof heroView==='function') heroView(false); return; }   // longueur : retour à la vue de départ
   if(section && typeof cloFocus==='function') cloFocus(section);
 }
 /* Changement de hauteur = rechargement du glb correspondant, sans reset du reste */
@@ -10555,11 +10571,14 @@ function CFG_RENDER(){
   optsEl.innerHTML=''; __stepN=0;
 
   section('hauteur', function(){
+    var w2=document.createElement('div');
     var c=document.createElement('div'); c.className='choices cols-3';
     HAUTEURS.forEach(function(o){
       c.appendChild(choiceCard(o.label, o.sub, '', state.pose===o.id, function(){ cloSetHeight(o.id); }));
     });
-    return c;
+    w2.appendChild(c);
+    var hn=document.createElement('div'); hn.className='reco-box'; hn.innerHTML='Besoin de 1,60 m ou 2,20 m ? Prenez la hauteur au-dessus et recoupez en hauteur. <b>Sur un muret</b> : choisissez la hauteur à ajouter au-dessus.'; w2.appendChild(hn);
+    return w2;
   });
 
   // Encart qualite apres la 1ere etape
@@ -10590,6 +10609,13 @@ function CFG_RENDER(){
     var tc=document.createElement('div'); tc.className='reco-box';
     tc.innerHTML='Les panneaux sont recoupables en longueur comme en largeur. Si vous effectuez des découpes, pensez à appliquer un <a href="https://cover.green/produit-de-traitement-de-coupe-marron/" target="_blank" rel="noopener" style="color:var(--cg-green-dk);text-decoration:underline">produit de traitement de coupe</a> sur les zones coupées.';
     wrap.appendChild(tc);
+    // Angles (en L / en U) : un poteau d'angle en plus par angle
+    var ah=document.createElement('div'); ah.className='clo-sub-q'; ah.textContent='Votre clôture fait-elle un angle ?'; wrap.appendChild(ah);
+    var ac=document.createElement('div'); ac.className='choices cols-3';
+    [[0,'Droite','Sans angle'],[1,'En L','1 angle'],[2,'En U','2 angles']].forEach(function(o){
+      ac.appendChild(choiceCard(o[1], o[2], '', (state.angles||0)===o[0], function(){ state.angles=o[0]; chosen.angles=true; cloRefresh('angles'); }));
+    });
+    wrap.appendChild(ac);
     return wrap;
   });
 
@@ -10602,7 +10628,9 @@ function CFG_RENDER(){
         cloRefresh('type');
       }));
     });
-    return c;
+    var w2=document.createElement('div'); w2.appendChild(c);
+    var hn=document.createElement('div'); hn.className='reco-box'; hn.innerHTML='<b>Zone ventée ?</b> L\'ajourée laisse passer le vent. En occultant au-delà de 1,80 m, prévoyez une fixation dans le béton.'; w2.appendChild(hn);
+    return w2;
   });
 
   if(state.type==='occultante'){
@@ -10621,11 +10649,14 @@ function CFG_RENDER(){
       c.appendChild(choiceCard(o[1],'','', state.poteaux===o[0], function(){
         state.poteaux=o[0]; chosen.poteaux=true;
         if(state.poteaux!=='avec') state.support='sans';
-        else if(state.support==='sans') state.support='platines';
         cloRefresh('poteaux');
       }));
     });
-    return c;
+    var w2=document.createElement('div'); w2.appendChild(c);
+    if(state.poteaux==='sans'){
+      var hn=document.createElement('div'); hn.className='reco-box'; hn.innerHTML='<b>Sans poteau</b> : panneaux fixés sur vos poteaux existants ou plaqués contre un mur solide (traverses au dos). Pas sur un grillage, trop fragile.'; w2.appendChild(hn);
+    }
+    return w2;
   });
 
   if(state.poteaux==='avec'){
@@ -10634,7 +10665,13 @@ function CFG_RENDER(){
       [['sans','Sans support'],['pieux','Pieux pour sol souple'],['platines','Platines pour sol dur']].forEach(function(o){
         c.appendChild(choiceCard(o[1],'','', state.support===o[0], function(){ state.support=o[0]; chosen.support=true; cloRefresh('support'); }));
       });
-      return c;
+      var w2=document.createElement('div'); w2.appendChild(c);
+      var hn=document.createElement('div'); hn.className='reco-box';
+      hn.innerHTML= state.support==='platines' ? '<b>Sur un muret</b> : les platines conviennent si le muret est plat et large d\'au moins 15 cm. En zone ventée, chevillez-les dans du béton.'
+                  : state.support==='pieux' ? '<b>Sol meuble</b> : les pieux s\'enfoncent sans béton. En zone très ventée ou au-delà de 1,80 m en occultant, préférez des poteaux scellés.'
+                  : '<b>Sans support</b> : vous scellez vous-même les poteaux de 2,50 m ou les fixez sur un support existant.';
+      w2.appendChild(hn);
+      return w2;
     });
   }
 
@@ -10652,14 +10689,30 @@ function cloLivraisonLabel(){
   if(sd) return String(sd);
   return 'Offerte';
 }
+/* Contenu approximatif du kit (question n°1 des chats) + visuel des panneaux empilés */
+function cloKitHtml(){
+  var b=cloBOM(), L=[];
+  var pan=(b.ajoures||0)+(b.occultants||0);
+  if(b.occultants) L.push(b.occultants+' panneaux occultants 60 × 200 cm');
+  if(b.ajoures) L.push(b.ajoures+' panneaux ajourés 60 × 200 cm'+(b.occultants?' (2e face)':''));
+  if(b.poteaux) L.push(b.poteaux+' poteaux 9 × 9 cm, hauteur 2,50 m');
+  if(b.platines) L.push(b.platines+' platines pour sol dur, goujons d\'ancrage');
+  if(b.pieux) L.push(b.pieux+' pieux pour sol souple');
+  if(b.traverses) L.push(b.traverses+' traverses de recoupe');
+  if(b.vis) L.push('Visserie inox');
+  var btn=(typeof __alt!=='undefined' && __alt) ? '' : '<button type="button" class="clo-kit-btn" onclick="cloExplodeToggle()">Voir comment les panneaux s\'assemblent</button>';
+  return '<div class="clo-kit"><div class="clo-kit-h">Votre kit comprend environ</div><ul>'+L.map(function(x){ return '<li>'+x+'</li>'; }).join('')+'</ul>'+btn+'</div>';
+}
 function cloRecap(){
   var w=document.createElement('div'); w.className='recap';
   var rows=[['Hauteur',hLabel(state.pose)],['Longueur',cloLongueurLabel()],['Type',typeLabel()]];
   if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
   rows.push(['Poteaux',poteauxLabel()]);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
+  if(state.angles) rows.push(['Angles',cloAnglesLabel()]);
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
+    +cloKitHtml()
     +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
     +(function(){ var p=computePrice(), ov=CFG_PRICE_TEXT(p); return `<div class="recap-row total"><span>${ov?'Prix au mètre TTC':'Total TTC'}</span><b>${ov?ov.main:fmtEUR(p)}</b></div>`+(ov?'':`<div class="recap-row"><span></span><span style="font-size:13px;color:var(--cg-ink-soft)">${CFG_PRICE_UNIT(p)}</span></div>`); })();
   return w;
@@ -10758,7 +10811,8 @@ function CFG_APPLY_VIS(){
   var lift = (state.poteaux==='sans') ? 0.02 : 0;
   for(var N=1; N<=4*glbPph; N++){
     var levelOK = Math.floor((N-1)/3) < showLevels;
-    var shown = (N<=mainMax) && levelOK;         // 3 travées principales, niveaux selon hauteur
+    var ang = state.angles||0;
+    var shown = ((N<=mainMax) && levelOK) || (ang>0 && N>mainMax && (N-mainMax-1)<showLevels);   // + retour d'angle (en L / en U)
     setVis('Panneau_'+N+'_Sol', shown);                       // bois (toujours)
     setVis('Visserie Panneaux_'+N+'_Sol', shown);
     // Occultante UNE face : fond noir pour boucher les ajours côté arrière.
@@ -10779,7 +10833,7 @@ function CFG_APPLY_VIS(){
   // Poteaux du run principal (1-4), masque le retour (5-6). 60 cm : poteaux a demi-hauteur.
   var avec = state.poteaux==='avec';
   for(var p=1; p<=6; p++){
-    var pv = avec && p<=4;
+    var pv = avec && (p<=4 || (state.angles||0)>0);   // poteaux 5-6 = retour d'angle
     setVis('Poteau_'+p+'_Sol', pv);
     if(pv) cloScaleY('Poteau_'+p+'_Sol', is60 ? 0.5 : 1);
   }
@@ -10788,12 +10842,14 @@ function CFG_APPLY_VIS(){
   cloSetMany(['Pieux pour sol souple_Sol','Pieux_Sol','Visserie Pieux_Sol'], avec && state.support==='pieux');
   cloSetMany(['Plots Béton_Sol'], false);   // plots béton toujours masqués
   // Retour d'angle + variantes d'angle + etiquettes : masques
-  cloSetMany(['Plots Béton_Angle_5_Sol','Plots Béton_Angle_6_Sol','Pieds_Angle_5_Sol','Pieds_Angle_6_Sol',
-    'Goujons Pieds_Angle_5_Sol','Goujons Pieds_Angle_6_Sol','Visserie Pieds_Angle_5_Sol','Visserie Pieds_Angle_6_Sol',
-    'Pieux_Angle_5_Sol','Pieux_Angle_6_Sol','Visserie Pieux_Angle_5_Sol','Visserie Pieux_Angle_6_Sol',
-    'Côté Extérieur Label_Sol','Côté Jardin Label_Sol'], false);
+  var angOn = avec && (state.angles||0)>0;
+  cloSetMany(['Pieds_Angle_5_Sol','Pieds_Angle_6_Sol','Goujons Pieds_Angle_5_Sol','Goujons Pieds_Angle_6_Sol','Visserie Pieds_Angle_5_Sol','Visserie Pieds_Angle_6_Sol'], angOn && state.support==='platines');
+  cloSetMany(['Pieux_Angle_5_Sol','Pieux_Angle_6_Sol','Visserie Pieux_Angle_5_Sol','Visserie Pieux_Angle_6_Sol'], angOn && state.support==='pieux');
+  cloSetMany(['Plots Béton_Angle_5_Sol','Plots Béton_Angle_6_Sol','Côté Extérieur Label_Sol','Côté Jardin Label_Sol'], false);
 
+  cloApplyExplode();
   cloSyncExt();
+  cloSyncMirror();
   try{ cloFaceChip(); }catch(e){}
   cloUpdateBadge(cloLongueur());
 }
@@ -10838,6 +10894,7 @@ function cloSyncExt(){
       for(var i=0;i<a.children.length && i<b.children.length;i++) sync(a.children[i], b.children[i], false);
     })(p.a, p.b, true);
     if(p.dx<0 && window.__cloExtHideNeg) p.b.visible=false;   // vue poteaux / fixations : on montre le bout de la clôture
+    if((p.dx>0 && (state.angles||0)>=1) || (p.dx<0 && (state.angles||0)>=2)) p.b.visible=false;   // la clôture tourne à l'angle
     p.b.matrix.makeTranslation(off.x,off.y,off.z).multiply(p.a.matrixWorld);
     p.b.matrixWorldNeedsUpdate=true;
   });
@@ -10853,6 +10910,8 @@ var CFG_HERO_POSE = { distK:0.92, dir:[-0.28,1], eyeF:0.46, tgtF:0.40, fitTop:1.
 /* Composition validée (cadre ~1.3) : la clôture traverse toute l'image, les deux bouts hors champ, le haut visible.
    Sur un cadre plus large on garde le même angle et on se rapproche / décale juste ce qu'il faut. */
 function CFG_HERO_ADJUST(to, tt, box, cam){
+  if((state.angles||0)>0){ window.__cloView='hero'; if(window.__cloExtHideNeg){ window.__cloExtHideNeg=false; cloSyncExt(); } return; }
+  window.__cloView='hero';
   if(window.__cloFace!=='front'){ window.__cloFace='front'; try{ cloFaceChip(); }catch(e){} }
   if(window.__cloExtHideNeg){ window.__cloExtHideNeg=false; cloSyncExt(); }   // retour vue de base : clôture prolongée
   var V=THREE.Vector3, s=(to.x<tt.x)?-1:1, zc=(box.min.z+box.max.z)/2, h=box.max.y-box.min.y, gy=box.min.y;
@@ -10961,6 +11020,61 @@ function CFG_DIMS(G, box){
   var f=document.getElementById('fromLine'); if(f) f.innerHTML='À partir de <b style="color:var(--cg-green)">'+mn.toFixed(2).replace('.',',')+'&nbsp;€/m</b> · douglas français';
 })();
 
+/* ---- En U : retour d'angle à gauche = copie en miroir du retour de droite ---- */
+function cloSyncMirror(){
+  if(!root || typeof scene==='undefined') return;
+  var M=window.__cloMir;
+  if(!M || M.src!==root){
+    if(M && M.g && M.g.parent) M.g.parent.remove(M.g);
+    M=window.__cloMir={src:root, g:new THREE.Group(), pairs:[]};
+    M.g.scale.x=-1; M.g.name='cloMirror';
+    root.children.forEach(function(ch){
+      if(/^Sc[eè]ne|Label/i.test(ch.name)) return;
+      var cl=ch.clone(true); M.g.add(cl); M.pairs.push({a:ch,b:cl});
+    });
+    scene.add(M.g);
+  }
+  var on=(state.angles||0)>=2;
+  M.g.visible=on; if(!on) return;
+  M.g.position.copy(root.position);
+  M.pairs.forEach(function(p){
+    (function sync(a,b){
+      var nm=String(a.name).replace(/\s+/g,'_');
+      var isRet=/^(Panneau|Occultant|Panneaux_2ème_Face|Visserie_Panneaux|Visserie_Panneaux_2ème_Face)_(\d+)_Sol$/.exec(nm);
+      var keep=true;
+      if(isRet){ var N=parseInt(isRet[2],10), pph=PPH[GLB_HEIGHT[state.pose]]||3; keep=N>3*pph; }
+      else if(/^Poteau_\d_Sol$/.test(nm)) keep=/^Poteau_[56]_Sol$/.test(nm);
+      else if(/_Sol$/.test(nm) && a.children.length===0 && !/Angle/.test(nm)) keep=false;
+      b.visible=a.visible && keep;
+      b.position.copy(a.position); b.quaternion.copy(a.quaternion); b.scale.copy(a.scale);
+      if(a.material) b.material=a.material;
+      for(var i=0;i<a.children.length && i<b.children.length;i++) sync(a.children[i], b.children[i]);
+    })(p.a, p.b);
+  });
+}
+/* ---- Vue d'assemblage : les panneaux de 60 cm s'écartent pour montrer l'empilement ---- */
+window.__cloExK=0;
+function cloApplyExplode(){
+  if(!root) return; var K=window.__cloExK||0, pph=PPH[GLB_HEIGHT[state.pose]]||3, mainMax=3*pph;
+  var lift=(state.poteaux==='sans')?0.02:0;
+  for(var N=1; N<=4*pph; N++){
+    var lvl=(N<=mainMax)?Math.floor((N-1)/3):(N-mainMax-1);
+    ['Panneau_','Occultant_','Panneaux_2ème_Face_','Visserie Panneaux_','Visserie Panneaux_2ème_Face_'].forEach(function(pre){
+      var o=sceneNode(pre+N+'_Sol'); if(!o) return; if(o.__oy===undefined) o.__oy=o.position.y;
+      o.position.y=o.__oy+(pre.indexOf('Visserie')===0?0:lift)+lvl*0.24*K; });
+  }
+}
+function cloExplodeToggle(){
+  if(!root) return; var to=(window.__cloExK>0.5)?0:1, from=window.__cloExK, t=0, pph=PPH[GLB_HEIGHT[state.pose]]||3;
+  if(to===1){ window.__cloExtHideNeg=false; if(typeof heroView==='function') heroView(false);
+    cloFaceLabel(pph+' panneau'+(pph>1?'x':'')+' de 60 cm empilé'+(pph>1?'s':'')+' par travée de 2 m'); }
+  else cloFaceLabel('');
+  var btn=document.querySelector('.clo-kit-btn'); if(btn) btn.textContent= to? 'Revenir à la clôture montée' : 'Voir comment les panneaux s\'assemblent';
+  (function step(){ t=Math.min(1,t+0.05); var e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    window.__cloExK=from+(to-from)*e; cloApplyExplode(); cloSyncExt(); cloSyncMirror();
+    if(t<1) requestAnimationFrame(step); else if(to===0) cloFaceLabel(''); })();
+}
+
 /* ---- Occultante (une ou deux faces) : rendre explicite le passage avant / arrière ----
    La caméra passe PAR-DESSUS la clôture (on voit qu'on tourne autour), un repère indique la face montrée,
    et deux boutons « Avant / Arrière » permettent de comparer à volonté (comme Recto / Verso sur MKL). */
@@ -10970,7 +11084,7 @@ function cloFaceTurn(side){
   var box=visibleBox(), c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3()), gy=box.min.y;
   var tt=new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), R=Math.max(3.2, sz.y*1.9), dx=-0.30*R, base=0.10;
   var toBack=(side==='back'), from=camera.position.clone(), ft=controls.target.clone(), t=0;
-  window.__cloFace=side; cloFaceChip(); cloFaceLabel(toBack ? 'On passe derrière…' : 'On revient devant…');
+  window.__cloFace=side; window.__cloView=(side==='back')?'back':'hero'; cloFaceChip(); cloFaceLabel(toBack ? 'On passe derrière…' : 'On revient devant…');
   var phi0=toBack?base:Math.PI-base, phi1=toBack?Math.PI-base:base;
   function arc(ph){ return new THREE.Vector3(tt.x+dx, tt.y+R*Math.sin(ph)*0.85, tt.z+R*Math.cos(ph)); }
   if(typeof tween!=='undefined') cancelAnimationFrame(tween);
@@ -11035,6 +11149,7 @@ function CFG_CART_SUMMARY(){
   if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
   rows.push(['Poteaux',poteauxLabel()]);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
+  if(state.angles) rows.push(['Angles',cloAnglesLabel()]);
   return rows;
 }
 

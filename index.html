@@ -10194,6 +10194,14 @@ var qrcode = function() {
 .cgp-root .price-block .unit{font-size:12.5px;color:var(--cg-ink-soft);font-weight:500;margin-top:1px}
 .cgp-root .price-block .unit:empty{display:none}
 @media (max-width:880px){.cgp-root .price-block .unit{display:none}}
+
+/* Clôture : sous-question (angles) et contenu du kit */
+.cgp-root .clo-sub-q{font-size:14px;font-weight:600;color:var(--cg-ink);margin:16px 0 8px}
+.cgp-root .clo-kit{background:#f6f8f4;border:1px solid var(--cg-line,#e2e5dd);border-radius:12px;padding:12px 14px;margin:10px 0}
+.cgp-root .clo-kit-h{font-size:13px;font-weight:700;color:var(--cg-ink);margin-bottom:6px}
+.cgp-root .clo-kit ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--cg-ink-soft);line-height:1.6}
+.cgp-root .clo-kit-btn{margin-top:10px;border:1.5px solid var(--cg-green);background:#fff;color:var(--cg-green-dk);font:600 13.5px Roboto,Arial,sans-serif;padding:9px 14px;border-radius:999px;cursor:pointer}
+.cgp-root .clo-kit-btn:hover,.cgp-root .clo-kit-btn:focus{background:var(--cg-green-soft)!important;color:var(--cg-green-dk)!important;border-color:var(--cg-green)!important}
 </style>
 </head>
 <body>
@@ -11001,12 +11009,13 @@ const SIDES = ['brisevuebioclimatique','rideaubrisevue','rideau'];              
 const QUALITY = {
   head:"Une qualité qui traverse les années.",
   sub:"Des matériaux choisis pour l'extérieur, sans compromis.",
-  tags:["Bois lamellé-collé classe 4","Acier galvanisé thermolaqué","Visserie inox A2"],
+  tags:["Bois lamellé-collé classe 4","Acier galvanisé thermolaqué","Visserie inox A2","Notice interactive 3D"],
   text:"Nos pergolas sont en <b>bois lamellé-collé classe 4</b>, assemblées par des connecteurs haute qualité en <b>acier galvanisé thermolaqué</b>, avec toute la <b>visserie en inox A2</b>.",
   items:[
     {t:"Bois lamellé-collé classe 4", img:"", b:"Des lamelles de bois collées dont les tensions internes se neutralisent : le bois ne vrille pas, ne se fend pas et ne se déforme pas avec le temps, là où le massif finit par travailler. La classe 4 le destine à un usage extérieur exposé, y compris à l'humidité."},
     {t:"Connecteurs en acier galvanisé thermolaqué", img:"", b:"Les jonctions sont assurées par des connecteurs haute qualité : galvanisés pour résister à la corrosion, puis thermolaqués pour une finition durable et contemporaine."},
-    {t:"Visserie en inox A2", img:"", b:"Toute la visserie est en inox A2 : aucune coulure de rouille sur le bois, et une tenue mécanique qui dure."}
+    {t:"Visserie en inox A2", img:"", b:"Toute la visserie est en inox A2 : aucune coulure de rouille sur le bois, et une tenue mécanique qui dure."},
+    {t:"Notice de montage interactive en 3D", img:"", b:"Votre pergola est livrée avec une notice interactive en 3D qui vous guide pièce par pièce, étape après étape."}
   ]
 };
 
