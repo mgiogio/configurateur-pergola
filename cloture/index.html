@@ -10182,7 +10182,9 @@ var qrcode = function() {
 .clo-face-lbl{position:absolute;left:50%;top:58px;transform:translateX(-50%) translateY(-6px);z-index:6;background:rgba(30,33,31,.88);color:#fff;font:600 13.5px Roboto,Arial,sans-serif;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
 .clo-face-lbl.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .cgp-root.cg-alt .clo-face-chip,.cgp-root.cg-alt .clo-face-lbl{display:none!important}
-@media (max-width:880px){.stage:not(.fs) .clo-face-chip{left:auto;right:10px;transform:none}}
+@media (max-width:880px){.stage:not(.fs) .clo-face-chip{left:auto;right:10px;transform:none}
+/* Clôture : badge Longueur en bas à gauche -> l'aide "Toucher pour agrandir" passe en bas à droite (plus de chevauchement) */
+.stage.has-len:not(.fs) .tap-hint{left:auto;right:12px;transform:none;max-width:calc(100% - 160px);white-space:normal;text-align:center;line-height:1.25}}
 
 /* Image instantanée pendant le chargement de la 3D */
 .stage-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:7;transition:opacity .5s;pointer-events:none}
@@ -10323,8 +10325,9 @@ var qrcode = function() {
       <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">1. Placez-vous sur le lieu</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Rendez-vous l&#224; o&#249; vous souhaitez l'installer.</div></div></div>
       <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8"/><path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8"/><path d="M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16"/><path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><circle cx="12" cy="12" r="2.3"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">2. Visez le sol</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Dirigez la cam&#233;ra vers votre terrasse ou jardin, en bougeant doucement.</div></div></div>
       <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5V6a2 2 0 1 1 4 0v5"/><path d="M13 10a2 2 0 0 1 4 0v4.5a5.5 5.5 0 0 1-5.5 5.5H11a5 5 0 0 1-4.2-2.3l-2-3.1a1.6 1.6 0 0 1 2.5-2l1.2 1.4"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">3. Touchez pour poser</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Tapez l'&#233;cran &#224; l'endroit voulu.</div></div></div>
-      <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><path d="m8.5 6.5 3.5-3.5 3.5 3.5M8.5 17.5 12 21l3.5-3.5M6.5 8.5 3 12l3.5 3.5M17.5 8.5 21 12l-3.5 3.5"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">4. Ajustez</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Glissez pour d&#233;placer, pincez pour tourner et redimensionner.</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:11px;background:var(--cg-green-soft);color:var(--cg-green-dk);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><path d="m8.5 6.5 3.5-3.5 3.5 3.5M8.5 17.5 12 21l3.5-3.5M6.5 8.5 3 12l3.5 3.5M17.5 8.5 21 12l-3.5 3.5"/></svg></span><div><div style="font-weight:700;font-size:14px;color:var(--cg-ink)">4. Ajustez</div><div style="font-size:12.5px;color:var(--cg-ink-soft);line-height:1.4">Glissez pour d&#233;placer, tournez avec deux doigts. Elle s'affiche &#224; taille r&#233;elle.</div></div></div>
     </div>
+    <div id="arTutoNote" style="display:none;margin:-2px 0 16px;padding:10px 12px;border-radius:10px;background:var(--cg-green-soft);color:var(--cg-green-dk);font-size:12.5px;line-height:1.45"></div>
     <button class="btn primary" id="arTutoGo" style="width:100%;height:48px">Lancer la visualisation</button>
     <label style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;font-size:12.5px;color:var(--cg-ink-soft);cursor:pointer"><input type="checkbox" id="arTutoSkip"> Ne plus afficher</label>
   </div>
@@ -10584,6 +10587,7 @@ function cloRefresh(section){
   CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice();
   cloFaceChip();
   if(section==='angles') return;   // les angles ne changent pas la 3D : on ne bouge pas la vue
+  if(typeof scheduleAR==='function') scheduleAR();   // l'AR doit refléter la clôture affichée (type, faces, poteaux, fixations)
   if(section==='longueur' || backToHero){ if(typeof heroView==='function') heroView(false); return; }   // longueur : retour à la vue de départ
   if(section && typeof cloFocus==='function') cloFocus(section);
 }
@@ -10732,19 +10736,12 @@ function cloLivraisonLabel(){
 }
 /* Contenu approximatif du kit (question n°1 des chats) + visuel des panneaux empilés */
 function cloKitHtml(){
-  var b=cloBOM(), L=[];
-  var pan=(b.ajoures||0)+(b.occultants||0);
-  if(b.occultants) L.push(b.occultants+' panneaux occultants 60 × 200 cm');
-  if(b.ajoures) L.push(b.ajoures+' panneaux ajourés 60 × 200 cm'+(b.occultants?' (2e face)':''));
-  if(b.poteaux) L.push(b.poteaux+' poteaux 9 × 9 cm, hauteur 2,50 m');
-  if(b.platines) L.push(b.platines+' platines pour sol dur, goujons d\'ancrage');
-  if(b.pieux) L.push(b.pieux+' pieux pour sol souple');
-  if(b.traverses) L.push(b.traverses+' traverses de recoupe');
-  if(b.vis) L.push('Visserie inox');
+  // Retour Manuel : pas de liste de composants (approximative) ; on vend la simplicité du montage + la vue éclatée.
+  // Texte valable avec ou sans poteaux (les poteaux sont choisis plus loin dans le parcours).
   var btn=(typeof __alt!=='undefined' && __alt) ? '' : '<button type="button" class="clo-kit-btn" onclick="cloExplodeToggle()">Voir comment les panneaux s\'assemblent</button>';
   return '<div class="clo-kit"><div class="clo-kit-h">Un montage simplifié au maximum</div>'
-    +'<p class="clo-kit-p">Des panneaux de 60 × 200 cm prêts à poser, que vous empilez entre les poteaux jusqu\'à la hauteur choisie. Votre kit comprend environ :</p>'
-    +'<ul>'+L.map(function(x){ return '<li>'+x+'</li>'; }).join('')+'</ul>'+btn+'</div>';
+    +'<p class="clo-kit-p">Des panneaux de 60 × 200 cm prêts à poser, que vous empilez les uns sur les autres jusqu\'à la hauteur choisie.</p>'
+    +btn+'</div>';
 }
 function cloRecap(){
   var w=document.createElement('div'); w.className='recap';
@@ -11126,11 +11123,28 @@ function cloUpdateBadge(L){
   if(!stage) return;
   var b=document.getElementById('cloLenBadge');
   if(!b){
-    b=document.createElement('div'); b.id='cloLenBadge';
+    b=document.createElement('div'); b.id='cloLenBadge'; stage.classList.add('has-len');
     b.style.cssText='position:absolute;left:12px;bottom:12px;z-index:4;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:700;color:#1E211F;box-shadow:0 2px 9px rgba(0,0,0,.12)';
     stage.appendChild(b);
   }
   b.textContent='Longueur : '+L+' m';
+}
+
+/* ---- Réalité augmentée ----
+   Le modèle AR = le tronçon réel de la 3D (3 travées de 2 m, sans les copies décoratives ni les angles),
+   toujours en position "montée" (vue éclatée annulée le temps de l'export). */
+var CLO_AR_SAMPLE_M = 6;
+function CFG_AR_PREP(){
+  var k=window.__cloExK||0; if(!k) return null;
+  window.__cloExK=0; cloApplyExplode();
+  return function(){ window.__cloExK=k; cloApplyExplode(); };
+}
+function CFG_AR_NOTE(){
+  var L=cloLongueur();
+  return '<b>Vous allez voir un échantillon de '+CLO_AR_SAMPLE_M+' m de clôture droite</b>, sans angle, à taille réelle et avec vos options (hauteur '
+    +hLabel(state.pose)+', '+typeLabel().toLowerCase()+'). '
+    +(function(){ var an=(state.angles && state.poteaux==='avec');
+        return (L!==CLO_AR_SAMPLE_M || an) ? 'Votre commande porte, elle, sur '+L+' m'+(an?' avec '+cloAnglesLabel():'')+'.' : ''; })();
 }
 
 /* ---- Panier ---- */
@@ -11771,6 +11785,7 @@ function loadModel(glbId){
     window.__loaded=true;
     if(typeof CFG_MODEL_IDS!=='undefined' && !window.__prefetchedAll){ window.__prefetchedAll=true; setTimeout(function(){ CFG_MODEL_IDS.forEach(function(id){ try{ fetchGlb(id); }catch(e){} }); }, 2500); }
     if(window.__posterEl){ var __pe=window.__posterEl; window.__posterEl=null; __pe.classList.add('hide'); stage.classList.remove('has-poster'); setTimeout(function(){ __pe.remove(); },600); }
+    __mvDirty=true;   // nouveau modèle (pose / hauteur) : l'AR déjà préparé n'est plus le bon
     if(isHandheld()){ setTimeout(prepareAR,4000); if(/[#&]ar=1/.test(location.hash)){ setTimeout(function(){ try{launchAR();}catch(e){} }, 1100); } }
     }catch(e){ __status('Erreur après chargement :\n'+e.message,true); console.error(e); }
    },err=>{ clearTimeout(watchdog); __status('Erreur de parsing GLTF :\n'+(err&&(err.message||err)),true); console.error('GLTF parse error:',err); });
@@ -12005,6 +12020,8 @@ function prepareAR(){
     try{
       var __walls=[];
       if(state.pose==='murale'){ root.traverse(function(o){ if(o.visible && o.name && o.name.indexOf('_BASE_Mur')>-1){ o.visible=false; __walls.push(o); } }); }
+      // état "monté" pour l'AR (ex. clôture : vue éclatée annulée le temps de l'export), restauré juste après
+      var __arUndo=(typeof CFG_AR_PREP==='function') ? CFG_AR_PREP() : null;
       new THREE.GLTFExporter().parse(root, glb=>{
         const mv=document.getElementById('mv');
         const url=URL.createObjectURL(new Blob([glb],{type:'model/gltf-binary'}));
@@ -12016,6 +12033,7 @@ function prepareAR(){
         setTimeout(()=>{ if(!__mvReady){ __mvReady=true; res(true); } }, 4000);
       }, {binary:true, onlyVisible:true});
       __walls.forEach(function(o){ o.visible=true; });  // mur remasqué pour l'AR seulement
+      if(typeof __arUndo==='function') __arUndo();
     }catch(e){ res(false); }
   }); }).catch(()=>false);
 }
@@ -12023,7 +12041,7 @@ function scheduleAR(){ __mvDirty=true; if(isHandheld()){ clearTimeout(__arTimer)
 function arStatus(){
   const mv=document.getElementById('mv'); const el=document.getElementById('arOvStatus'); const btn=document.getElementById('mvArBtn'); if(!el) return;
   const can = mv && mv.canActivateAR;
-  if(can){ el.textContent='Touchez « Voir en réalité augmentée » pour placer la pergola dans votre jardin.'; return; }
+  if(can){ el.textContent='Touchez « Voir en réalité augmentée » pour placer la '+CFG_NOUN+' dans votre jardin.'; return; }
   var srcv = mv && (mv.src || mv.getAttribute('src'));
   el.textContent = 'Diag  composant:'+(customElements.get('model-viewer')?'OK':'NON')
     +'  source:'+(srcv?'OK':'NON')
@@ -12047,7 +12065,9 @@ function launchAR(){
   var skip=false; try{ skip=localStorage.getItem('cgp_arTuto')==='1'; }catch(e){}
   if(skip){ doLaunchAR(); return; }
   var m=document.getElementById('arTuto');
-  if(m){ var sk=document.getElementById('arTutoSkip'); if(sk) sk.checked=false; var tt=document.getElementById('arTutoTitle'); if(tt) tt.textContent='Voir votre '+CFG_NOUN+' chez vous'; m.classList.add('show'); }
+  if(m){ var sk=document.getElementById('arTutoSkip'); if(sk) sk.checked=false; var tt=document.getElementById('arTutoTitle'); if(tt) tt.textContent='Voir votre '+CFG_NOUN+' chez vous';
+    var nt=document.getElementById('arTutoNote'); if(nt){ var h=(typeof CFG_AR_NOTE==='function') ? CFG_AR_NOTE() : ''; nt.innerHTML=h||''; nt.style.display=h?'':'none'; }
+    m.classList.add('show'); }
   else doLaunchAR();
 }
 function doLaunchAR(){
@@ -12358,25 +12378,35 @@ let __stickT; window.addEventListener('scroll',function(){ clearTimeout(__stickT
 /* Mobile : quand l'image est collée en haut, l'en-tête collant du thème est masqué (l'image « passe devant »)
    pour laisser toute la place au configurateur ; il réapparaît dès qu'on remonte au-dessus du configurateur.
    (On ne peut pas simplement passer au-dessus en z-index : les conteneurs Elementor créent leur propre empilement.) */
-var __hdrHidden=[], __hdrRaf=0;
+var __hdrHidden=[], __hdrRaf=0, __hdrT1=0, __hdrT2=0;
 function __mobileHeader(){
   __hdrRaf=0;
   var col=document.querySelector('#cgpRoot .stage-col'), root=document.getElementById('cgpRoot');
   var stuck=false;
   if(col && root && isMobile() && !fsOpen){ var r=col.getBoundingClientRect(), rr=root.getBoundingClientRect(); stuck = r.top<=1 && rr.top<0 && rr.bottom>r.height+40; }
-  if(stuck && !__hdrHidden.length){
+  if(stuck){
+    // on rescane à chaque fois : l'en-tête du thème peut devenir "fixe" APRÈS notre passage (son script tourne
+    // dans la même frame que le nôtre) -> sans ce rescan il restait affiché par-dessus l'image quand on s'arrête
     document.querySelectorAll('header,[class*="header"],[class*="sticky"],[class*="fixed"]').forEach(function(el){
-      if(el.closest('.cgp-root')) return; var cs=getComputedStyle(el), b=el.getBoundingClientRect();
+      if(el.closest('.cgp-root')) return;
+      for(var i=0;i<__hdrHidden.length;i++){ if(__hdrHidden[i][0]===el) return; }
+      var cs=getComputedStyle(el), b=el.getBoundingClientRect();
       if((cs.position==='fixed'||cs.position==='sticky') && b.top<=2 && b.bottom>0 && el.offsetHeight>20 && el.offsetHeight<220 && b.width>window.innerWidth*0.6){
-        __hdrHidden.push([el, el.style.visibility]); el.style.visibility='hidden'; }
+        __hdrHidden.push([el, el.style.visibility]); }
     });
-  } else if(!stuck && __hdrHidden.length){
+    __hdrHidden.forEach(function(x){ if(x[0].style.visibility!=='hidden') x[0].style.visibility='hidden'; });   // le thème peut le ré-afficher
+  } else if(__hdrHidden.length){
     __hdrHidden.forEach(function(x){ x[0].style.visibility=x[1]; }); __hdrHidden=[];
-  } else if(stuck){
-    __hdrHidden.forEach(function(x){ x[0].style.visibility='hidden'; });   // le thème peut le ré-afficher en remontant
   }
 }
-window.addEventListener('scroll',function(){ if(!__hdrRaf) __hdrRaf=requestAnimationFrame(__mobileHeader); }, {passive:true});
+function __hdrSchedule(){
+  if(!__hdrRaf) __hdrRaf=requestAnimationFrame(__mobileHeader);
+  // contrôles "de fin de défilement" : rattrapent l'en-tête du thème qui se fixe après notre passage
+  clearTimeout(__hdrT1); clearTimeout(__hdrT2);
+  __hdrT1=setTimeout(__mobileHeader,90); __hdrT2=setTimeout(__mobileHeader,450);
+}
+window.addEventListener('scroll', __hdrSchedule, {passive:true});
+window.addEventListener('resize', __hdrSchedule);
 /* (AR mobile : préparé 4 s après l'affichage du modèle, voir loadModel) */
 setTimeout(function(){ if(typeof renderer!=='undefined'&&renderer){ onResize(); heroView(true); } },350);
 window.addEventListener('load',function(){ if(typeof renderer!=='undefined'&&renderer){ onResize(); heroView(true); } });
