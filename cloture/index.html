@@ -10182,6 +10182,7 @@ var qrcode = function() {
 .clo-face-lbl{position:absolute;left:50%;top:58px;transform:translateX(-50%) translateY(-6px);z-index:6;background:rgba(30,33,31,.88);color:#fff;font:600 13.5px Roboto,Arial,sans-serif;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
 .clo-face-lbl.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .cgp-root.cg-alt .clo-face-chip,.cgp-root.cg-alt .clo-face-lbl{display:none!important}
+@media (max-width:480px){#delivLine{padding:6px 11px!important}}
 @media (max-width:880px){.stage:not(.fs) .clo-face-chip{left:auto;right:10px;transform:none}
 /* Clôture : badge Longueur en bas à gauche -> l'aide "Toucher pour agrandir" passe en bas à droite (plus de chevauchement) */
 .stage.has-len:not(.fs) .tap-hint{left:auto;right:12px;transform:none;max-width:calc(100% - 160px);white-space:normal;text-align:center;line-height:1.25}}
@@ -10259,8 +10260,8 @@ var qrcode = function() {
     <div class="product-head">
       <h1 id="cgTitle">Pergola bois <span style="color:var(--cg-green)">sur mesure</span></h1>
       <div class="rating" id="cgRating"><span class="stars">★★★★★</span> <b>4,9</b> <a href="#reviews">128 avis</a> <span class="rating-ph">(note WooCommerce)</span></div>
-      <div class="from" id="fromLine">À partir de <b style="color:var(--cg-green)">1&nbsp;119,15&nbsp;€</b> · lamellé-collé français</div>
-      <div id="delivLine" style="display:none;margin-top:9px;font-size:13.5px;font-weight:700;color:#037d00;background:#EAF7E5;border-radius:999px;padding:7px 14px;width:fit-content"></div>
+      <div class="from" id="fromLine">À partir de <b style="color:var(--cg-green)">1&nbsp;119,15&nbsp;€</b> en lamellé-collé français</div>
+      <div id="delivLine" style="display:none;margin-top:9px;font-size:13.5px;font-weight:700;color:#037d00;background:#EAF7E5;border-radius:999px;padding:7px 14px;width:fit-content;max-width:100%;white-space:nowrap;overflow:hidden"></div>
     </div>
     <div class="stories-title">Témoignages clients</div>
     <div class="stories" id="stories"></div>
@@ -10269,7 +10270,7 @@ var qrcode = function() {
 </div>
 
 <div class="footbar"><div class="wrap">
-  <div class="price-block"><div class="lbl" id="shipLbl">Total TTC · Livraison offerte</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div><div class="unit" id="unitPrice"></div></div>
+  <div class="price-block"><div class="lbl" id="shipLbl">Total TTC</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div><div class="unit" id="unitPrice"></div></div>
   <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Sauver</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
@@ -11058,7 +11059,7 @@ function CFG_DIMS(G, box){
   var t=document.getElementById('cgTitle'); if(t) t.innerHTML='Clôture bois <span style="color:var(--cg-green)">en kit</span>';
   // prix plancher calculé sur les hauteurs réellement proposées (0,60 m retiré -> 1,20 m ajourée, sans option)
   var mn=Math.min.apply(null, HAUTEURS.map(function(h){ return H_CALC[h.id]; }));
-  var f=document.getElementById('fromLine'); if(f) f.innerHTML='À partir de <b style="color:var(--cg-green)">'+mn.toFixed(2).replace('.',',')+'&nbsp;€/m</b> · douglas français';
+  var f=document.getElementById('fromLine'); if(f) f.innerHTML='À partir de <b style="color:var(--cg-green)">'+mn.toFixed(2).replace('.',',')+'&nbsp;€/m</b> en douglas français';
 })();
 
 /* Quitter la vue « bout de clôture » (poteaux / fixations) : on rend la clôture prolongée et le sol normal */
@@ -11276,7 +11277,7 @@ var CFG_AB_ALT = {
 
 function __status(msg,err){var l=document.getElementById('loader'); if(!l)return; if(window.__swap && !err) return; l.style.display='grid'; l.classList.toggle('err',!!err);
   l.innerHTML=(err?'<div style="max-width:88%;color:#a33;font-size:13px;white-space:pre-wrap;text-align:left">':'<div><div class="spin"></div>')+msg+'</div>';}
-__status('THREE='+(typeof THREE)+' · GLTFLoader='+(typeof (window.THREE&&THREE.GLTFLoader))+' · Meshopt='+(typeof window.MeshoptDecoder));
+__status('THREE='+(typeof THREE)+' - GLTFLoader='+(typeof (window.THREE&&THREE.GLTFLoader))+' - Meshopt='+(typeof window.MeshoptDecoder));
 
 /* Surcoûts placeholders (à confirmer côté Woo) */
 /* Tarifs exacts (export MKL : 21424 autoportante / 21969 murale) */
@@ -11340,12 +11341,22 @@ function shipInfo(total){
   const t=/^livraison/i.test(raw)?raw:('Livraison '+raw);            // champ texte : repris mot pour mot
   return {line:t, recap:raw.charAt(0).toUpperCase()+raw.slice(1), lbl:t, rz:t, del:del};
 }
+/* Texte sur une seule ligne : on réduit la police juste ce qu'il faut (petits écrans), jamais sous 10,5 px */
+function fitOneLine(el){
+  try{
+    el.style.fontSize=''; var max=el.parentElement ? el.parentElement.clientWidth : 0; if(!max) return;
+    var fs=parseFloat(getComputedStyle(el).fontSize)||13.5;
+    while(el.scrollWidth>max && fs>10.5){ fs-=0.5; el.style.fontSize=fs+'px'; }
+  }catch(e){}
+}
+window.addEventListener('resize', function(){ var d=document.getElementById('delivLine'); if(d && d.style.display!=='none') fitOneLine(d); });
 /* Met à jour tous les affichages livraison (bandeau, barre prix, réassurance, récap) */
 function applyShipping(total){
   const s=shipInfo(total);
   const dl=document.getElementById('delivLine');
-  if(dl){ dl.innerHTML=(s.line?s.line+' · expédiée sous ':'Expédiée sous ')+'<b>'+s.del+'</b>'; dl.style.display='inline-block'; }
-  const lb=document.getElementById('shipLbl'); if(lb) lb.textContent='Total TTC'+(s.lbl?' · '+s.lbl:'');
+  // Une seule ligne, sans point médian (retour Manuel) : « Livraison offerte à partir de 2 000€ sous 5 à 8 jours ouvrés »
+  if(dl){ dl.innerHTML=(s.line?s.line+' sous ':'Expédiée sous ')+'<b>'+s.del+'</b>'; dl.style.display='inline-block'; fitOneLine(dl); }
+  const lb=document.getElementById('shipLbl'); if(lb) lb.textContent='Total TTC'+(s.lbl?' - '+s.lbl.charAt(0).toLowerCase()+s.lbl.slice(1):'');
   document.querySelectorAll('.rz-ship-t').forEach(e=>e.textContent=s.rz||'Expédition rapide');
   document.querySelectorAll('.ship-recap').forEach(e=>{ e.textContent=s.recap; const row=e.closest('.recap-row'); if(row) row.style.display=s.recap?'':'none'; });
 }
@@ -11448,8 +11459,8 @@ const SIM_PLANS=[{n:3,free:true},{n:4,free:true},{n:12},{n:24},{n:36}];
 let simN=36;
 function financedMonthly(P,n,apr){ const i=apr/12; return P*i/(1-Math.pow(1+i,-n)); }
 function simDetail(P,p){
-  if(p.free){ return `${p.n}× <b>${fmtEUR(P/p.n)}</b> · sans frais`; }
-  return `${p.n}× <b>${fmtEUR(financedMonthly(P,p.n,SIM_APR))}/mois</b> · TAEG 9,9%`;
+  if(p.free){ return `${p.n}× <b>${fmtEUR(P/p.n)}</b> sans frais`; }
+  return `${p.n}× <b>${fmtEUR(financedMonthly(P,p.n,SIM_APR))}/mois</b>, TAEG 9,9 %`;
 }
 function buildSimulator(){
   if(!SIM_PLANS.some(p=>p.n===simN)) simN=36;
@@ -11646,7 +11657,7 @@ function updatePrice(){ const p=computePrice();
   // Produit : prix unitaire sous le total (ex. clôture « soit 70,63 €/m ») ; sur mobile, à côté de la mensualité
   const unit=(!ov && typeof CFG_PRICE_UNIT==='function') ? CFG_PRICE_UNIT(p) : '';
   const up=document.getElementById('unitPrice'); if(up) up.textContent=unit;
-  if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*'+((unit && isMobile())?' · '+unit.replace(/^soit /,''):'');
+  if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*'+((unit && isMobile())?' - '+unit.replace(/^soit /,''):'');
   try{ applyShipping(p); }catch(e){}
   if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
 
@@ -12344,7 +12355,7 @@ function __abPreviewBar(){
   var cur=AB?AB.v:'B', col=document.querySelector('.cgp-root .stage-col'); if(!col) return;
   var bar=document.createElement('div'); bar.className='ab-recette';
   var lab=CFG_AB.labels||{};
-  bar.innerHTML='<span>Recette A/B'+(CTX.ab?' · test actif':' · test inactif')+'</span>'+
+  bar.innerHTML='<span>Recette A/B'+(CTX.ab?' - test actif':' - test inactif')+'</span>'+
     ['A','B'].map(function(v){ return '<button data-v="'+v+'" class="'+(cur===v?'on':'')+'">'+v+' - '+(v==='A'?'Visuels MKL':'3D')+'</button>'; }).join('');
   bar.querySelectorAll('button').forEach(function(b){ b.onclick=function(){
     var u=new URL(location.href); u.searchParams.set('cgab', b.getAttribute('data-v')); location.href=u.toString(); }; });
@@ -12375,7 +12386,7 @@ function __cfgBackInit(pr){
     var below = root.getBoundingClientRect().bottom < 0;          // on est descendu sous le configurateur
     var show = !fbVisible && below && !fsOpen;
     if(show){ var l=document.getElementById('shipLbl'), t=document.getElementById('totalPrice');
-      document.getElementById('cbL').textContent = l ? l.textContent.split('·')[0].trim() : 'Total TTC';
+      document.getElementById('cbL').textContent = l ? l.textContent.split(' - ')[0].trim() : 'Total TTC';
       document.getElementById('cbP').textContent = t ? t.textContent : ''; }
     bar.classList.toggle('show', show); bar.setAttribute('aria-hidden', show?'false':'true');
     document.getElementById('cbGo').tabIndex = show ? 0 : -1;
