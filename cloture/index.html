@@ -10116,6 +10116,8 @@ var qrcode = function() {
 .alt-vis .alt-dims.on{display:block}
 .alt-vis .alt-dims b{color:#0b6b00}
 .alt-vis .alt-dims div{padding:2px 0}
+.alt-dims .clo-tech-h{font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#0b6b00;margin-bottom:4px}
+.clo-tech{top:12px;bottom:auto;left:12px;max-width:min(330px,calc(100% - 80px))}
 .stage.fs .alt-vis{background:#f3f4f2}
 @media (max-width:880px){.stage:not(.fs) .alt-vis .alt-views{left:auto;right:10px;transform:none}}
 
@@ -10293,7 +10295,7 @@ var qrcode = function() {
   <div class="qr-card">
     <button class="qr-close" id="qrClose">✕</button>
     <h3>Voir dans votre jardin (AR)</h3>
-    <p>La réalité augmentée fonctionne sur smartphone. Scannez ce QR code avec l'appareil photo de votre téléphone pour ouvrir la pergola en AR.</p>
+    <p id="qrTxt">La réalité augmentée fonctionne sur smartphone. Scannez ce QR code avec l'appareil photo de votre téléphone pour voir votre configuration chez vous.</p>
     <div class="qr-img" id="qrImg"></div>
     <div class="qr-url" id="qrUrl"></div>
     <div class="qr-note" id="qrNote"></div>
@@ -10361,6 +10363,9 @@ const H_CALC   = { '060':23.545, '120':47.09, '180':70.63, '240':94.18 };// prix
 const OCC_CALC = { '060':5.535, '120':11.07, '180':16.61, '240':22.15 }; // surprix occultant/m selon hauteur (5.535/panneau)
 const SUP_CALC = { 'sans':0, 'pieux':10.20, 'platines':14.63 };
 const POT_CALC = { 'sans':0, 'avec':32.95 };
+/* Angles (décision Manuel 06/11) : chaque angle ajoute 1 poteau + 1 pied (platine ou pieu) si une fixation est choisie,
+   facturés au prix catalogue TTC des pièces (poteau 0200-00030, platine 0300-00268, pieu 0300-00267). */
+const ANGLE_CALC = { poteau:59.10, platines:20.67, pieux:11.20, sans:0 };
 /* glb reel utilise pour chaque hauteur : le 60 cm reutilise le glb 1,20 m en n'affichant qu'un niveau */
 const GLB_HEIGHT = { '060':'120', '120':'120', '180':'180', '240':'240' };
 
@@ -10417,7 +10422,7 @@ const CFG_NOUN = (window.CGP_CTX && CGP_CTX.noun) ? String(CGP_CTX.noun) : 'clô
 const QUALITY = {
   tags:["Douglas français","Panneaux de 60 cm","Visserie inox"],
   items:[
-    {t:"Douglas français", img:"", b:"Les lames sont en douglas français, un bois naturellement durable pour l'extérieur, sans traitement chimique lourd."},
+    {t:"Douglas français", img:"", b:"Les lames sont en douglas issu de forêts françaises, une essence naturellement durable en extérieur. Lames de 4,7 × 2,5 cm, panneaux de 5 cm d'épaisseur."},
     {t:"Panneaux de 60 cm", img:"", b:"La clôture est livrée en panneaux de 60 cm de haut que vous assemblez les uns sur les autres jusqu'à la hauteur choisie."},
     {t:"Visserie inox", img:"", b:"Toute la visserie est en inox : aucune coulure de rouille sur le bois, une tenue qui dure dans le temps."}
   ]
@@ -10429,7 +10434,7 @@ const SECTIONS = {
     desc:"Hauteur hors poteau, assemblée par panneaux de 60 cm.",
     arg:{ intro:"La hauteur détermine le nombre de panneaux empilés.", points:[
       ["1,20 m","Pour délimiter sans fermer : jardinet, massif, séparation basse."],
-      ["1,80 m","La hauteur la plus demandée : intimité complète côté jardin ou terrasse."],
+      ["1,80 m","La hauteur standard pour l'intimité côté jardin ou terrasse."],
       ["2,40 m","Protection maximale, pour couper un vis-à-vis élevé ou le vent."],
       ["Hauteur intermédiaire","Pour 1,60 m ou 2,20 m par exemple, choisissez la hauteur au-dessus et recoupez les panneaux en hauteur (scie sauteuse). Les poteaux de 2,50 m se recoupent aussi. Traitez les coupes avec un produit de traitement."],
       ["Sur un muret","Choisissez la hauteur à ajouter au-dessus du muret, puis des poteaux avec platines pour sol dur. Le muret doit être plat et large d'au moins 15 cm (socle de la platine)."] ] } },
@@ -10438,24 +10443,24 @@ const SECTIONS = {
       ["Panneaux de 2 m","La clôture se compose de panneaux de 2 m, assemblés entre poteaux."],
       ["Longueur impaire","Vous payez la longueur réelle. Vous recevez des panneaux de 2 m et recoupez le dernier à la bonne longueur."],
       ["Recoupe","Les panneaux se recoupent proprement en longueur, liteau de maintien et traverse de recoupe fournis."],
-      ["Angles","La clôture s'adapte aux angles : si vous prenez les poteaux, indiquez le nombre d'angles à l'étape Poteaux, nous ajoutons un poteau par angle."] ] } },
+      ["Angles","La clôture s'adapte aux angles : si vous prenez les poteaux, indiquez le nombre d'angles à l'étape Poteaux. Chaque angle ajoute 1 poteau (59,10 €) et son pied si vous choisissez une fixation au sol."] ] } },
   type:{ title:"Type de clôture.", q:"Ajourée ou occultante ?",
     arg:{ items:[
-      {t:"Ajourée", img:"", b:"Les lames laissent passer l'air et la lumière, avec un espacement régulier. Le vent passe au travers : c'est le bon choix en zone très exposée."},
+      {t:"Ajourée", img:"", b:"Les lames (4,7 × 2,5 cm) sont espacées de 2 cm : l'air et la lumière passent. Le vent aussi : c'est le bon choix en zone très exposée."},
       {t:"Occultante", img:"", b:"Une membrane occultante (Delta-Fassade, garantie 30 ans) est fixée au dos des lames : aucun vis-à-vis. Vous pouvez ajouter une 2e face bois pour habiller et protéger la membrane côté voisin."},
       {t:"Et le vent ?", img:"", b:"L'occultante a plus de prise au vent que l'ajourée mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez la clôture dans le béton : platines chevillées dans le béton, ou pieux enfoncés directement dans du béton frais."} ] } },
   faces:{ title:"Faces.", q:"Une ou deux faces bois ?",
     arg:{ items:[
-      {t:"Une face bois", img:"", b:"Le bois habille la face que vous choisissez ; la structure reste visible de l'autre côté."},
-      {t:"Deux faces bois", img:"", b:"Le bois habille les deux faces : même rendu côté jardin et côté voisin, sans montant apparent."} ] } },
+      {t:"Une face bois", img:"", b:"Le bois habille votre côté. Côté voisin, on voit la membrane noire et les traverses de maintien."},
+      {t:"Deux faces bois", img:"", b:"Le bois habille les deux côtés : même rendu côté jardin et côté voisin, et la membrane est protégée entre les deux faces."} ] } },
   poteaux:{ title:"Poteaux.", q:"Avec ou sans poteaux ?",
     arg:{ items:[
-      {t:"Avec poteaux", img:"", b:"Les poteaux sont fournis, en <b>bois lamellé-collé</b> classe 4 (section 9 × 9 cm) : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Clôture complète et autoportante. Choisissez ensuite la fixation au sol."},
+      {t:"Avec poteaux", img:"", b:"Les poteaux sont fournis, en <b>bois lamellé-collé</b> classe 4 (section 9 × 9 cm) : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Hauteur 2,50 m, à recouper à la hauteur de votre clôture. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
       {t:"Sans poteau", img:"", b:"Vous fixez les panneaux sur un support existant et solide : poteaux maçonnés, bois ou métal, ou directement plaqués contre un mur (les traverses au dos font un tasseau de 2,5 cm). Fixations adaptées à votre support non fournies. Un grillage n'est pas assez solide."} ] } },
   support:{ title:"Fixation au sol.", q:"Sur quel type de sol ?",
     cta:"Comment choisir ma fixation ?",
     arg:{ items:[
-      {t:"Sans support", img:"", b:"Vous posez sur un support existant (muret, longrine) ou scellez vous-même les poteaux."},
+      {t:"Sans support", img:"", b:"Vous fixez les poteaux vous-même, par exemple en les scellant dans des trous remplis de béton. Sur un muret ou une dalle, préférez les platines pour sol dur."},
       {t:"Pieux pour sol souple", img:"", b:"Des pieux à enfoncer dans la terre : parfait pour un sol meuble, sans béton. Pour plus de tenue (zone ventée, grande hauteur), ils peuvent être scellés en les enfonçant directement dans du béton."},
       {t:"Platines pour sol dur", img:"", b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } }
 };
@@ -10486,7 +10491,8 @@ function computePrice(){
   var faces = (state.type==='occultante' && state.faces==='deux') ? 1 : 0;
   var coeff = H_CALC[h] + SUP_CALC[supportEff()] + POT_CALC[state.poteaux]
             + H_CALC[h]*faces + OCC_CALC[h]*occ;
-  return Math.round(coeff * Lpaid * 100) / 100;
+  var ang = (state.poteaux==='avec') ? (state.angles||0) : 0;
+  return Math.round((coeff * Lpaid + ang * (ANGLE_CALC.poteau + ANGLE_CALC[supportEff()])) * 100) / 100;
 }
 
 /* ======================= NOMENCLATURE (BOM) ======================= */
@@ -10701,7 +10707,7 @@ function CFG_RENDER(){
       // Angles : nombre total d'angles de la clôture ; chaque angle ajoute un poteau (et sa fixation) au kit
       var an=document.createElement('div'); an.className='clo-angles';
       var na=state.angles||0;
-      an.innerHTML='<span class="clo-angles-l">Nombre d\'angles<small>Votre clôture fait un angle ? Indiquez combien : nous ajoutons 1 poteau par angle</small></span>'
+      an.innerHTML='<span class="clo-angles-l">Nombre d\'angles<small>Votre clôture fait un angle ? Indiquez combien : chaque angle ajoute 1 poteau (59,10 €) et son pied si vous choisissez une fixation au sol</small></span>'
         +'<span class="clo-step"><button type="button" data-d="-1" aria-label="Un angle de moins">−</button><b>'+na+'</b><button type="button" data-d="1" aria-label="Un angle de plus">+</button></span>';
       an.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ var v=Math.max(0,Math.min(cloAnglesMax(),(state.angles||0)+parseInt(b.getAttribute('data-d'),10))); if(v===(state.angles||0)) return; state.angles=v; chosen.angles=true; cloRefresh('angles'); }; });
       w2.appendChild(an);
@@ -10756,7 +10762,7 @@ function cloRecap(){
   var w=document.createElement('div'); w.className='recap';
   var rows=[['Hauteur',hLabel(state.pose)],['Longueur',cloLongueurLabel()],['Type',typeLabel()]];
   if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
-  rows.push(['Poteaux',poteauxLabel()]);
+  rows.push(['Poteaux', state.poteaux==='avec' ? poteauxLabel() : 'Sans poteau (non fournis)']);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
   if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3>'
@@ -11042,6 +11048,29 @@ function CFG_SCENE_READY(){
    section des poteaux. Le moteur fournit dimLabel / dimLine et le bouton. */
 var CFG_DIMS_COLOR = 0x9be37f;   // cotes vert clair : lisibles sur le fond vert foncé
 var CFG_DIMS_VIEW = { dir:[-0.12,0.22,1], zoom:1.32, tgtF:0.55 };   // vue de face d'ensemble
+/* « Mesures » = la fiche technique que les clients réclament dans le chat (analyse Crisp, clôture) :
+   hauteur des poteaux (~310 demandes), dimensions / épaisseur des panneaux (~350 / ~150), section 9 × 9 (~260),
+   espace entre les lames, socle des platines. Valeurs = réponses données par l'équipe dans le chat.
+   La hauteur et la longueur choisies ne sont plus répétées (déjà dans les options et le badge Longueur). */
+function cloTechRows(){
+  var pph=PPH[state.pose]||3, r=[];
+  r.push(['Hauteur', hLabel(state.pose)+' ('+pph+' panneaux de 60 cm)']);
+  r.push(['Panneau', '200 × 60 cm, 5 cm d\'épaisseur']);
+  r.push(['Lames douglas', '4,7 × 2,5 cm']);
+  if(state.type==='ajouree') r.push(['Espace entre lames', '2 cm']);
+  else r.push(['Occultation', 'membrane au dos des lames']);
+  if(state.poteaux==='avec'){
+    r.push(['Poteaux', '9 × 9 cm, 2,50 m à recouper']);
+    if(state.support==='platines') r.push(['Platine', 'socle 15 × 15 cm']);
+  }
+  return r;
+}
+function cloTechHtml(){ return '<div class="clo-tech-h">Fiche technique</div>'+cloTechRows().map(function(x){ return '<div>'+x[0]+' : <b>'+x[1]+'</b></div>'; }).join(''); }
+function CFG_DIMS_PANEL(on){
+  if(!stage) return; var p=document.getElementById('cloTech');
+  if(!p){ p=document.createElement('div'); p.id='cloTech'; p.className='alt-dims clo-tech'; stage.appendChild(p); }
+  p.innerHTML=cloTechHtml(); p.classList.toggle('on', !!on);
+}
 function CFG_DIMS(G, box){
   cloLeaveEndView(); window.__cloView='dims'; cloFaceChip();
   var V=THREE.Vector3, gy=Math.max(0,box.min.y), top=box.max.y, x0=box.min.x, x1=box.max.x, zf=box.max.z+0.10;
@@ -11053,8 +11082,6 @@ function CFG_DIMS(G, box){
   var n=Math.max(1,Math.round((x1-x0)/2)), w=(x1-x0)/n, zt=zf+0.30, a=x0, b=x0+w;
   G.add(dimLine(new V(a+0.02,gy+0.02,zt), new V(b-0.02,gy+0.02,zt), new V(0,0,1)));
   var lt=dimLabel('Panneau 2,00 m'); lt.position.set((a+b)/2, gy+0.13, zt); G.add(lt);
-  var ll=dimLabel('Longueur commandée : '+cloLongueurLabel(), true); ll.position.set((x0+x1)/2, top+0.28, zf); G.add(ll);
-  if(state.poteaux==='avec'){ var lpo=dimLabel('Poteaux 9 × 9 cm'); lpo.position.set(x0+w*1.5, gy+0.55*(top-gy), zf+0.02); G.add(lpo); }
 }
 
 /* Titre produit (le squelette affiche "Pergola" par defaut) */
@@ -11225,7 +11252,7 @@ var CFG_AB_ALT = {
   init:function(st){
     var self=this, d=document.createElement('div'); d.className='alt-vis';
     d.innerHTML='<div class="alt-img"><div class="alt-sq"></div></div>'+
-      '<div class="alt-views"><button data-v="recto" class="on">Recto</button><button data-v="verso">Verso</button></div>'+
+      '<div class="alt-views"><button data-v="recto" class="on">Côté jardin</button><button data-v="verso">Côté voisin</button></div>'+
       '<div class="alt-dims"></div>';
     st.insertBefore(d, st.firstChild); this.el=d;
     d.querySelectorAll('.alt-views button').forEach(function(b){ b.onclick=function(ev){ ev.stopPropagation(); self.view=b.getAttribute('data-v'); self.draw(); if(typeof cgVisual==='function') cgVisual('recto_verso'); }; });
@@ -11264,11 +11291,7 @@ var CFG_AB_ALT = {
   },
   dims:function(on){
     this.dimsOn=on; if(!this.el) return; var b=this.el.querySelector('.alt-dims');
-    var rows=['<div>Hauteur : <b>'+hLabel(state.pose)+'</b></div>',
-      '<div>Longueur commandée : <b>'+cloLongueurLabel()+'</b></div>',
-      '<div>Panneaux : <b>2,00 m × 60 cm</b></div>'];
-    if(state.poteaux==='avec') rows.push('<div>Poteaux : <b>9 × 9 cm</b></div>');
-    b.innerHTML=rows.join(''); b.classList.toggle('on', !!on);
+    b.innerHTML=cloTechHtml(); b.classList.toggle('on', !!on);   // même fiche technique que la variante 3D
   },
   snapshot:function(){
     try{
@@ -11669,6 +11692,10 @@ function updatePrice(){ const p=computePrice();
   const up=document.getElementById('unitPrice'); if(up) up.textContent=unit;
   if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*'+((unit && isMobile())?' - '+unit.replace(/^soit /,''):'');
   try{ applyShipping(p); }catch(e){}
+  // Prix d'appel affiché (ex. « 47,09 €/m ») : la mensualité ne correspondrait à rien de visible -> le bloc
+  // « Payer en plusieurs fois » n'apparaît qu'avec un vrai total (dès la première option choisie)
+  document.querySelectorAll('#cgpRoot .simul').forEach(function(x){ x.style.display = ov ? 'none' : ''; });
+  if(__dimsOn) closeDims();
   if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
 
 /* ============================================================================
@@ -12117,7 +12144,8 @@ function showQR(){
   document.getElementById('qrUrl').textContent = url.length>72?url.slice(0,72)+'…':url;
   document.getElementById('qrNote').textContent = local
     ? "Aperçu local : ce QR pointe vers un fichier de votre ordinateur, il ne s'ouvrira pas sur le téléphone. En production (site en ligne), il pointera vers la page et l'AR fonctionnera."
-    : "Scan = ouverture de cette page sur le téléphone, puis bouton AR.";
+    : "Votre configuration s'ouvre sur le téléphone, prête à poser chez vous.";
+  var qt=document.getElementById('qrTxt'); if(qt) qt.textContent="La réalité augmentée fonctionne sur smartphone. Scannez ce QR code avec l'appareil photo de votre téléphone pour voir votre "+CFG_NOUN+" chez vous, à taille réelle.";
   document.getElementById('qrModal').classList.add('show');
 }
 function hideQR(){ document.getElementById('qrModal').classList.remove('show'); }
@@ -12196,11 +12224,14 @@ function buildDims(){
   if(typeof CFG_DIMS==='function') CFG_DIMS(G, box); else defaultDims(G, box);
   scene.add(G); __dims=G;
 }
+/* Les cotes décrivent une configuration précise : dès qu'une option change, on les ferme (plus de cotes périmées) */
+function closeDims(){ if(!__dimsOn) return; toggleDims(document.getElementById('dimsBtn')); }
 function toggleDims(btn){
   __dimsOn=!__dimsOn; if(btn) btn.classList.toggle('on',__dimsOn);
   if(__dimsOn) cgVisual('mesures');
   if(__alt){ try{ __alt.dims(__dimsOn); }catch(e){} return; }
   buildDims();
+  if(typeof CFG_DIMS_PANEL==='function'){ try{ CFG_DIMS_PANEL(__dimsOn); }catch(e){} }
   if(__dimsOn && typeof reframeTo==='function' && root){
     var v=(typeof CFG_DIMS_VIEW!=='undefined')?CFG_DIMS_VIEW:{dir:[1,0.6,1.05], zoom:1.3, tgtF:0.45};
     var b=visibleBox(), c=b.getCenter(new THREE.Vector3()), sz=b.getSize(new THREE.Vector3());
@@ -12278,6 +12309,21 @@ function snapshot(){
     return url;
   }catch(e){ return ''; }
 }
+/* Événement e-commerce standard « add_to_cart » au format GTM4WP (le même que l'ajout panier natif WooCommerce),
+   indispensable au suivi des publicités : l'ajout se fait en AJAX, GTM4WP ne le voit donc pas tout seul.
+   L'article reprend exactement l'objet du view_item de la page (même item_id = SKU de la fiche, nom, catégorie),
+   au prix de la configuration. */
+function cgEcomAddToCart(total){
+  try{
+    var vi=null; (window.dataLayer||[]).forEach(function(e){ if(e && e.event==='view_item' && e.ecommerce && e.ecommerce.items && e.ecommerce.items[0]) vi=e.ecommerce.items[0]; });
+    var it = vi ? JSON.parse(JSON.stringify(vi)) : { item_id:CTX.sku||'', item_name:CTX.productName||'', sku:CTX.sku||'', id:CTX.sku||'' };
+    if(CTX.sku && !it.item_id) it.item_id=CTX.sku;
+    it.price=total; it.quantity=1;
+    window.dataLayer=window.dataLayer||[];
+    window.dataLayer.push({ ecommerce:null });
+    window.dataLayer.push({ event:'add_to_cart', ecommerce:{ currency:'EUR', value:total, items:[it] }, cg_product:CG_PRODUCT });
+  }catch(e){}
+}
 function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
   const btn=document.getElementById('cartBtn'), old=btn.innerHTML; btn.style.minWidth=btn.offsetWidth+'px'; btn.disabled=true; btn.textContent='Ajout…';
@@ -12292,10 +12338,15 @@ function addToCart(){
   body.set('pageurl', location.origin+location.pathname);
   body.set('image', snapshot());
   if(AB) body.set('ab', AB.test+':'+AB.v);
+  // Le serveur recalcule prix et pièces à partir de l'état (clôture) et force le SKU de la fiche en ligne principale
+  body.set('product', CG_PRODUCT);
+  body.set('state', JSON.stringify(state, function(k,v){ return (v instanceof Set) ? Array.from(v) : v; }));
+  if(CTX.productId) body.set('page_pid', String(CTX.productId));
   fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()})
     .then(r=>r.json()).then(j=>{
       if(j&&j.success){
         var go=function(){ if(j.data&&j.data.cart_url){ location.href=j.data.cart_url; } else { toast('Ajouté au panier'); btn.disabled=false; btn.innerHTML=old; } };
+        cgEcomAddToCart(+computePrice().toFixed(2));   // add_to_cart GA4 standard (Google Ads, Meta...) avec le SKU de la fiche
         cgTrack('cg_add_to_cart',{value:+computePrice().toFixed(2), currency:'EUR'}, go);
       }
       else { toast((j&&j.data&&j.data.message)||'Erreur lors de l\'ajout au panier'); btn.disabled=false; btn.innerHTML=old; }

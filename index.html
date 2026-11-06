@@ -10116,6 +10116,8 @@ var qrcode = function() {
 .alt-vis .alt-dims.on{display:block}
 .alt-vis .alt-dims b{color:#0b6b00}
 .alt-vis .alt-dims div{padding:2px 0}
+.alt-dims .clo-tech-h{font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#0b6b00;margin-bottom:4px}
+.clo-tech{top:12px;bottom:auto;left:12px;max-width:min(330px,calc(100% - 80px))}
 .stage.fs .alt-vis{background:#f3f4f2}
 @media (max-width:880px){.stage:not(.fs) .alt-vis .alt-views{left:auto;right:10px;transform:none}}
 
@@ -10293,7 +10295,7 @@ var qrcode = function() {
   <div class="qr-card">
     <button class="qr-close" id="qrClose">✕</button>
     <h3>Voir dans votre jardin (AR)</h3>
-    <p>La réalité augmentée fonctionne sur smartphone. Scannez ce QR code avec l'appareil photo de votre téléphone pour ouvrir la pergola en AR.</p>
+    <p id="qrTxt">La réalité augmentée fonctionne sur smartphone. Scannez ce QR code avec l'appareil photo de votre téléphone pour voir votre configuration chez vous.</p>
     <div class="qr-img" id="qrImg"></div>
     <div class="qr-url" id="qrUrl"></div>
     <div class="qr-note" id="qrNote"></div>
@@ -11545,6 +11547,10 @@ function updatePrice(){ const p=computePrice();
   const up=document.getElementById('unitPrice'); if(up) up.textContent=unit;
   if(sp) sp.textContent = ov ? (ov.sub||'') : fmtEUR(financedMonthly(p,36,SIM_APR))+'/mois*'+((unit && isMobile())?' - '+unit.replace(/^soit /,''):'');
   try{ applyShipping(p); }catch(e){}
+  // Prix d'appel affiché (ex. « 47,09 €/m ») : la mensualité ne correspondrait à rien de visible -> le bloc
+  // « Payer en plusieurs fois » n'apparaît qu'avec un vrai total (dès la première option choisie)
+  document.querySelectorAll('#cgpRoot .simul').forEach(function(x){ x.style.display = ov ? 'none' : ''; });
+  if(__dimsOn) closeDims();
   if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
 
 /* ============================================================================
@@ -11993,7 +11999,8 @@ function showQR(){
   document.getElementById('qrUrl').textContent = url.length>72?url.slice(0,72)+'…':url;
   document.getElementById('qrNote').textContent = local
     ? "Aperçu local : ce QR pointe vers un fichier de votre ordinateur, il ne s'ouvrira pas sur le téléphone. En production (site en ligne), il pointera vers la page et l'AR fonctionnera."
-    : "Scan = ouverture de cette page sur le téléphone, puis bouton AR.";
+    : "Votre configuration s'ouvre sur le téléphone, prête à poser chez vous.";
+  var qt=document.getElementById('qrTxt'); if(qt) qt.textContent="La réalité augmentée fonctionne sur smartphone. Scannez ce QR code avec l'appareil photo de votre téléphone pour voir votre "+CFG_NOUN+" chez vous, à taille réelle.";
   document.getElementById('qrModal').classList.add('show');
 }
 function hideQR(){ document.getElementById('qrModal').classList.remove('show'); }
@@ -12072,11 +12079,14 @@ function buildDims(){
   if(typeof CFG_DIMS==='function') CFG_DIMS(G, box); else defaultDims(G, box);
   scene.add(G); __dims=G;
 }
+/* Les cotes décrivent une configuration précise : dès qu'une option change, on les ferme (plus de cotes périmées) */
+function closeDims(){ if(!__dimsOn) return; toggleDims(document.getElementById('dimsBtn')); }
 function toggleDims(btn){
   __dimsOn=!__dimsOn; if(btn) btn.classList.toggle('on',__dimsOn);
   if(__dimsOn) cgVisual('mesures');
   if(__alt){ try{ __alt.dims(__dimsOn); }catch(e){} return; }
   buildDims();
+  if(typeof CFG_DIMS_PANEL==='function'){ try{ CFG_DIMS_PANEL(__dimsOn); }catch(e){} }
   if(__dimsOn && typeof reframeTo==='function' && root){
     var v=(typeof CFG_DIMS_VIEW!=='undefined')?CFG_DIMS_VIEW:{dir:[1,0.6,1.05], zoom:1.3, tgtF:0.45};
     var b=visibleBox(), c=b.getCenter(new THREE.Vector3()), sz=b.getSize(new THREE.Vector3());
@@ -12154,6 +12164,21 @@ function snapshot(){
     return url;
   }catch(e){ return ''; }
 }
+/* Événement e-commerce standard « add_to_cart » au format GTM4WP (le même que l'ajout panier natif WooCommerce),
+   indispensable au suivi des publicités : l'ajout se fait en AJAX, GTM4WP ne le voit donc pas tout seul.
+   L'article reprend exactement l'objet du view_item de la page (même item_id = SKU de la fiche, nom, catégorie),
+   au prix de la configuration. */
+function cgEcomAddToCart(total){
+  try{
+    var vi=null; (window.dataLayer||[]).forEach(function(e){ if(e && e.event==='view_item' && e.ecommerce && e.ecommerce.items && e.ecommerce.items[0]) vi=e.ecommerce.items[0]; });
+    var it = vi ? JSON.parse(JSON.stringify(vi)) : { item_id:CTX.sku||'', item_name:CTX.productName||'', sku:CTX.sku||'', id:CTX.sku||'' };
+    if(CTX.sku && !it.item_id) it.item_id=CTX.sku;
+    it.price=total; it.quantity=1;
+    window.dataLayer=window.dataLayer||[];
+    window.dataLayer.push({ ecommerce:null });
+    window.dataLayer.push({ event:'add_to_cart', ecommerce:{ currency:'EUR', value:total, items:[it] }, cg_product:CG_PRODUCT });
+  }catch(e){}
+}
 function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
   const btn=document.getElementById('cartBtn'), old=btn.innerHTML; btn.style.minWidth=btn.offsetWidth+'px'; btn.disabled=true; btn.textContent='Ajout…';
@@ -12168,10 +12193,15 @@ function addToCart(){
   body.set('pageurl', location.origin+location.pathname);
   body.set('image', snapshot());
   if(AB) body.set('ab', AB.test+':'+AB.v);
+  // Le serveur recalcule prix et pièces à partir de l'état (clôture) et force le SKU de la fiche en ligne principale
+  body.set('product', CG_PRODUCT);
+  body.set('state', JSON.stringify(state, function(k,v){ return (v instanceof Set) ? Array.from(v) : v; }));
+  if(CTX.productId) body.set('page_pid', String(CTX.productId));
   fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()})
     .then(r=>r.json()).then(j=>{
       if(j&&j.success){
         var go=function(){ if(j.data&&j.data.cart_url){ location.href=j.data.cart_url; } else { toast('Ajouté au panier'); btn.disabled=false; btn.innerHTML=old; } };
+        cgEcomAddToCart(+computePrice().toFixed(2));   // add_to_cart GA4 standard (Google Ads, Meta...) avec le SKU de la fiche
         cgTrack('cg_add_to_cart',{value:+computePrice().toFixed(2), currency:'EUR'}, go);
       }
       else { toast((j&&j.data&&j.data.message)||'Erreur lors de l\'ajout au panier'); btn.disabled=false; btn.innerHTML=old; }
