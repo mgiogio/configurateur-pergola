@@ -12159,8 +12159,13 @@ function encodeConfig(){
   return btoa(unescape(encodeURIComponent(JSON.stringify(o))));
 }
 function readConfigFromHash(){
-  const m=(location.hash||'').match(/cfg=([^&]+)/); if(!m) return null;
-  try{ return JSON.parse(decodeURIComponent(escape(atob(m[1])))); }catch(e){ return null; }
+  // Lien de sauvegarde e-mail : ?cgcfg=CODE (le modèle Brevo colle « ?utm_source=… » à la fin du lien : on coupe au « ? »)
+  // Lien interne / QR code : #cfg=CODE
+  var code=null;
+  try{ var q=new URLSearchParams(location.search).get('cgcfg'); if(q) code=q.split('?')[0].replace(/ /g,'+'); }catch(e){}
+  if(!code){ const m=(location.hash||'').match(/cfg=([^&?]+)/); if(m) code=m[1]; }
+  if(!code) return null;
+  try{ return JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ return null; }
 }
 function saveConfig(){
   const code=encodeConfig();
@@ -12542,12 +12547,36 @@ var __sClose=document.getElementById('saveClose'); if(__sClose) __sClose.onclick
 var __sCopy=document.getElementById('saveCopy'); if(__sCopy) __sCopy.onclick=function(){ var i=document.getElementById('saveLink'); if(i){ i.select(); try{document.execCommand('copy');}catch(e){} if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(i.value).catch(function(){}); toast('Lien copié'); } };
 var __sEm=document.getElementById('saveEmail'); if(__sEm) __sEm.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); var b=document.getElementById('saveSend'); if(b) b.click(); } });
 var __sModal=document.getElementById('saveModal'); if(__sModal) __sModal.onclick=function(e){ if(e.target===__sModal) __sModal.classList.remove('show'); };
+/* Sauvegarde = même chemin que l'ancien configurateur MKL : envoi du formulaire Elementor de la pop-up « Sauvegarder »
+   (post 30442, formulaire 7de3b2a), dont les actions alimentent Brevo et déclenchent le scénario
+   « Sauvegarde de la configuration ». Mêmes champs que MKL ; le lien (referrer) rouvre la configuration exacte. */
+function cgSaveElementor(email, link, d, imgUrl){
+  try{
+    var sp=CTX.savePopup; if(!sp || !sp.post_id || !sp.form_id || !CTX.ajaxUrl) return;
+    var ck=(document.cookie.match(/(?:^|;\s*)sib_cuid=([^;]+)/)||[])[1]||'';
+    var fd=new FormData();
+    fd.set('action','elementor_pro_forms_send_form');
+    fd.set('post_id', String(sp.post_id)); fd.set('form_id', String(sp.form_id));
+    fd.set('queried_id', String(CTX.productId||'')); fd.set('referer_title', document.title); fd.set('referrer', link);
+    fd.set('form_fields[email]', email);
+    fd.set('form_fields[mkl_configuration]', d.summaryText||'');
+    fd.set('form_fields[mkl_configuration_price]', d.price||'');
+    fd.set('form_fields[mkl_configuration_image]', imgUrl||'');
+    if(sp.f_produit) fd.set('form_fields['+sp.f_produit+']', d.label||'');
+    if(sp.f_resume)  fd.set('form_fields['+sp.f_resume+']', d.summaryText||'');
+    fd.set('form_fields[tracking_cookie]', ck);
+    fd.set('configured_product_id', String(CTX.productId||''));
+    fd.set('configurator_data_raw', JSON.stringify(state, function(k,v){ return (v instanceof Set) ? Array.from(v) : v; }));
+    fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',body:fd}).then(function(r){ return r.json(); })
+      .then(function(j){ if(!(j && j.success)) console.warn('Sauvegarde Elementor :', j); }).catch(function(e){ console.warn('Sauvegarde Elementor :', e); });
+  }catch(e){}
+}
 var __sSend=document.getElementById('saveSend'); if(__sSend) __sSend.onclick=function(){
   var em=document.getElementById('saveEmail'), msg=document.getElementById('saveMsg');
   var email=em?em.value.trim():'';
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ if(msg){ msg.style.color='var(--cg-orange)'; msg.textContent='Entrez une adresse email valide.'; } return; }
   var d=window.__cgpSave||{};
-  var link=(d.base||location.origin+location.pathname)+(d.cfg?'#cfg='+d.cfg:'');
+  var link=(d.base||location.origin+location.pathname)+(d.cfg?'?cgcfg='+encodeURIComponent(d.cfg):'');
   var old=__sSend.textContent; __sSend.disabled=true; __sSend.textContent='Envoi…';
   function pushBrevo(imgUrl){
     try{
@@ -12559,6 +12588,7 @@ var __sSend=document.getElementById('saveSend'); if(__sSend) __sSend.onclick=fun
         window.Brevo.push(["track", "configuration_sauvegardee", { email: email }, { data:{ url: link, image: imgUrl||'', produit: d.label||'', prix: d.price||'' } }]);
       }
     }catch(e){}
+    cgSaveElementor(email, link, d, imgUrl);   // le chemin de l'ancien configurateur (formulaire Elementor -> scénario Brevo)
     __sSend.disabled=false; __sSend.textContent=old;
     cgTrack('cg_config_save',{value:+computePrice().toFixed(2), currency:'EUR'});
     // Confirmation visible : le formulaire laisse place à une coche animée, puis la popup se ferme seule
