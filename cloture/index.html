@@ -12663,24 +12663,37 @@ let __stickT; window.addEventListener('scroll',function(){ clearTimeout(__stickT
    pour laisser toute la place au configurateur ; il réapparaît dès qu'on remonte au-dessus du configurateur.
    (On ne peut pas simplement passer au-dessus en z-index : les conteneurs Elementor créent leur propre empilement.) */
 var __hdrHidden=[], __hdrRaf=0, __hdrT1=0, __hdrT2=0;
+/* L'image « pousse » l'en-tête vers le haut au fil du défilement (décalage proportionnel) au lieu de le faire disparaître
+   d'un coup : plus de clignotement quand l'image arrive en haut, même avec le défilement par inertie de l'iPhone. */
+function __hdrFind(){
+  document.querySelectorAll('header,[class*="header"],[class*="sticky"],[class*="fixed"]').forEach(function(el){
+    if(el.closest('.cgp-root')) return;
+    for(var i=0;i<__hdrHidden.length;i++){ if(__hdrHidden[i][0]===el) return; }
+    var cs=getComputedStyle(el), b=el.getBoundingClientRect();
+    if((cs.position==='fixed'||cs.position==='sticky') && b.top<=2 && b.bottom>0 && el.offsetHeight>20 && el.offsetHeight<220 && b.width>window.innerWidth*0.6){
+      __hdrHidden.push([el, el.style.visibility, el.style.transform, el.style.transition]); }
+  });
+}
 function __mobileHeader(){
   __hdrRaf=0;
   var col=document.querySelector('#cgpRoot .stage-col'), root=document.getElementById('cgpRoot');
-  var stuck=false;
-  if(col && root && isMobile() && !fsOpen){ var r=col.getBoundingClientRect(), rr=root.getBoundingClientRect(); stuck = r.top<=1 && rr.top<0 && rr.bottom>r.height+40; }
-  if(stuck){
-    // on rescane à chaque fois : l'en-tête du thème peut devenir "fixe" APRÈS notre passage (son script tourne
-    // dans la même frame que le nôtre) -> sans ce rescan il restait affiché par-dessus l'image quand on s'arrête
-    document.querySelectorAll('header,[class*="header"],[class*="sticky"],[class*="fixed"]').forEach(function(el){
-      if(el.closest('.cgp-root')) return;
-      for(var i=0;i<__hdrHidden.length;i++){ if(__hdrHidden[i][0]===el) return; }
-      var cs=getComputedStyle(el), b=el.getBoundingClientRect();
-      if((cs.position==='fixed'||cs.position==='sticky') && b.top<=2 && b.bottom>0 && el.offsetHeight>20 && el.offsetHeight<220 && b.width>window.innerWidth*0.6){
-        __hdrHidden.push([el, el.style.visibility]); }
+  var push=0, active=false;
+  if(col && root && isMobile() && !fsOpen){
+    var r=col.getBoundingClientRect(), rr=root.getBoundingClientRect();
+    if(r.top<240 && rr.bottom>r.height+40){ __hdrFind();
+      var h=0; __hdrHidden.forEach(function(x){ h=Math.max(h,x[0].offsetHeight); });
+      push=Math.max(0, Math.min(h, h - r.top));   // l'image arrive sous l'en-tête : il remonte d'autant
+      if(h && push>=h-1) push=h;
+      active = push>0; }
+  }
+  if(active && __hdrHidden.length){
+    __hdrHidden.forEach(function(x){ var el=x[0], h=el.offsetHeight;
+      el.style.transition='none';
+      el.style.transform= push>0 ? 'translate3d(0,'+(-push)+'px,0)' : x[2];
+      el.style.visibility= (push>=h) ? 'hidden' : x[1];
     });
-    __hdrHidden.forEach(function(x){ if(x[0].style.visibility!=='hidden') x[0].style.visibility='hidden'; });   // le thème peut le ré-afficher
   } else if(__hdrHidden.length){
-    __hdrHidden.forEach(function(x){ x[0].style.visibility=x[1]; }); __hdrHidden=[];
+    __hdrHidden.forEach(function(x){ x[0].style.visibility=x[1]; x[0].style.transform=x[2]; x[0].style.transition=x[3]; }); __hdrHidden=[];
   }
 }
 function __hdrSchedule(){
