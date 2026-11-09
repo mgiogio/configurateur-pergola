@@ -10247,6 +10247,12 @@ var qrcode = function() {
 
 /* Mobile : témoignages pleine largeur (défilement jusqu'au bord de l'écran, pas de coupe franche) */
 @media (max-width:880px){.cgp-root .stories-wrap{margin-left:calc(-1*var(--cg-gut,16px));margin-right:calc(-1*var(--cg-gut,16px))}.cgp-root .stories.is-carousel{padding:2px var(--cg-gut,16px);scroll-padding-left:var(--cg-gut,16px)}.cgp-root .stories.is-carousel .story{flex-basis:calc((100vw - 2*var(--cg-gut,16px) - 64px)/4.4)}.cgp-root .st-arrow.next{right:8px}.cgp-root .st-arrow.prev{left:8px}}
+
+.cgp-root .group.cg-flash{animation:cgFlash 1.6s ease}@keyframes cgFlash{0%,60%{background:rgba(3,125,0,.07);box-shadow:0 0 0 8px rgba(3,125,0,.07)}100%{background:transparent;box-shadow:0 0 0 8px transparent}}
+
+/* Petits téléphones / gros montants : la barre du bas ne doit jamais déborder (sinon le bouton panier est coupé et la page défile en largeur) */
+@media(max-width:420px){.cgp-root .footbar .actions{gap:6px}.cgp-root .footbar .btn.primary{white-space:normal!important;line-height:1.1;text-align:center;padding:0 12px;flex:0 1 auto;min-width:0}.cgp-root .footbar .btn.ghost{padding:0 10px}}
+@media(max-width:350px){.cgp-root .footbar .wrap{gap:6px;padding-left:12px;padding-right:12px}.cgp-root .footbar .btn{font-size:13px}.cgp-root .price-block .split{font-size:12px}}
 </style>
 </head>
 <body>
@@ -11231,6 +11237,17 @@ function shipInfo(total){
     if(total>=n) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
     return {line:'Livraison offerte à partir de '+lim, recap:'Offerte à partir de '+lim, lbl:'Livraison offerte à partir de '+lim, rz:'Livraison offerte à partir de '+lim, del:del};
   }
+  // Champ texte avec un seuil (« offerte à partir de 2 000€ ») : on tient compte du total pour ne pas laisser croire
+  // à un client à 1 900 € que sa livraison est offerte (il paierait la livraison au panier).
+  const ms=raw.match(/(?:partir de|dès|des|au-delà de)\s*([0-9][0-9\s  .]*)/i);
+  const thr=ms?parseFloat(ms[1].replace(/[\s  .]/g,'')):NaN;
+  if(!isNaN(thr) && thr>=100){
+    const lim=Math.round(thr).toLocaleString('fr-FR')+' €';
+    if(total>=thr) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
+    const t2=/^livraison/i.test(raw)?raw:('Livraison '+raw);
+    const placeholder=(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(total));   // prix « à partir de » : pas encore de vrai total
+    return {line:t2, recap:'Offerte dès '+lim+(placeholder?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
+  }
   const t=/^livraison/i.test(raw)?raw:('Livraison '+raw);            // champ texte : repris mot pour mot
   return {line:t, recap:raw.charAt(0).toUpperCase()+raw.slice(1), lbl:t, rz:t, del:del};
 }
@@ -11277,7 +11294,7 @@ function section(id,buildFn){
   optsEl.appendChild(w);
 }
 function openArg(id){ const s=SECTIONS[id]||{}, a=s.arg; if(!a) return;
-  document.getElementById('infoT').textContent=fixPunct(s.cta ? s.cta.replace(/\s*\?$/,'') : (s.title||'').replace(/\.$/,''));
+  document.getElementById('infoT').textContent=fixPunct(s.argTitle || (s.cta ? s.cta.replace(/\s*\?$/,'') : (s.title||'').replace(/\.$/,'')));   // argTitle : titre de fenêtre dédié
   let html='';
   if(a.items){
     html='<div class="arg-items">'+a.items.map(argItemHtml).join('')+'</div>';
@@ -12268,6 +12285,14 @@ function cgFreshNonce(force){
 })();
 function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
+  // Prix « à partir de » encore affiché (rien choisi) : on n'ajoute pas une config par défaut que le client n'a pas vue,
+  // on l'emmène à l'étape à compléter (le config peut indiquer laquelle via CFG_CART_FIRST_STEP).
+  if(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(computePrice())){
+    const st=(typeof CFG_CART_FIRST_STEP!=='undefined'?CFG_CART_FIRST_STEP:null), g=st?document.getElementById('group-'+st):null;
+    if(g){ g.scrollIntoView({behavior:'smooth',block:'center'}); g.classList.remove('cg-flash'); void g.offsetWidth; g.classList.add('cg-flash'); }
+    toast((typeof CFG_CART_FIRST_MSG!=='undefined'?CFG_CART_FIRST_MSG:'Choisissez vos options pour voir le prix exact.'));
+    return;
+  }
   const btn=document.getElementById('cartBtn'), old=btn.innerHTML; btn.style.minWidth=btn.offsetWidth+'px'; btn.disabled=true; btn.textContent='Ajout…';
   cgFreshNonce().then(nonce=>addToCartSend(btn,old,nonce,false));
 }

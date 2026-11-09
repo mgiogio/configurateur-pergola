@@ -10247,6 +10247,12 @@ var qrcode = function() {
 
 /* Mobile : témoignages pleine largeur (défilement jusqu'au bord de l'écran, pas de coupe franche) */
 @media (max-width:880px){.cgp-root .stories-wrap{margin-left:calc(-1*var(--cg-gut,16px));margin-right:calc(-1*var(--cg-gut,16px))}.cgp-root .stories.is-carousel{padding:2px var(--cg-gut,16px);scroll-padding-left:var(--cg-gut,16px)}.cgp-root .stories.is-carousel .story{flex-basis:calc((100vw - 2*var(--cg-gut,16px) - 64px)/4.4)}.cgp-root .st-arrow.next{right:8px}.cgp-root .st-arrow.prev{left:8px}}
+
+.cgp-root .group.cg-flash{animation:cgFlash 1.6s ease}@keyframes cgFlash{0%,60%{background:rgba(3,125,0,.07);box-shadow:0 0 0 8px rgba(3,125,0,.07)}100%{background:transparent;box-shadow:0 0 0 8px transparent}}
+
+/* Petits téléphones / gros montants : la barre du bas ne doit jamais déborder (sinon le bouton panier est coupé et la page défile en largeur) */
+@media(max-width:420px){.cgp-root .footbar .actions{gap:6px}.cgp-root .footbar .btn.primary{white-space:normal!important;line-height:1.1;text-align:center;padding:0 12px;flex:0 1 auto;min-width:0}.cgp-root .footbar .btn.ghost{padding:0 10px}}
+@media(max-width:350px){.cgp-root .footbar .wrap{gap:6px;padding-left:12px;padding-right:12px}.cgp-root .footbar .btn{font-size:13px}.cgp-root .price-block .split{font-size:12px}}
 </style>
 </head>
 <body>
@@ -10453,14 +10459,14 @@ const SECTIONS = {
       ["2,40 m","Protection maximale, pour couper un vis-à-vis élevé ou le vent."],
       ["Hauteur intermédiaire","Pour 1,60 m ou 2,20 m par exemple, choisissez la hauteur au-dessus et recoupez les panneaux en hauteur (scie sauteuse). Les poteaux de 2,50 m se recoupent aussi. Traitez les coupes avec un produit de traitement."],
       ["Sur un muret","Choisissez la hauteur à ajouter au-dessus du muret, puis des poteaux avec « Platines pour sol dur ». Le muret doit être plat et large d'au moins 15 cm (socle de la platine)."] ] } },
-  longueur:{ title:"Longueur.", q:"Quelle longueur totale ?",
+  longueur:{ title:"Longueur.", q:"Quelle longueur totale ?", argTitle:"Bien choisir votre longueur",
     arg:{ imgs:cloGal([['panneaux-2m','Clôture en panneaux de 2 m'],['recoupe-longueur','Clôture ajustée à la longueur'],['angles','Clôture avec angle']]),
       intro:"Indiquez la longueur totale de clôture souhaitée.", points:[
       ["Comment mesurer ?","Mesurez au sol, d'un bout à l'autre de la clôture. S'il y a des angles, additionnez la longueur de chaque côté, puis arrondissez au mètre supérieur."],
       ["Panneaux de 2 m","La clôture se compose de panneaux de 2 m, assemblés entre poteaux."],
       ["Longueur impaire","Vous payez la longueur réelle. Vous recevez des panneaux de 2 m et recoupez le dernier à la bonne longueur."],
       ["Recoupe","Les panneaux se recoupent proprement en longueur comme en hauteur, traverses de recoupe fournies. Appliquez un produit de traitement de coupe sur les zones coupées."],
-      ["Angles","La clôture s'adapte aux angles : si vous prenez les poteaux, indiquez le nombre d'angles à l'étape Poteaux. Chaque angle ajoute 1 poteau (59,10 €) et son pied si vous choisissez une fixation au sol."] ] } },
+      ["Angles","La clôture s'adapte aux angles : si vous prenez les poteaux, indiquez le nombre d'angles à l'étape Poteaux. Chaque angle ajoute 1 poteau et son pied si vous choisissez une fixation au sol."] ] } },
   type:{ title:"Type de clôture.", q:"Ajourée ou occultante ?",
     arg:{ items:[
       {t:"Ajourée", img:cloTh('type-ajouree'), b:"Les lames (4,7 × 2,5 cm) sont espacées de 2 cm : l'air et la lumière passent. Le vent aussi : c'est le bon choix en zone très exposée."},
@@ -10498,6 +10504,8 @@ function CFG_PRICE_TEXT(p){
 /* Retour Manuel (30/10) : « soit X €/m » sous le total prêtait à confusion avec la mensualité (« €/mois ») juste à côté.
    On ne l'affiche plus dès que la longueur dépasse 1 m (donc jamais sur un vrai total) ; le prix au mètre reste
    affiché au chargement (« À partir de 47,09 €/m », prix Merchant Center). */
+/* Clic « Ajouter au panier » avant tout choix : on emmène le client à la longueur (pas d'ajout d'une clôture de 2 m par défaut) */
+var CFG_CART_FIRST_STEP='longueur', CFG_CART_FIRST_MSG='Indiquez la longueur de votre clôture pour voir le prix exact.';
 function CFG_PRICE_UNIT(p){ var L=cloLongueur(); return (L>0 && L<=1) ? 'soit '+(p/L).toFixed(2).replace('.',',')+' €/m' : ''; }
 /* Réassurance : la clôture est en douglas français (pas de lamellé-collé, sauf les poteaux) */
 var CFG_RZ_WOOD = { t:'Douglas français', s:'Issu de forêts françaises' };
@@ -10618,7 +10626,9 @@ function cloRefresh(section){
   if((section!=='type' && section!=='angles') || backToHero){ window.__cloXray=false; window.__cloExtHideNeg=false; }
   CFG_RENDER(); if(typeof applyVisibility==='function') applyVisibility(); updatePrice();
   cloFaceChip();
-  if(section==='angles') return;   // les angles ne changent pas la 3D : on ne bouge pas la vue
+  if(section==='angles') return;
+  // autre option choisie : on arrête le demi-tour recto/verso en cours et son étiquette (sinon « Face arrière » reste affiché sur une autre vue)
+  window.__cloTurnId=(window.__cloTurnId||0)+1; cloFaceLabel('');   // les angles ne changent pas la 3D : on ne bouge pas la vue
   if(typeof scheduleAR==='function') scheduleAR();   // l'AR doit refléter la clôture affichée (type, faces, poteaux, fixations)
   if(section==='longueur' || backToHero){ if(typeof heroView==='function') heroView(false); return; }   // longueur : retour à la vue de départ
   if(section && typeof cloFocus==='function') cloFocus(section);
@@ -10665,6 +10675,8 @@ function CFG_RENDER(){
       if(parseInt(state.longueur,10)===m) opt.selected=true; sel.appendChild(opt);
     }
     sel.onchange=function(){ state.longueur=parseInt(sel.value,10); chosen.longueur=true; cloRefresh('longueur'); };
+    // Le client ouvre la liste et garde « 2 m » (pas d'événement change) : on considère quand même la longueur choisie
+    sel.addEventListener('blur', function(){ if(!window.__cloPriced){ chosen.longueur=true; cloRefresh('longueur'); } });
     row.appendChild(sel);
     wrap.appendChild(row);
     // Transparence longueur impaire : panneaux de 2 m -> longueur recue arrondie + recoupe
@@ -11153,18 +11165,19 @@ function cloFaceTurn(side){
   if(!root || typeof THREE==='undefined') return;
   var box=visibleBox(), c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3()), gy=box.min.y;
   var tt=new THREE.Vector3(c.x, gy+0.45*sz.y, c.z), R=Math.max(3.2, sz.y*1.9), dx=-0.30*R, base=0.10;
-  var toBack=(side==='back'), from=camera.position.clone(), ft=controls.target.clone(), t=0;
+  var toBack=(side==='back'), from=camera.position.clone(), ft=controls.target.clone(), t=0, my=(window.__cloTurnId=(window.__cloTurnId||0)+1);
   cloLeaveEndView();
   window.__cloFace=side; window.__cloView=(side==='back')?'back':'hero'; cloFaceChip(); cloFaceLabel(toBack ? 'On passe derrière…' : 'On revient devant…');
   var phi0=toBack?base:Math.PI-base, phi1=toBack?Math.PI-base:base;
   function arc(ph){ return new THREE.Vector3(tt.x+dx, tt.y+R*Math.sin(ph)*0.85, tt.z+R*Math.cos(ph)); }
   if(typeof tween!=='undefined') cancelAnimationFrame(tween);
   (function step(){
+    if(window.__cloTurnId!==my) return;   // un autre mouvement a pris la main
     t=Math.min(1,t+0.018); var e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;          // départ et arrivée en douceur
     var k=Math.min(1,t*4);                                                     // rejoint d'abord l'arc
     var p=arc(phi0+(phi1-phi0)*e); camera.position.copy(from.clone().lerp(p,k)); controls.target.copy(ft.clone().lerp(tt,k)); controls.update();
     if(t>0.45 && t<0.5) cloFaceLabel(toBack ? (state.faces==='deux' ? 'Face arrière : 2e face en bois' : 'Face arrière : côté traverses') : 'Face avant');
-    if(t<1) tween=requestAnimationFrame(step); else setTimeout(function(){ cloFaceLabel(''); }, 1800);
+    if(t<1) tween=requestAnimationFrame(step); else setTimeout(function(){ if(window.__cloTurnId===my) cloFaceLabel(''); }, 1800);
   })();
 }
 function cloFaceLabel(txt){
@@ -11395,6 +11408,17 @@ function shipInfo(total){
     if(total>=n) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
     return {line:'Livraison offerte à partir de '+lim, recap:'Offerte à partir de '+lim, lbl:'Livraison offerte à partir de '+lim, rz:'Livraison offerte à partir de '+lim, del:del};
   }
+  // Champ texte avec un seuil (« offerte à partir de 2 000€ ») : on tient compte du total pour ne pas laisser croire
+  // à un client à 1 900 € que sa livraison est offerte (il paierait la livraison au panier).
+  const ms=raw.match(/(?:partir de|dès|des|au-delà de)\s*([0-9][0-9\s  .]*)/i);
+  const thr=ms?parseFloat(ms[1].replace(/[\s  .]/g,'')):NaN;
+  if(!isNaN(thr) && thr>=100){
+    const lim=Math.round(thr).toLocaleString('fr-FR')+' €';
+    if(total>=thr) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
+    const t2=/^livraison/i.test(raw)?raw:('Livraison '+raw);
+    const placeholder=(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(total));   // prix « à partir de » : pas encore de vrai total
+    return {line:t2, recap:'Offerte dès '+lim+(placeholder?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
+  }
   const t=/^livraison/i.test(raw)?raw:('Livraison '+raw);            // champ texte : repris mot pour mot
   return {line:t, recap:raw.charAt(0).toUpperCase()+raw.slice(1), lbl:t, rz:t, del:del};
 }
@@ -11441,7 +11465,7 @@ function section(id,buildFn){
   optsEl.appendChild(w);
 }
 function openArg(id){ const s=SECTIONS[id]||{}, a=s.arg; if(!a) return;
-  document.getElementById('infoT').textContent=fixPunct(s.cta ? s.cta.replace(/\s*\?$/,'') : (s.title||'').replace(/\.$/,''));
+  document.getElementById('infoT').textContent=fixPunct(s.argTitle || (s.cta ? s.cta.replace(/\s*\?$/,'') : (s.title||'').replace(/\.$/,'')));   // argTitle : titre de fenêtre dédié
   let html='';
   if(a.items){
     html='<div class="arg-items">'+a.items.map(argItemHtml).join('')+'</div>';
@@ -12432,6 +12456,14 @@ function cgFreshNonce(force){
 })();
 function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
+  // Prix « à partir de » encore affiché (rien choisi) : on n'ajoute pas une config par défaut que le client n'a pas vue,
+  // on l'emmène à l'étape à compléter (le config peut indiquer laquelle via CFG_CART_FIRST_STEP).
+  if(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(computePrice())){
+    const st=(typeof CFG_CART_FIRST_STEP!=='undefined'?CFG_CART_FIRST_STEP:null), g=st?document.getElementById('group-'+st):null;
+    if(g){ g.scrollIntoView({behavior:'smooth',block:'center'}); g.classList.remove('cg-flash'); void g.offsetWidth; g.classList.add('cg-flash'); }
+    toast((typeof CFG_CART_FIRST_MSG!=='undefined'?CFG_CART_FIRST_MSG:'Choisissez vos options pour voir le prix exact.'));
+    return;
+  }
   const btn=document.getElementById('cartBtn'), old=btn.innerHTML; btn.style.minWidth=btn.offsetWidth+'px'; btn.disabled=true; btn.textContent='Ajout…';
   cgFreshNonce().then(nonce=>addToCartSend(btn,old,nonce,false));
 }
