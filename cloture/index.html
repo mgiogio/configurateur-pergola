@@ -12413,18 +12413,29 @@ function cgEcomAddToCart(total){
 /* Jeton de sécurité (nonce) toujours frais : la page est servie par le cache du CDN (jusqu'à 30 jours),
    donc le jeton écrit dans la page peut avoir expiré (> 24 h) -> « Session expirée ». On en redemande un
    au serveur juste avant chaque appel ; si le plugin est plus ancien (pas d'action cgp_nonce), on garde celui de la page. */
-function cgFreshNonce(){
+/* Pour ne pas rallonger le clic (un appel WordPress ≈ 0,5 à 1 s), le jeton est demandé une seule fois,
+   en arrière-plan, dès que le visiteur commence à configurer ; au clic, il est déjà là. */
+let __nonceP=null, __nonceT=0;
+function cgFreshNonce(force){
   if(!CTX.ajaxUrl) return Promise.resolve(CTX.nonce||'');
-  return fetch(CTX.ajaxUrl+(CTX.ajaxUrl.indexOf('?')<0?'?':'&')+'action=cgp_nonce&t='+Date.now(),{credentials:'same-origin',cache:'no-store'})
+  if(!force && __nonceP && Date.now()-__nonceT < 6*3600*1000) return __nonceP;   // valable au moins 12 h côté WordPress
+  __nonceT=Date.now();
+  __nonceP=fetch(CTX.ajaxUrl+(CTX.ajaxUrl.indexOf('?')<0?'?':'&')+'action=cgp_nonce&t='+Date.now(),{credentials:'same-origin',cache:'no-store'})
     .then(r=>r.json()).then(j=>(j&&j.success&&j.data&&j.data.nonce)?(CTX.nonce=j.data.nonce):(CTX.nonce||''))
-    .catch(()=>CTX.nonce||'');
+    .catch(()=>{ __nonceP=null; return CTX.nonce||''; });
+  return __nonceP;
 }
+(function(){   // préchargement : à la première interaction, ou au plus tard 8 s après l'affichage
+  let done=false; const go=()=>{ if(done) return; done=true; cgFreshNonce(); };
+  ['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,go,{once:true,passive:true}));
+  setTimeout(go,8000);
+})();
 function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
   const btn=document.getElementById('cartBtn'), old=btn.innerHTML; btn.style.minWidth=btn.offsetWidth+'px'; btn.disabled=true; btn.textContent='Ajout…';
-  cgFreshNonce().then(nonce=>addToCartSend(btn,old,nonce));
+  cgFreshNonce().then(nonce=>addToCartSend(btn,old,nonce,false));
 }
-function addToCartSend(btn,old,nonce){
+function addToCartSend(btn,old,nonce,retried){
   const body=new URLSearchParams();
   body.set('action','cgp_add'); body.set('nonce',nonce||'');
   body.set('pose',state.pose); body.set('size',state.taille);
@@ -12447,6 +12458,7 @@ function addToCartSend(btn,old,nonce){
         cgEcomAddToCart(+computePrice().toFixed(2));   // add_to_cart GA4 standard (Google Ads, Meta...) avec le SKU de la fiche
         cgTrack('cg_add_to_cart',{value:+computePrice().toFixed(2), currency:'EUR'}, go);
       }
+      else if(!retried && j && j.data && /expir/i.test(j.data.message||'')){ cgFreshNonce(true).then(n=>addToCartSend(btn,old,n,true)); }   // jeton périmé : un nouveau, une seule fois, sans rien demander au client
       else { toast((j&&j.data&&j.data.message)||'Erreur lors de l\'ajout au panier'); btn.disabled=false; btn.innerHTML=old; }
     }).catch(()=>{ toast('Erreur réseau, réessayez.'); btn.disabled=false; btn.innerHTML=old; });
 }
