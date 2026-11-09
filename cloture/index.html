@@ -12410,11 +12410,23 @@ function cgEcomAddToCart(total){
     window.dataLayer.push({ event:'add_to_cart', ecommerce:{ currency:'EUR', value:total, items:[it] }, cg_product:CG_PRODUCT });
   }catch(e){}
 }
+/* Jeton de sécurité (nonce) toujours frais : la page est servie par le cache du CDN (jusqu'à 30 jours),
+   donc le jeton écrit dans la page peut avoir expiré (> 24 h) -> « Session expirée ». On en redemande un
+   au serveur juste avant chaque appel ; si le plugin est plus ancien (pas d'action cgp_nonce), on garde celui de la page. */
+function cgFreshNonce(){
+  if(!CTX.ajaxUrl) return Promise.resolve(CTX.nonce||'');
+  return fetch(CTX.ajaxUrl+(CTX.ajaxUrl.indexOf('?')<0?'?':'&')+'action=cgp_nonce&t='+Date.now(),{credentials:'same-origin',cache:'no-store'})
+    .then(r=>r.json()).then(j=>(j&&j.success&&j.data&&j.data.nonce)?(CTX.nonce=j.data.nonce):(CTX.nonce||''))
+    .catch(()=>CTX.nonce||'');
+}
 function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
   const btn=document.getElementById('cartBtn'), old=btn.innerHTML; btn.style.minWidth=btn.offsetWidth+'px'; btn.disabled=true; btn.textContent='Ajout…';
+  cgFreshNonce().then(nonce=>addToCartSend(btn,old,nonce));
+}
+function addToCartSend(btn,old,nonce){
   const body=new URLSearchParams();
-  body.set('action','cgp_add'); body.set('nonce',CTX.nonce||'');
+  body.set('action','cgp_add'); body.set('nonce',nonce||'');
   body.set('pose',state.pose); body.set('size',state.taille);
   body.set('total',computePrice().toFixed(2));
   body.set('label', (typeof CFG_CART_LABEL==='function') ? CFG_CART_LABEL() : ('Pergola bois '+((POSE.options.find(o=>o.id===state.pose)||{}).label||'')+' '+sizeLabel(state.taille)[0]));
@@ -12684,9 +12696,10 @@ var __sSend=document.getElementById('saveSend'); if(__sSend) __sSend.onclick=fun
     if(em) em.value='';
   }
   if(CTX.ajaxUrl && d.image){
-    Promise.resolve(d.image).then(function(img){   // l'image e-mail peut être prête de façon asynchrone (variante A)
+    Promise.all([Promise.resolve(d.image), cgFreshNonce()]).then(function(res){   // image e-mail (parfois asynchrone) + jeton frais
+      var img=res[0], nonce=res[1];
       if(!img) return pushBrevo('');
-      var body=new URLSearchParams(); body.set('action','cgp_saveimg'); body.set('nonce',CTX.nonce||''); body.set('image',img);
+      var body=new URLSearchParams(); body.set('action','cgp_saveimg'); body.set('nonce',nonce||''); body.set('image',img);
       return fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()})
         .then(function(r){return r.json();}).then(function(j){ pushBrevo(j&&j.success&&j.data?j.data.url:''); });
     }).catch(function(){ pushBrevo(''); });
