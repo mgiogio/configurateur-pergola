@@ -10454,7 +10454,7 @@ const SECTIONS = {
       ["Hauteur intermédiaire","Pour 1,60 m ou 2,20 m par exemple, choisissez la hauteur au-dessus et recoupez les panneaux en hauteur (scie sauteuse). Les poteaux de 2,50 m se recoupent aussi. Traitez les coupes avec un produit de traitement."],
       ["Sur un muret","Choisissez la hauteur à ajouter au-dessus du muret, puis des poteaux avec platines pour sol dur. Le muret doit être plat et large d'au moins 15 cm (socle de la platine)."] ] } },
   longueur:{ title:"Longueur.", q:"Quelle longueur totale ?",
-    arg:{ imgs:cloGal([['panneaux-2m','Clôture en panneaux de 2 m'],['recoupe-longueur','Dernier panneau recoupé contre un mur'],['angles','Clôture avec angle']]),
+    arg:{ imgs:cloGal([['panneaux-2m','Clôture en panneaux de 2 m'],['recoupe-longueur','Clôture ajustée contre un mur'],['angles','Clôture avec angle']]),
       intro:"Indiquez la longueur totale de clôture souhaitée.", points:[
       ["Panneaux de 2 m","La clôture se compose de panneaux de 2 m, assemblés entre poteaux."],
       ["Longueur impaire","Vous payez la longueur réelle. Vous recevez des panneaux de 2 m et recoupez le dernier à la bonne longueur."],
@@ -10467,11 +10467,11 @@ const SECTIONS = {
       {t:"Et le vent ?", img:cloTh('vent'), b:"L'occultante a plus de prise au vent que l'ajourée mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez la clôture dans le béton : platines chevillées dans le béton, ou pieux enfoncés directement dans du béton frais."} ] } },
   faces:{ title:"Faces.", q:"Une ou deux faces bois ?",
     arg:{ items:[
-      {t:"Une face bois", img:cloTh('une-face-cote-voisin'), b:"Le bois habille votre côté. Côté voisin, on voit la membrane noire et les traverses de maintien."},
+      {t:"Une face bois", img:cloTh('une-face-cote-voisin'), b:"Le bois habille un seul côté : tournez-le vers le côté le plus vu (votre jardin, ou la rue comme ici). De l'autre côté, on voit la membrane noire et les traverses de maintien."},
       {t:"Deux faces bois", img:cloTh('deux-faces'), b:"Le bois habille les deux côtés : même rendu côté jardin et côté voisin, et la membrane est protégée entre les deux faces."} ] } },
   poteaux:{ title:"Poteaux.", q:"Avec ou sans poteaux ?",
     arg:{ items:[
-      {t:"Avec poteaux", img:cloTh('avec-poteaux'), b:"Les poteaux sont fournis, en <b>bois lamellé-collé</b> classe 4 (section 9 × 9 cm) : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Hauteur 2,50 m, à recouper à la hauteur de votre clôture. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
+      {t:"Avec poteaux", img:cloTh('avec-poteaux'), b:"Les poteaux sont fournis, en <b>bois lamellé-collé 90 × 90 mm</b>, classe 4 : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Hauteur 2,50 m, à recouper à la hauteur de votre clôture. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
       {t:"Sans poteau", img:cloTh('sans-poteau'), b:"Vous fixez les panneaux sur un support existant et solide : poteaux maçonnés, bois ou métal, ou directement plaqués contre un mur (les traverses au dos font un tasseau de 2,5 cm). Fixations adaptées à votre support non fournies. Un grillage n'est pas assez solide."} ] } },
   support:{ title:"Fixation au sol.", q:"Sur quel type de sol ?",
     cta:"Comment choisir ma fixation ?",
@@ -10729,7 +10729,7 @@ function CFG_RENDER(){
     var w2=document.createElement('div'); w2.appendChild(c);
     if(state.poteaux==='avec'){
       // Angles : nombre total d'angles de la clôture ; chaque angle ajoute un poteau (et sa fixation) au kit
-      var an=document.createElement('div'); an.className='clo-angles';
+      var an=document.createElement('div'); an.className='clo-angles g-after';
       var na=state.angles||0;
       an.innerHTML='<span class="clo-angles-l">Nombre d\'angles<small>Votre clôture fait un angle ? Indiquez combien : chaque angle ajoute 1 poteau (59,10 €) et son pied si vous choisissez une fixation au sol</small></span>'
         +'<span class="clo-step"><button type="button" data-d="-1" aria-label="Un angle de moins">−</button><b>'+na+'</b><button type="button" data-d="1" aria-label="Un angle de plus">+</button></span>';
@@ -11441,7 +11441,8 @@ function section(id,buildFn){
     d.innerHTML=(meta.desc?fixPunct(meta.desc)+' ':'')
       + (meta.arg?`<button class="savoir" type="button">${fixPunct(meta.cta||'En savoir plus')}</button>`:'');
     const b=d.querySelector('.savoir'); if(b) b.onclick=()=>openArg(id);
-    w.appendChild(d); }
+    // un bloc marqué .g-after (ex. nombre d'angles) passe sous le lien « En savoir plus », qui ne le concerne pas
+    const tail=w.querySelector('.g-after'); if(tail) tail.parentNode.insertBefore(d,tail); else w.appendChild(d); }
   optsEl.appendChild(w);
 }
 function openArg(id){ const s=SECTIONS[id]||{}, a=s.arg; if(!a) return;
@@ -11534,7 +11535,9 @@ function sofMonthly(P,n){ const i=PAY.sofinco.debiteur/12; return Math.round(P*i
 function sofRate(P,pay,n){ let lo=0,hi=1; for(let it=0;it<60;it++){ const r=(lo+hi)/2; let s=0; for(let k=1;k<=n;k++) s+=pay/Math.pow(1+r,k/12); if(s>P) lo=r; else hi=r; } return (lo+hi)/2; }
 function fmtPct(x,d){ return x.toFixed(d).replace('.',','); }
 function simDetail(P,n){
-  if(n<=4) return `${n}× <b>${fmtEUR(P/n)}</b> sans frais`;
+  // 3× / 4× : même mise en forme que les mensualités Sofinco (montant à la même taille)
+  if(n<=4) return `<div class="sim-main"><b>${fmtEUR(P/n)}</b> × ${n} sans frais</div>`
+    + `<div class="sim-sub">Par carte bancaire avec Oney, sans frais ni intérêts.</div>`;
   // Essentiel visible (mensualité, durée, TAEG, total dû, avertissement légal) ; le détail complet dans une fenêtre
   const m=sofMonthly(P,n), due=Math.round(m*n*100)/100;
   return `<div class="sim-main"><b>${fmtEUR(m)}</b> / mois pendant ${n} mois*</div>`
@@ -12239,7 +12242,7 @@ function saveConfig(){
   const inp=document.getElementById('saveLink'); if(inp) inp.value=url;
   var lbl=(typeof CFG_CART_LABEL==='function') ? CFG_CART_LABEL() : ('Pergola bois '+((POSE.options.find(function(o){return o.id===state.pose;})||{}).label||'')+' '+sizeLabel(state.taille)[0]);
   var __rows=cartSummary(); var __sumTxt=__rows.map(function(r){return r[0]+' : '+r[1];}).join(', ');
-  window.__cgpSave={ base:location.origin+location.pathname, cfg:code, label:lbl, price:fmtEUR(computePrice()), summaryText:__sumTxt, image:(typeof snapshot==='function'?snapshot():'') };
+  window.__cgpSave={ base:location.origin+location.pathname, cfg:code, label:lbl, price:fmtEUR(computePrice()), summaryText:__sumTxt, image:(typeof snapshot==='function'?snapshot('mail'):'') };   // e-mail : format paysage, pas carré
   var em=document.getElementById('saveEmail'); if(em) em.value='';
   var msg=document.getElementById('saveMsg'); if(msg) msg.textContent='';
   var sf=document.getElementById('saveForm'), sd=document.getElementById('saveDone'); if(sf) sf.hidden=false; if(sd) sd.hidden=true; clearTimeout(window.__saveT);
@@ -12370,19 +12373,27 @@ function cartSummary(){
     if(n){ const lbl=((SECTIONS[fid]||{}).title||fid).replace(/\.$/,''); rows.push([lbl, n+' pan'+(n>1?'s':'')]); }});
   return rows;
 }
-function snapshot(){
-  if(typeof __alt!=='undefined' && __alt && __alt.snapshot){ try{ var s=__alt.snapshot(); if(s) return s; }catch(e){} }
+/* snapshot()      : carré 600 × 600, image entière centrée (vignette panier WooCommerce)
+   snapshot('mail'): paysage 570 × 380 rempli (sans bandes blanches), à la largeur du modèle d'e-mail Brevo */
+function snapshot(fmt){
+  const W = fmt==='mail' ? 570 : 600, H = fmt==='mail' ? 380 : 600, cover = fmt==='mail';
+  const crop=(url)=>new Promise(res=>{   // recadre une image carrée (variante A) au format demandé
+    if(!cover || !url) return res(url);
+    const im=new Image(); im.onload=()=>{ const c=document.createElement('canvas'); c.width=W; c.height=H;
+      const k=Math.max(W/im.width,H/im.height); c.getContext('2d').drawImage(im,(W-im.width*k)/2,(H-im.height*k)/2,im.width*k,im.height*k);
+      res(c.toDataURL('image/jpeg',0.86)); }; im.onerror=()=>res(url); im.src=url; });
+  if(typeof __alt!=='undefined' && __alt && __alt.snapshot){ try{ var s=__alt.snapshot(); if(s) return cover ? crop(s) : s; }catch(e){} }
   try{
     if(!(renderer&&renderer.domElement&&camera)) return '';
     // Toujours capturer une VUE D'ENSEMBLE (pas le zoom courant sur un panneau)
     var __sp=camera.position.clone(), __st=(controls?controls.target.clone():null);
     try{ heroView(true); renderer.render(scene,camera); }catch(e){ renderer.render(scene,camera); }
-    const src=renderer.domElement, S=600;
-    const c=document.createElement('canvas'); c.width=S; c.height=S;
-    const x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,S,S);   // fond blanc (JPEG n'a pas de transparence)
-    const sw=src.width, sh=src.height, k=Math.min(S/sw,S/sh);                  // carré, image centrée, sans déformation
+    const src=renderer.domElement;
+    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,W,H);   // fond blanc (JPEG n'a pas de transparence)
+    const sw=src.width, sh=src.height, k=cover ? Math.max(W/sw,H/sh) : Math.min(W/sw,H/sh);   // e-mail : rempli ; panier : entier
     const dw=sw*k, dh=sh*k;
-    x.drawImage(src,0,0,sw,sh,(S-dw)/2,(S-dh)/2,dw,dh);
+    x.drawImage(src,0,0,sw,sh,(W-dw)/2,(H-dh)/2,dw,dh);
     const url=c.toDataURL('image/jpeg',0.85);
     // restaurer la vue de l'utilisateur
     try{ camera.position.copy(__sp); if(controls&&__st){ controls.target.copy(__st); controls.update(); } renderer.render(scene,camera); }catch(e){}
@@ -12678,10 +12689,12 @@ var __sSend=document.getElementById('saveSend'); if(__sSend) __sSend.onclick=fun
     if(em) em.value='';
   }
   if(CTX.ajaxUrl && d.image){
-    var body=new URLSearchParams(); body.set('action','cgp_saveimg'); body.set('nonce',CTX.nonce||''); body.set('image',d.image);
-    fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()})
-      .then(function(r){return r.json();}).then(function(j){ pushBrevo(j&&j.success&&j.data?j.data.url:''); })
-      .catch(function(){ pushBrevo(''); });
+    Promise.resolve(d.image).then(function(img){   // l'image e-mail peut être prête de façon asynchrone (variante A)
+      if(!img) return pushBrevo('');
+      var body=new URLSearchParams(); body.set('action','cgp_saveimg'); body.set('nonce',CTX.nonce||''); body.set('image',img);
+      return fetch(CTX.ajaxUrl,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()})
+        .then(function(r){return r.json();}).then(function(j){ pushBrevo(j&&j.success&&j.data?j.data.url:''); });
+    }).catch(function(){ pushBrevo(''); });
   } else pushBrevo('');
 };
 var __arTutoClose=document.getElementById('arTutoClose'); if(__arTutoClose) __arTutoClose.onclick=function(){ var m=document.getElementById('arTuto'); if(m) m.classList.remove('show'); };
