@@ -10452,31 +10452,32 @@ const SECTIONS = {
       ["1,80 m","La hauteur standard pour l'intimité côté jardin ou terrasse."],
       ["2,40 m","Protection maximale, pour couper un vis-à-vis élevé ou le vent."],
       ["Hauteur intermédiaire","Pour 1,60 m ou 2,20 m par exemple, choisissez la hauteur au-dessus et recoupez les panneaux en hauteur (scie sauteuse). Les poteaux de 2,50 m se recoupent aussi. Traitez les coupes avec un produit de traitement."],
-      ["Sur un muret","Choisissez la hauteur à ajouter au-dessus du muret, puis des poteaux avec platines pour sol dur. Le muret doit être plat et large d'au moins 15 cm (socle de la platine)."] ] } },
+      ["Sur un muret","Choisissez la hauteur à ajouter au-dessus du muret, puis des poteaux avec « Platines pour sol dur ». Le muret doit être plat et large d'au moins 15 cm (socle de la platine)."] ] } },
   longueur:{ title:"Longueur.", q:"Quelle longueur totale ?",
     arg:{ imgs:cloGal([['panneaux-2m','Clôture en panneaux de 2 m'],['recoupe-longueur','Clôture ajustée contre un mur'],['angles','Clôture avec angle']]),
       intro:"Indiquez la longueur totale de clôture souhaitée.", points:[
+      ["Comment mesurer ?","Mesurez au sol, d'un bout à l'autre de la clôture. S'il y a des angles, additionnez la longueur de chaque côté, puis arrondissez au mètre supérieur."],
       ["Panneaux de 2 m","La clôture se compose de panneaux de 2 m, assemblés entre poteaux."],
       ["Longueur impaire","Vous payez la longueur réelle. Vous recevez des panneaux de 2 m et recoupez le dernier à la bonne longueur."],
-      ["Recoupe","Les panneaux se recoupent proprement en longueur, liteau de maintien et traverse de recoupe fournis."],
+      ["Recoupe","Les panneaux se recoupent proprement en longueur comme en hauteur, traverses de recoupe fournies. Appliquez un produit de traitement de coupe sur les zones coupées."],
       ["Angles","La clôture s'adapte aux angles : si vous prenez les poteaux, indiquez le nombre d'angles à l'étape Poteaux. Chaque angle ajoute 1 poteau (59,10 €) et son pied si vous choisissez une fixation au sol."] ] } },
   type:{ title:"Type de clôture.", q:"Ajourée ou occultante ?",
     arg:{ items:[
       {t:"Ajourée", img:cloTh('type-ajouree'), b:"Les lames (4,7 × 2,5 cm) sont espacées de 2 cm : l'air et la lumière passent. Le vent aussi : c'est le bon choix en zone très exposée."},
-      {t:"Occultante", img:cloTh('type-occultante'), b:"Une membrane occultante (Delta-Fassade, garantie 30 ans) est fixée au dos des lames : aucun vis-à-vis. Vous pouvez ajouter une 2e face bois pour habiller et protéger la membrane côté voisin."},
-      {t:"Et le vent ?", img:cloTh('vent'), b:"L'occultante a plus de prise au vent que l'ajourée mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez la clôture dans le béton : platines chevillées dans le béton, ou pieux enfoncés directement dans du béton frais."} ] } },
+      {t:"Occultante", img:cloTh('type-occultante'), b:"Une membrane occultante (Delta-Fassade) est fixée au dos des lames : aucun vis-à-vis. Vous pouvez ajouter une 2e face bois pour habiller et protéger la membrane côté voisin."},
+      {t:"Et le vent ?", img:cloTh('vent'), b:"L'occultante a plus de prise au vent que l'ajourée, mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez la clôture dans le béton : « Platines pour sol dur » chevillées dans le béton, ou « Pieux pour sol souple » enfoncés directement dans du béton frais."} ] } },
   faces:{ title:"Faces.", q:"Une ou deux faces bois ?",
     arg:{ items:[
       {t:"Une face bois", img:cloTh('une-face-cote-voisin'), b:"Le bois habille un seul côté : tournez-le vers le côté le plus vu (votre jardin, ou la rue comme ici). De l'autre côté, on voit la membrane noire et les traverses de maintien."},
       {t:"Deux faces bois", img:cloTh('deux-faces'), b:"Le bois habille les deux côtés : même rendu côté jardin et côté voisin, et la membrane est protégée entre les deux faces."} ] } },
   poteaux:{ title:"Poteaux.", q:"Avec ou sans poteaux ?",
     arg:{ items:[
-      {t:"Avec poteaux", img:cloTh('avec-poteaux'), b:"Les poteaux sont fournis, en <b>bois lamellé-collé 90 × 90 mm</b>, classe 4 : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Hauteur 2,50 m, à recouper à la hauteur de votre clôture. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
-      {t:"Sans poteau", img:cloTh('sans-poteau'), b:"Vous fixez les panneaux sur un support existant et solide : poteaux maçonnés, bois ou métal, ou directement plaqués contre un mur (les traverses au dos font un tasseau de 2,5 cm). Fixations adaptées à votre support non fournies. Un grillage n'est pas assez solide."} ] } },
+      {t:"Avec poteaux", img:cloTh('avec-poteaux'), b:"Les poteaux sont fournis, en <b>bois lamellé-collé 90 × 90 mm</b>, classe 4 : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Hauteur 2,50 m, à recouper à la hauteur de votre clôture. La quincaillerie pour fixer les panneaux sur les poteaux est fournie avec les poteaux. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
+      {t:"Sans poteau", img:"", b:"Vous fixez les panneaux sur un support existant et solide : poteaux maçonnés, bois ou métal, ou directement plaqués contre un mur (les traverses au dos font un tasseau de 2,5 cm). Fixations adaptées à votre support non fournies. Un grillage n'est pas assez solide."} ] } },
   support:{ title:"Fixation au sol.", q:"Sur quel type de sol ?",
     cta:"Comment choisir ma fixation ?",
     arg:{ items:[
-      {t:"Sans support", img:"", b:"Vous fixez les poteaux vous-même, par exemple en les scellant dans des trous remplis de béton. Sur un muret ou une dalle, préférez les platines pour sol dur."},
+      {t:"Sans support", img:"", b:"Vous fixez les poteaux vous-même, par exemple en les scellant dans des trous remplis de béton. Sur un muret ou une dalle, préférez les « Platines pour sol dur »."},
       {t:"Pieux pour sol souple", img:cloTh('pieu'), b:"Des pieux à enfoncer dans la terre : parfait pour un sol meuble, sans béton. Pour plus de tenue (zone ventée, grande hauteur), ils peuvent être scellés en les enfonçant directement dans du béton."},
       {t:"Platines pour sol dur", img:cloTh('platine'), b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } }
 };
@@ -10669,19 +10670,13 @@ function CFG_RENDER(){
     // Transparence longueur impaire : panneaux de 2 m -> longueur recue arrondie + recoupe
     var Lv=cloLongueur();
     var recu=cloLongueurFacturee();
-    if(recu!==Lv){
-      var nt=document.createElement('div'); nt.className='reco-box';
-      nt.innerHTML='Les panneaux font 2 m. Pour <b>'+Lv+' m</b>, vous recevez <b>'+recu+' m</b> de panneaux et des <b>traverses de recoupe</b> pour ajuster le dernier panneau à <b>'+Lv+' m</b>.';
-      wrap.appendChild(nt);
-    }
-    // Comment mesurer (erreur fréquente en commande) : longueur totale au sol, tous les côtés additionnés
-    var hm=document.createElement('div'); hm.className='g-tip';
-    hm.innerHTML='<span><b>Comment mesurer ?</b> Mesurez au sol, d\'un bout à l\'autre de la clôture. S\'il y a des angles, additionnez la longueur de chaque côté, puis arrondissez au mètre supérieur.</span>';
+    // Peu de texte à cette étape : une seule ligne utile (longueur impaire, sinon comment mesurer).
+    // Le détail (recoupe, traitement de coupe, angles) est dans « En savoir plus ».
+    var hm=document.createElement('div'); hm.className='reco-box';
+    hm.innerHTML = (recu!==Lv)
+      ? 'Panneaux de 2 m : vous recevez <b>'+recu+' m</b> et recoupez le dernier pour obtenir <b>'+Lv+' m</b>.'
+      : '<b>Comment mesurer ?</b> Au sol, d\'un bout à l\'autre, en additionnant chaque côté s\'il y a des angles.';
     wrap.appendChild(hm);
-    // Message recoupe + produit de traitement de coupe (toujours visible)
-    var tc=document.createElement('div'); tc.className='reco-box';
-    tc.innerHTML='Les panneaux sont recoupables en longueur comme en largeur. Si vous effectuez des découpes, pensez à appliquer un <a href="https://cover.green/produit-de-traitement-de-coupe-marron/" target="_blank" rel="noopener" style="color:var(--cg-green-dk);text-decoration:underline">produit de traitement de coupe</a> sur les zones coupées.';
-    wrap.appendChild(tc);
     return wrap;
   });
 
@@ -10700,7 +10695,7 @@ function CFG_RENDER(){
     });
     var w2=document.createElement('div'); w2.appendChild(c);
     var hn=document.createElement('div'); hn.className='reco-box';
-    hn.innerHTML = (state.type==='occultante' && state.pose==='240') ? '<b>2,40 m en occultant</b> : la clôture prend beaucoup de vent. Prévoyez une fixation dans le béton : platines chevillées, ou pieux enfoncés directement dans le béton.'
+    hn.innerHTML = (state.type==='occultante' && state.pose==='240') ? '<b>2,40 m en occultant</b> : la clôture prend beaucoup de vent. Prévoyez une fixation dans le béton : « Platines pour sol dur » chevillées, ou « Pieux pour sol souple » enfoncés directement dans le béton.'
                  : (state.type==='occultante') ? '<b>Zone ventée ?</b> L\'occultante prend plus le vent que l\'ajourée : soignez la fixation de vos poteaux.'
                  : '<b>Zone ventée ?</b> L\'ajourée laisse passer le vent : c\'est le bon choix en zone exposée.';
     w2.appendChild(hn);
@@ -10751,7 +10746,7 @@ function CFG_RENDER(){
       var w2=document.createElement('div'); w2.appendChild(c);
       var hn=document.createElement('div'); hn.className='reco-box';
       hn.innerHTML= state.support==='platines' ? '<b>Sur un muret</b> : les platines conviennent si le muret est plat et large d\'au moins 15 cm. En zone ventée, chevillez-les dans du béton.'
-                  : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les pieux simplement plantés dans la terre ne suffisent pas face au vent. Enfoncez-les directement dans du béton (scellement), ou choisissez les platines chevillées dans le béton.'
+                  : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les « Pieux pour sol souple » simplement plantés dans la terre ne suffisent pas face au vent. Enfoncez-les directement dans du béton (scellement), ou choisissez les « Platines pour sol dur » chevillées dans le béton.'
                   : state.support==='pieux' ? '<b>Sol meuble</b> : les pieux s\'enfoncent sans béton. En zone très ventée, vous pouvez les sceller en les enfonçant directement dans du béton.'
                   : '<b>Sans support</b> : vous scellez vous-même les poteaux de 2,50 m ou les fixez sur un support existant.';
       w2.appendChild(hn);
