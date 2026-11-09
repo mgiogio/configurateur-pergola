@@ -10253,6 +10253,20 @@ var qrcode = function() {
 /* Petits téléphones / gros montants : la barre du bas ne doit jamais déborder (sinon le bouton panier est coupé et la page défile en largeur) */
 @media(max-width:420px){.cgp-root .footbar .actions{gap:6px}.cgp-root .footbar .btn.primary{white-space:normal!important;line-height:1.1;text-align:center;padding:0 12px;flex:0 1 auto;min-width:0}.cgp-root .footbar .btn.ghost{padding:0 10px}}
 @media(max-width:350px){.cgp-root .footbar .wrap{gap:6px;padding-left:12px;padding-right:12px}.cgp-root .footbar .btn{font-size:13px}.cgp-root .price-block .split{font-size:12px}}
+
+/* iPhone (Safari) : après la roue de sélection d'une liste, la barre du bas (collante + flou) était mal redessinée et le prix
+   apparaissait coupé. Calque dédié = redessin fiable. */
+.cgp-root .footbar{-webkit-transform:translateZ(0);transform:translateZ(0);isolation:isolate}.cgp-root .footbar .price-block{position:relative;overflow:visible}
+
+/* Indication de défilement dans les fenêtres d'aide (mobile surtout) : dégradé + « Faire défiler » tant qu'il reste du contenu */
+.cgp-root .scroll-hint{position:sticky;bottom:-26px;margin:0 -26px -26px;height:64px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;background:linear-gradient(rgba(255,255,255,0),#fff 62%);pointer-events:none;opacity:0;transition:opacity .25s}
+.cgp-root .scroll-hint.on{opacity:1}
+.cgp-root .scroll-hint span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--cg-green-dk);background:#fff;border:1px solid var(--cg-line);border-radius:999px;padding:5px 12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.cgp-root .scroll-hint span:after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);animation:cgNudge 1.4s ease-in-out infinite}
+@keyframes cgNudge{0%,100%{translate:0 0}50%{translate:0 3px}}
+
+/* Plein écran : le badge « Longueur » remonte en haut à gauche, sous « Quitter », pour ne pas être caché par « Voir dans mon jardin » */
+.stage.fs #cloLenBadge{bottom:auto!important;top:64px;left:12px}
 </style>
 </head>
 <body>
@@ -10301,6 +10315,7 @@ var qrcode = function() {
     <button class="qr-close" id="infoClose">✕</button>
     <h3 id="infoT"></h3>
     <div class="info-body" id="infoB"></div>
+    <div class="scroll-hint" id="infoHint" aria-hidden="true"><span>Faire défiler</span></div>
   </div>
 </div>
 
@@ -11246,7 +11261,7 @@ function shipInfo(total){
     if(total>=thr) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
     const t2=/^livraison/i.test(raw)?raw:('Livraison '+raw);
     const placeholder=(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(total));   // prix « à partir de » : pas encore de vrai total
-    return {line:t2, recap:'Offerte dès '+lim+(placeholder?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
+    return {line:t2, recap:'Offerte dès '+lim+((placeholder || thr-total>0.25*thr)?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
   }
   const t=/^livraison/i.test(raw)?raw:('Livraison '+raw);            // champ texte : repris mot pour mot
   return {line:t, recap:raw.charAt(0).toUpperCase()+raw.slice(1), lbl:t, rz:t, del:del};
@@ -11321,7 +11336,7 @@ function argGalleryHtml(a, title){
   const alt=argAlt(L[0].alt || String(title||'').replace(/\.$/,''));
   return `<div class="arg-gal"><img class="arg-img" src="${L[0].src}" alt="${alt}" decoding="async">`
     +(L.length>1 ? '<div class="arg-thumbs">'+L.map((g,i)=>
-      `<button type="button" class="arg-th${i?'':' on'}" data-src="${g.src}" data-alt="${argAlt(g.alt||alt)}" aria-label="Voir l'image ${i+1}"><img src="${g.th||g.src}" alt="" loading="lazy" decoding="async"></button>`).join('')+'</div>' : '')
+      `<button type="button" class="arg-th${i?'':' on'}" data-src="${g.src}" data-alt="${argAlt(g.alt||alt)}" aria-label="Voir l'image ${i+1}"><img src="${g.th||g.src}" alt="" decoding="async"></button>`).join('')+'</div>' : '')
     +'</div>'; }
 function argGalleryBind(root){ root.querySelectorAll('.arg-gal').forEach(G=>{ const main=G.querySelector('.arg-img');
   G.querySelectorAll('.arg-th').forEach(b=>b.onclick=()=>{ main.src=b.dataset.src; main.alt=b.dataset.alt;
@@ -11602,6 +11617,8 @@ function updatePrice(){ const p=computePrice();
   // Produit : prix d'affichage au chargement (ex. prix au mètre = prix du flux Merchant Center), avant toute interaction
   const ov=(typeof CFG_PRICE_TEXT==='function') ? CFG_PRICE_TEXT(p) : null;
   document.getElementById('totalPrice').textContent= ov ? ov.main : fmtEUR(p);
+  // iPhone : force le redessin de la barre du bas (sinon le nouveau prix peut s'afficher coupé après la liste déroulante)
+  try{ const fbr=document.querySelector('#cgpRoot .footbar'); if(fbr){ fbr.style.opacity='0.999'; requestAnimationFrame(()=>requestAnimationFrame(()=>{ fbr.style.opacity=''; })); } }catch(e){}
   const sp=document.getElementById('splitPay');
   // Produit : prix unitaire sous le total (ex. clôture « soit 70,63 €/m ») ; sur mobile, à côté de la mensualité
   const unit=(!ov && typeof CFG_PRICE_UNIT==='function') ? CFG_PRICE_UNIT(p) : '';
@@ -12287,7 +12304,8 @@ function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
   // Prix « à partir de » encore affiché (rien choisi) : on n'ajoute pas une config par défaut que le client n'a pas vue,
   // on l'emmène à l'étape à compléter (le config peut indiquer laquelle via CFG_CART_FIRST_STEP).
-  if(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(computePrice())){
+  if(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(computePrice()) && !window.__cgCartNudged){
+    window.__cgCartNudged=true;   // une seule fois : au 2e clic, on ajoute la configuration affichée (ex. le client veut vraiment 2 m)
     const st=(typeof CFG_CART_FIRST_STEP!=='undefined'?CFG_CART_FIRST_STEP:null), g=st?document.getElementById('group-'+st):null;
     if(g){ g.scrollIntoView({behavior:'smooth',block:'center'}); g.classList.remove('cg-flash'); void g.offsetWidth; g.classList.add('cg-flash'); }
     toast((typeof CFG_CART_FIRST_MSG!=='undefined'?CFG_CART_FIRST_MSG:'Choisissez vos options pour voir le prix exact.'));
@@ -12432,6 +12450,17 @@ function __cfgBackInit(pr){
   };
 }
 
+/* Fenêtres d'aide : « Faire défiler » tant que tout le contenu n'est pas visible (disparaît en bas de la fenêtre) */
+(function(){
+  const m=document.getElementById('infoModal'), h=document.getElementById('infoHint'); if(!m||!h) return;
+  const card=m.querySelector('.info-card'); if(!card) return;
+  const upd=()=>{ const more=card.scrollHeight - card.clientHeight - card.scrollTop > 24; h.classList.toggle('on', m.classList.contains('show') && more); };
+  card.addEventListener('scroll', upd, {passive:true});
+  new MutationObserver(()=>{ if(m.classList.contains('show')){ card.scrollTop=0; upd(); setTimeout(upd,350); setTimeout(upd,1200); } else h.classList.remove('on'); })
+    .observe(m,{attributes:true,attributeFilter:['class']});
+  card.addEventListener('load', upd, true);   // images chargées : la hauteur change
+  window.addEventListener('resize', upd);
+})();
 /* ===== BOOT ===== */
 try{ fetchGlb(glbIdFor(state.pose)); getDraco(); }catch(e){}   // téléchargements lancés tout de suite, en parallèle
 __altInit();
