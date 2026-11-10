@@ -10297,7 +10297,8 @@ var qrcode = function() {
       <div class="drag-hint" id="dragHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"/><path d="M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"/><path d="M4 20v-4h4"/></svg>Glissez pour tourner en 3D</div>
     </div>
     <div class="ar-row"><button class="ar-btn" id="arBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6 20 7v10l-8 4.4L4 17V7z"/><path d="M12 12 20 7M12 12v9.4M12 12 4 7"/></svg>Voir dans mon jardin <span class="ar-sub">en réalité augmentée</span></button></div>
-    <style>.ar-stage{position:fixed;right:0;bottom:0;width:1px;height:1px;overflow:hidden;z-index:-1}.ar-stage.open{inset:0;width:100%;height:100%;overflow:visible;z-index:2147483000;background:#eef1f3}.ar-stage model-viewer{width:100%;height:100%;opacity:0;--poster-color:transparent}.ar-stage.open model-viewer{opacity:1}.ar-ov-close{display:none;position:absolute;top:14px;left:14px;z-index:5;align-items:center;justify-content:center;border:none;background:rgba(30,33,31,.82);color:#fff;width:42px;height:42px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer}.ar-stage.open .ar-ov-close{display:flex}.ar-ov-status{display:none;position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:5;font:600 13px Roboto,Arial,sans-serif;color:#1E211F;background:rgba(255,255,255,.92);padding:8px 15px;border-radius:999px;max-width:86vw;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.12)}.ar-stage.open .ar-ov-status{display:block}.mv-ar-btn{border:none;background:#EB5A00;color:#fff;font:700 15px Roboto,Arial,sans-serif;padding:14px 26px;border-radius:999px;box-shadow:0 6px 20px rgba(235,90,0,.42);cursor:pointer;position:absolute;bottom:26px;left:50%;transform:translateX(-50%)}.mv-ar-btn:hover,.mv-ar-btn:active,.mv-ar-btn:focus,.mv-ar-btn:visited{background:#EB5A00!important;color:#fff!important;text-decoration:none!important;outline:none}</style>
+    <style>.ar-stage{position:fixed;right:0;bottom:0;width:1px;height:1px;overflow:hidden;z-index:-1}.ar-stage.open{inset:0;width:100%;height:100%;overflow:visible;z-index:2147483000;background:#eef1f3}.ar-stage model-viewer{width:100%;height:100%;opacity:0;--poster-color:transparent}.ar-stage.open model-viewer{opacity:1}.ar-ov-close{display:none;position:absolute;top:14px;left:14px;z-index:5;align-items:center;justify-content:center;border:none;background:rgba(30,33,31,.82);color:#fff;width:42px;height:42px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer}.ar-stage.open .ar-ov-close{display:flex}.ar-ov-status{display:none;position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:5;font:600 13px Roboto,Arial,sans-serif;color:#1E211F;background:rgba(255,255,255,.92);padding:8px 15px;border-radius:999px;max-width:86vw;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.12)}.ar-stage.open .ar-ov-status{display:block}.mv-ar-btn{border:none;background:#EB5A00;color:#fff;font:700 15px Roboto,Arial,sans-serif;padding:14px 26px;border-radius:999px;box-shadow:0 6px 20px rgba(235,90,0,.42);cursor:pointer;position:absolute;bottom:26px;left:50%;transform:translateX(-50%)}.mv-ar-btn:hover,.mv-ar-btn:active,.mv-ar-btn:focus,.mv-ar-btn:visited{background:#EB5A00!important;color:#fff!important;text-decoration:none!important;outline:none}.cgp-root .clo-addon{justify-content:flex-start;gap:12px}.cgp-root .clo-addon+.clo-addon,.cgp-root .reco-box+.clo-addon{margin-top:8px}.cgp-root .clo-addon-img{width:56px;height:56px;border-radius:8px;object-fit:cover;flex:none;background:var(--cg-grey-1)}.cgp-root .clo-addon .clo-angles-l{flex:1;min-width:0}
+</style>
     <div class="ar-stage" id="arStage"><button class="ar-ov-close" id="arOvClose" aria-label="Fermer">&#10005;</button><div class="ar-ov-status" id="arOvStatus"></div><model-viewer id="mv" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls loading="eager" touch-action="pan-y"><button slot="ar-button" style="display:none" aria-hidden="true"></button></model-viewer><button id="mvArBtn" class="mv-ar-btn" style="display:none">Voir en r&#233;alit&#233; augment&#233;e</button></div>
   </div>
   <div class="opts-col">
@@ -10401,11 +10402,10 @@ window.CGP_CTX = Object.assign({ noun:'clôture', pose:'180' }, window.CGP_CTX||
 const PPH      = { '060':1, '120':2, '180':3, '240':4 };    // panneaux empiles par hauteur
 const H_CALC   = { '060':23.545, '120':47.09, '180':70.63, '240':94.18 };// prix/m de base selon hauteur (lineaire : 23.545/panneau)
 const OCC_CALC = { '060':5.535, '120':11.07, '180':16.61, '240':22.15 }; // surprix occultant/m selon hauteur (5.535/panneau)
-const SUP_CALC = { 'sans':0, 'pieux':10.20, 'platines':14.63 };
-const POT_CALC = { 'sans':0, 'avec':32.95 };
-/* Angles (décision Manuel 06/11) : chaque angle ajoute 1 poteau + 1 pied (platine ou pieu) si une fixation est choisie,
-   facturés au prix catalogue TTC des pièces (poteau 0200-00030, platine 0300-00268, pieu 0300-00267). */
-const ANGLE_CALC = { poteau:59.10, platines:20.67, pieux:11.20, sans:0 };
+/* Facturation à la pièce (décision Manuel 10/11/2026) : poteaux, pieds, traverses de recoupe et vis au prix catalogue TTC
+   des pièces WooCommerce (poteau 0200-00030, platine 0300-00268, pieu 0300-00267, traverse 0300-00316, vis 0300-00064).
+   Les panneaux restent au mètre (H_CALC / OCC_CALC). Doit rester identique à includes/cloture-calc.php (plugin). */
+const PIECE = { poteau:59.10, platine:20.67, pieu:11.20, traverse:0, vis:0.05, portillon:349, traitement:35 };   // traverses de recoupe offertes (décision Manuel 10/11), toujours ajoutées au panier pour le stock
 /* glb reel utilise pour chaque hauteur : le 60 cm reutilise le glb 1,20 m en n'affichant qu'un niveau */
 const GLB_HEIGHT = { '060':'120', '120':'120', '180':'180', '240':'240' };
 
@@ -10514,10 +10514,27 @@ const SECTIONS = {
     arg:{ items:[
       {t:"Sans support", img:"", b:"Vous avez déjà vos propres supports pour fixer les poteaux."},
       {t:"Pieux pour sol souple", img:cloTh('pieu'), b:"Des pieux à enfoncer dans un sol meuble. Plantés directement dans la terre, ils conviennent à la clôture ajourée. Pour une clôture occultante, une grande hauteur ou une zone ventée, scellez-les : enfoncés dans du béton frais, ils deviennent très résistants."},
-      {t:"Platines pour sol dur", img:cloTh('platine'), b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } }
+      {t:"Platines pour sol dur", img:cloTh('platine'), b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } },
+  complements:{ title:"Compléments.", q:"Portillon et finition", argTitle:"Le portillon douglas",
+    arg:{ imgs:cloGal([['portillon','Portillon bois douglas en kit'],['portillon-mesures','Dimensions du portillon']]),
+      intro:"Un portillon assorti à votre clôture, en douglas français.", points:[
+      ["Dimensions","1,59 m de haut, 1 m de large (99,5 cm de passage entre les poteaux)."],
+      ["Livré prêt à poser","Portillon déjà assemblé en France, avec charnières, loquet et notice. Il se pose en 30 minutes environ."],
+      ["Poteaux","Il se fixe entre deux poteaux. Avec les poteaux de la clôture, chaque portillon en ajoute 1 au kit."],
+      ["Longueur","La longueur choisie est celle de la clôture seule : prévoyez environ 1,10 m de plus pour le portillon et son poteau."],
+      ["Traitement des coupes","Les poteaux et les panneaux se recoupent à la scie : le produit de traitement protège le bois à ces endroits."] ] } }
 };
 
 /* ============================ PRIX ============================ */
+/* Compléments (portillon, traitement des coupes) : affichés seulement si le plugin confirme que le produit est
+   en vente et en stock (CGP_CTX.addons), sinon la ligne serait refusée au panier. */
+function cloAddonOk(k){ var a=window.CGP_CTX && CGP_CTX.addons; return !!(a && a[k]); }
+var PORTILLON_H = '1,59 m', PORTILLON_W = '1 m';
+function cloPortillonHint(){
+  var d={ '120':'Il dépasse votre clôture de 1,20 m d\'environ 40 cm.', '180':'Il est environ 20 cm plus bas que votre clôture de 1,80 m.', '240':'Il est environ 80 cm plus bas que votre clôture de 2,40 m.' }[state.pose]||'';
+  return '<b>Portillon de '+PORTILLON_H+' de haut.</b> '+d+' Il s\'ajoute à la longueur de clôture choisie : prévoyez environ 1,10 m de plus.'
+    +(state.poteaux==='avec' ? ' Chaque portillon ajoute 1 poteau'+(state.support!=='sans'?' et son pied':'')+'.' : ' À fixer entre deux poteaux solides.');
+}
 function supportEff(){ return (state.poteaux==='avec') ? state.support : 'sans'; }
 function cloLongueur(){ return Math.max(LONG_MIN, Math.min(LONG_MAX, parseInt(state.longueur,10)||LONG_MIN)); }
 function cloLongueurFacturee(){ return 2*Math.ceil(cloLongueur()/2); } // arrondi au pair sup (panneaux de 2 m)
@@ -10527,7 +10544,7 @@ function cloLongueurFacturee(){ return 2*Math.ceil(cloLongueur()/2); } // arrond
 function CFG_PRICE_TEXT(p){
   // Options touchées mais longueur pas encore choisie : prix au mètre de la configuration en cours (pas un total pour 2 m)
   if(window.__cloPriced && !window.__cloLenChosen){
-    var a=state.angles; state.angles=0; var pm=computePrice()/cloLongueur(); state.angles=a;
+    var a=state.angles, l=state.longueur, pt=state.portillon, tr=state.traitement; state.angles=0; state.portillon=0; state.traitement=0; state.longueur=10; var pm=computePrice()/10; state.angles=a; state.longueur=l; state.portillon=pt; state.traitement=tr;   // pièces à la pièce : prix au mètre donné pour 10 m
     return { main: pm.toFixed(2).replace('.',',')+' €/m', sub:'Prix au mètre', label:'Choisissez la longueur pour le total' };
   }
   if(window.__cloPriced) return null;
@@ -10551,13 +10568,15 @@ var CFG_RZ_EXTRA = [{ic:'shield', t:'Bois garanti 20 ans', s:'Traité pour durer
 var CFG_RZ_SHIP = {ic:'chat', t:'Une équipe qui vous conseille', s:'Par téléphone et chat, avant et après l\'achat'};   // en plus des 3 éléments communs
 function computePrice(){
   var h = PPH[state.pose] ? state.pose : '180';
-  var Lpaid = cloLongueur();   // comme MKL (formule officielle « longueur ») : prix au mètre sur la longueur réelle, impaire comprise
+  var L = cloLongueur();   // panneaux : prix au mètre sur la longueur réelle, impaire comprise (comme avant)
   var occ = (state.type==='occultante') ? 1 : 0;
   var faces = (state.type==='occultante' && state.faces==='deux') ? 1 : 0;
-  var coeff = H_CALC[h] + SUP_CALC[supportEff()] + POT_CALC[state.poteaux]
-            + H_CALC[h]*faces + OCC_CALC[h]*occ;
-  var ang = (state.poteaux==='avec') ? (state.angles||0) : 0;
-  return Math.round((coeff * Lpaid + ang * (ANGLE_CALC.poteau + ANGLE_CALC[supportEff()])) * 100) / 100;
+  var b = cloBOM();        // pièces comptées comme dans le panier (angles compris)
+  var t = (H_CALC[h]*(1+faces) + OCC_CALC[h]*occ) * L
+        + b.poteaux*PIECE.poteau + b.platines*PIECE.platine + b.pieux*PIECE.pieu
+        + b.traverses*PIECE.traverse + b.vis*PIECE.vis
+        + b.portillons*PIECE.portillon + b.traitement*PIECE.traitement;
+  return Math.round(t * 100) / 100;
 }
 
 /* ======================= NOMENCLATURE (BOM) ======================= */
@@ -10569,26 +10588,28 @@ function cloBOM(){
   var occ = (state.type==='occultante') ? pph*R : 0;
   var ajo = (state.type==='ajouree') ? pph*R
           : ((state.type==='occultante' && state.faces==='deux') ? pph*R : 0);
-  var poteaux  = (state.poteaux==='avec') ? R+1+(state.angles||0) : 0;   // + 1 poteau d'angle par angle
+  var port     = cloAddonOk('portillon') ? (state.portillon||0) : 0;
+  var trait    = cloAddonOk('traitement') ? (state.traitement||0) : 0;
+  var poteaux  = (state.poteaux==='avec') ? R+1+(state.angles||0)+port : 0;   // + 1 poteau par angle, + 1 poteau par portillon
   var platines = (state.poteaux==='avec' && state.support==='platines') ? poteaux : 0;
   var pieux    = (state.poteaux==='avec' && state.support==='pieux')    ? poteaux : 0;
   var vis      = (state.poteaux==='avec') ? 6*(occ+ajo) : 0;
   var traverse = pph * ((state.type==='occultante' && state.faces==='deux') ? 2 : 1);
   var clou     = 12 * traverse;
   return { rangees:R, ajoures:ajo, occultants:occ, poteaux:poteaux,
-           platines:platines, pieux:pieux, vis:vis, traverses:traverse, clous:clou };
+           platines:platines, pieux:pieux, vis:vis, traverses:traverse, clous:clou, portillons:port, traitement:trait };
 }
 
 /* ======================= HOOKS MOTEUR ======================= */
 
 /* Etat initial (le moteur appelle initState -> CFG_INIT_STATE si defini) */
 /* Sauvegarde : encodage propre à la clôture (lien #cfg=... qui restaure la configuration) */
-function CFG_ENCODE(){ return {p:state.pose, t:state.taille, c:{l:state.longueur, ty:state.type, fa:state.faces, po:state.poteaux, su:state.support, an:state.angles}}; }
+function CFG_ENCODE(){ return {p:state.pose, t:state.taille, c:{l:state.longueur, ty:state.type, fa:state.faces, po:state.poteaux, su:state.support, an:state.angles, pt:state.portillon, tr:state.traitement}}; }
 function CFG_INIT_STATE(){
   // restauration depuis un lien sauvegardé (une seule fois)
   if(!window.__cloRestored && typeof RESTORE!=='undefined' && RESTORE && RESTORE.c){
     window.__cloRestored=true; window.__cloPriced=true; window.__cloLenChosen=true; var r=RESTORE.c;
-    if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su; if(r.an!=null) state.angles=parseInt(r.an,10)||0;
+    if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su; if(r.an!=null) state.angles=parseInt(r.an,10)||0; if(r.pt!=null) state.portillon=parseInt(r.pt,10)||0; if(r.tr!=null) state.traitement=parseInt(r.tr,10)||0;
     try{ ['hauteur','longueur','type','faces','poteaux','support'].forEach(function(k){ chosen[k]=true; }); }catch(e){}
   }
   if(!PPH[state.pose] || state.pose==='060') state.pose = '120';   // départ 1,20 m comme MKL (prix = flux Merchant Center)
@@ -10598,6 +10619,8 @@ function CFG_INIT_STATE(){
   if(state.poteaux==null)  state.poteaux = 'sans';   // le projet démarre sans poteau
   if(state.support==null)  state.support = 'sans';      // comme MKL : pas de fixation présélectionnée quand on ajoute les poteaux
   if(state.angles==null)   state.angles = 0;          // 0 = droite, 1 = en L, 2 = en U
+  if(state.portillon==null) state.portillon = 0;
+  if(state.traitement==null) state.traitement = 0;
 }
 
 /* Libelle clair d'une valeur */
@@ -10803,6 +10826,24 @@ function CFG_RENDER(){
     });
   }
 
+  if(cloAddonOk('portillon') || cloAddonOk('traitement')){
+    section('complements', function(){
+      var w2=document.createElement('div');
+      function row(key, img, name, sub, max){
+        var n=state[key]||0, r=document.createElement('div'); r.className='clo-angles clo-addon';
+        r.innerHTML='<img class="clo-addon-img" src="'+img+'" alt="" loading="lazy" decoding="async">'
+          +'<span class="clo-angles-l">'+name+'<small>'+sub+'</small></span>'
+          +'<span class="clo-step"><button type="button" data-d="-1" aria-label="Retirer">−</button><b>'+n+'</b><button type="button" data-d="1" aria-label="Ajouter">+</button></span>';
+        r.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ var v=Math.max(0,Math.min(max,(state[key]||0)+parseInt(b.getAttribute('data-d'),10))); if(v===(state[key]||0)) return; state[key]=v; chosen.complements=true; cloRefresh('angles'); }; });
+        w2.appendChild(r);
+      }
+      if(cloAddonOk('portillon')) row('portillon', CLO_IMG+'t/cloture-portillon-sq.webp', 'Portillon douglas', 'Hauteur '+PORTILLON_H+', largeur '+PORTILLON_W+'. 349 €', 3);
+      if(cloAddonOk('portillon') && state.portillon>0){ var hn=document.createElement('div'); hn.className='reco-box'; hn.innerHTML=cloPortillonHint(); w2.appendChild(hn); }
+      if(cloAddonOk('traitement')) row('traitement', CLO_IMG+'t/cloture-traitement-sq.webp', 'Traitement des coupes', 'Protège le bois recoupé. 1 L, 35 €', 5);
+      return w2;
+    });
+  }
+
   var gs=optsEl.querySelectorAll('.group'); if(gs.length) gs[gs.length-1].classList.add('no-sep');
   optsEl.appendChild(cloRecap());
   if(typeof buildSimulator==='function') optsEl.appendChild(buildSimulator());
@@ -10841,6 +10882,7 @@ function cloRecap(){
   rows.push(['Poteaux', state.poteaux==='avec' ? poteauxLabel() : 'Sans poteau (non fournis)']);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
   if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
+  cloAddonRows().forEach(function(r){ rows.push(r); });
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3><button type="button" class="savoir tech-link" onclick="cloOpenTech()">Voir la fiche technique</button>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
     +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
@@ -11148,6 +11190,7 @@ function cloTechRows(){
     r.push(['Poteaux', '9 × 9 cm, 2,50 m à recouper']);
     if(state.support==='platines') r.push(['Platine', 'socle 15 × 15 cm']);
   }
+  if(cloBOM().portillons) r.push(['Portillon', '1,59 m de haut, 99,5 cm de passage']);
   return r;
 }
 function cloTechHtml(){ return '<div class="clo-tech-h">Fiche technique</div>'+cloTechRows().map(function(x){ return '<div>'+x[0]+' : <b>'+x[1]+'</b></div>'; }).join(''); }
@@ -11284,13 +11327,15 @@ function CFG_CART_LABEL(){
    et la commande liste les pièces pour la préparation / l'ERP. */
 var CLO_SKU = {
   ajoure:'0210-00016', occultant:'0210-00023', poteau:'0200-00030',
-  platine:'0300-00268', pieu:'0300-00267', traverse:'0300-00316', vis:'0300-00064'
+  platine:'0300-00268', pieu:'0300-00267', traverse:'0300-00316', vis:'0300-00064',
+  portillon:'0700-00100-1', traitement:'0600-00010'
 };
 function CFG_CART_PAYLOAD(){
   var b=cloBOM(), items=[{ sku:SKU_PARENT, qty:1, role:'main' }];
   function add(k,q){ if(q>0) items.push({ sku:CLO_SKU[k], qty:q, role:'component' }); }
   add('ajoure', b.ajoures); add('occultant', b.occultants); add('poteau', b.poteaux);
   add('platine', b.platines); add('pieu', b.pieux); add('traverse', b.traverses); add('vis', b.vis);
+  add('portillon', b.portillons); add('traitement', b.traitement);
   // pas de clous : la traverse de recoupe est un kit (nomenclature Odoo) qui contient déjà sa visserie / ses clous
   return items;
 }
@@ -11301,7 +11346,15 @@ function CFG_CART_SUMMARY(){
   rows.push(['Poteaux',poteauxLabel()]);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
   if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
+  cloAddonRows().forEach(function(r){ rows.push(r); });
   return rows;
+}
+/* Libellés identiques côté serveur (includes/cloture-calc.php) */
+function cloAddonRows(){
+  var b=cloBOM(), r=[];
+  if(b.portillons) r.push(['Portillon', b.portillons+' portillon'+(b.portillons>1?'s':'')+' 1 × 1,59 m']);
+  if(b.traitement) r.push(['Traitement des coupes', b.traitement+' × 1 L']);
+  return r;
 }
 
 /* =================================================================
