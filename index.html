@@ -11272,7 +11272,7 @@ function shipInfo(total){
     if(total>=thr) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
     const t2=/^livraison/i.test(raw)?raw:('Livraison '+raw);
     const placeholder=(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(total));   // prix « à partir de » : pas encore de vrai total
-    return {line:t2, recap:'Offerte dès '+lim+((placeholder || thr-total>0.25*thr)?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
+    return {line:t2, recap:'Offerte dès '+lim+(placeholder?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
   }
   const t=/^livraison/i.test(raw)?raw:('Livraison '+raw);            // champ texte : repris mot pour mot
   return {line:t, recap:raw.charAt(0).toUpperCase()+raw.slice(1), lbl:t, rz:t, del:del};
@@ -11491,6 +11491,8 @@ const FLAG_FR='<svg class="fr-flag" viewBox="0 0 3 2" aria-label="France" role="
 const RZ_SVG={
   truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 9.5h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/></svg>',
   ret:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9h11a5 5 0 0 1 0 10H8"/><path d="M6.5 5.5 3 9l3.5 3.5"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5a7.5 7.5 0 0 1-11.2 6.5L4 20l1.1-4.3A7.5 7.5 0 1 1 20 12.5z"/></svg>',
+  tools:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.3-.5-.5-2.3z"/></svg>',
   shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
   leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4.4 3.2-7.5 8.5-7.5C20.5 9.4 17.3 12 12 12Z"/><path d="M12 15c0-3.2-2.4-5.3-6.3-5.3C5.7 13.2 8.1 15 12 15Z"/></svg>'
 };
@@ -11502,6 +11504,7 @@ function buildReassurance(){
   ];
   const w=document.createElement('div'); w.className='reassure';
   items[2].t+=' '+FLAG_FR;   // matière française : petit drapeau
+  if(typeof CFG_RZ_SHIP!=='undefined') items[0]=Object.assign({}, CFG_RZ_SHIP, {ic:RZ_SVG[CFG_RZ_SHIP.ic]||RZ_SVG.truck});   // produit : argument à la place de la livraison
   if(typeof CFG_RZ_EXTRA!=='undefined') CFG_RZ_EXTRA.forEach(x=>items.push(Object.assign({}, x, {ic:RZ_SVG[x.ic]||RZ_SVG.leaf})));   // ex. garantie
   w.innerHTML=items.map(i=>`<div class="rz-item"><span class="rz-ic">${i.ic}</span><div class="rz-tx"><b>${i.t}</b><span>${fixPunct(i.s)}</span></div></div>`).join('');
   return w;

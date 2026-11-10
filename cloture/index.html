@@ -10477,7 +10477,7 @@ const QUALITY = {
 /* ---- Textes des etapes (vouvoiement cote client) ---- */
 const SECTIONS = {
   hauteur:{ title:"Hauteur.", q:"Quelle hauteur de clôture ?",
-    arg:{ imgs:cloGal([['hauteur-1m80','Clôture bois 1,80 m'],['hauteur-1m20','Clôture bois 1,20 m sur muret'],['hauteur-2m40','Clôture bois 2,40 m']]),
+    arg:{ imgs:cloGal([['hauteur-1m80','Clôture bois 1,80 m'],['hauteur-2m40','Clôture bois 2,40 m']]),
       intro:"Hauteur de la clôture, hors poteau.", points:[
       ["1,20 m","Pour délimiter sans fermer : jardinet, massif, séparation basse."],
       ["1,80 m","La hauteur standard pour l'intimité côté jardin ou terrasse."],
@@ -10494,17 +10494,21 @@ const SECTIONS = {
       ["Angles","La clôture s'adapte aux angles : si vous prenez les poteaux, indiquez le nombre d'angles à l'étape Poteaux. Chaque angle ajoute 1 poteau et son pied si vous choisissez une fixation au sol."] ] } },
   type:{ title:"Type de clôture.", q:"Ajourée ou occultante ?",
     arg:{ items:[
-      {t:"Ajourée", img:cloTh('type-ajouree'), b:"Les lames (4,7 × 2,5 cm) sont espacées de 2 cm : l'air et la lumière passent. Le vent aussi : c'est le bon choix en zone très exposée."},
+      {t:"Ajourée", img:cloTh('type-ajouree'), b:"Les lames (4,7 × 2,5 cm) sont espacées de 2 cm : l'air et la lumière passent, pour délimiter sans fermer."},
       {t:"Occultante", img:cloTh('type-occultante'), b:"Une membrane occultante (Delta-Fassade) est fixée au dos des lames : aucun vis-à-vis. Vous pouvez ajouter une 2e face bois pour habiller et protéger la membrane côté voisin."},
-      {t:"Et le vent ?", img:cloTh('vent'), b:"L'occultante a plus de prise au vent que l'ajourée, mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. En occultant, fixez la clôture dans le béton : « Platines pour sol dur » chevillées dans le béton, ou « Pieux pour sol souple » scellés dans du béton frais (plantés seuls dans la terre, les pieux sont réservés à l'ajourée)."} ] } },
+      {t:"Et le vent ?", img:cloTh('vent'), b:"Bien fixée, l'occultante reste stable : la membrane est conçue pour résister au vent. Pour une tenue optimale, fixez la clôture dans le béton : « Platines pour sol dur » chevillées dans le béton, ou « Pieux pour sol souple » scellés dans du béton frais (plantés seuls dans la terre, les pieux sont réservés à l'ajourée)."} ] } },
   faces:{ title:"Faces.", q:"Une ou deux faces bois ?",
     arg:{ items:[
       {t:"Une face bois", img:cloTh('une-face-cote-voisin'), b:"Le bois habille un seul côté : tournez-le vers le côté le plus vu (votre jardin, ou la rue comme ici). De l'autre côté, on voit la membrane noire et les traverses de maintien."},
       {t:"Deux faces bois", img:cloTh('deux-faces'), b:"Le bois habille les deux côtés : même rendu côté jardin et côté voisin, et la membrane est protégée entre les deux faces."} ] } },
   poteaux:{ title:"Poteaux.", q:"Avec ou sans poteaux ?",
-    arg:{ items:[
-      {t:"Avec poteaux", img:cloTh('avec-poteaux'), b:"Les poteaux sont fournis, en <b>bois lamellé-collé 90 × 90 mm</b>, classe 4 : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Il faut 1 poteau au départ, puis 1 tous les 2 m (le nombre est calculé pour vous). Hauteur 2,50 m, à recouper à la hauteur de votre clôture. La quincaillerie pour fixer les panneaux sur les poteaux est fournie avec les poteaux. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
-      {t:"Sans poteau", img:"", b:"Vous fixez les panneaux sur un support existant et solide : poteaux maçonnés, bois ou métal, ou directement plaqués contre un mur (les traverses au dos font un tasseau de 2,5 cm). Fixations adaptées à votre support non fournies. Un grillage n'est pas assez solide."} ] } },
+    arg:{ imgs:cloGal([['avec-poteaux','Poteau en bois lamellé-collé 90 × 90 mm']]),
+      intro:"Des poteaux en bois lamellé-collé, prêts à recevoir vos panneaux.", points:[
+      ["Lamellé-collé 90 × 90 mm, classe 4","Contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps."],
+      ["Le bon nombre, calculé pour vous","1 poteau au départ, puis 1 tous les 2 m, plus 1 par angle."],
+      ["Hauteur 2,50 m","À recouper à la hauteur de votre clôture."],
+      ["Quincaillerie fournie","Tout le nécessaire pour fixer les panneaux sur les poteaux est livré avec."],
+      ["Sans poteau ?","Fixez les panneaux sur un support existant et solide (poteaux maçonnés, bois ou métal) ou plaquez-les contre un mur : les traverses au dos font un tasseau de 2,5 cm. Fixations non fournies. Un grillage n'est pas assez solide."] ] } },
   support:{ title:"Fixation au sol.", q:"Quelle fixation pour vos poteaux ?",
     cta:"Comment choisir ma fixation ?",
     arg:{ items:[
@@ -10541,7 +10545,10 @@ function CFG_CART_REQUIRE(){ return window.__cloLenChosen ? null : 'longueur'; }
 function CFG_PRICE_UNIT(p){ var L=cloLongueur(); return (L>0 && L<=1) ? 'soit '+(p/L).toFixed(2).replace('.',',')+' €/m' : ''; }
 /* Réassurance : la clôture est en douglas français (pas de lamellé-collé, sauf les poteaux) */
 var CFG_RZ_WOOD = { t:'Douglas français', s:'Issu de forêts françaises' };
-var CFG_RZ_EXTRA = [{ic:'shield', t:'Bois garanti 20 ans', s:'Traité pour durer en extérieur'}];   // en plus des 3 éléments communs
+var CFG_RZ_EXTRA = [{ic:'shield', t:'Bois garanti 20 ans', s:'Traité pour durer en extérieur'}];
+/* À la place de la livraison (déjà sous le titre et dans le récapitulatif) : la réassurance la plus citée dans les avis
+   Trustpilot sur la clôture (service client : 57 % des avis clôture lus ; le montage facile est déjà l'argument de l'étape Hauteur). */
+var CFG_RZ_SHIP = {ic:'chat', t:'Une équipe qui vous conseille', s:'Par téléphone et chat, avant et après l\'achat'};   // en plus des 3 éléments communs
 function computePrice(){
   var h = PPH[state.pose] ? state.pose : '180';
   var Lpaid = cloLongueur();   // comme MKL (formule officielle « longueur ») : prix au mètre sur la longueur réelle, impaire comprise
@@ -10737,12 +10744,9 @@ function CFG_RENDER(){
       card.insertBefore(im, card.firstChild); card.classList.add('has-img');
       c.appendChild(card);
     });
+    // Pas de message « vent » sous le type : il installait le doute sur l'occultante (retour Manuel). Le conseil
+    // de fixation est donné à l'étape Fixation, là où il sert.
     var w2=document.createElement('div'); w2.appendChild(c);
-    var hn=document.createElement('div'); hn.className='reco-box';
-    hn.innerHTML = (state.type==='occultante' && state.pose==='240') ? '<b>2,40 m en occultant</b> : la clôture prend beaucoup de vent. Prévoyez une fixation dans le béton : « Platines pour sol dur » chevillées, ou « Pieux pour sol souple » enfoncés directement dans le béton.'
-                 : (state.type==='occultante') ? '<b>Zone ventée ?</b> L\'occultante prend plus le vent que l\'ajourée : soignez la fixation de vos poteaux.'
-                 : '<b>Zone ventée ?</b> L\'ajourée laisse passer le vent : c\'est le bon choix en zone exposée.';
-    w2.appendChild(hn);
     return w2;
   });
 
@@ -10789,7 +10793,7 @@ function CFG_RENDER(){
       });
       var w2=document.createElement('div'); w2.appendChild(c);
       var hn=document.createElement('div'); hn.className='reco-box';
-      hn.innerHTML= state.support==='platines' ? '<b>Sur un muret</b> : les platines conviennent si le muret est plat et large d\'au moins 15 cm. En zone ventée, chevillez-les dans du béton.'
+      hn.innerHTML= state.support==='platines' ? '<b>Sol dur</b> : dalle, terrasse, plots béton ou muret plat d\'au moins 15 cm de large. En zone ventée, chevillez les platines dans du béton.'
                   : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les « Pieux pour sol souple » simplement plantés dans la terre ne suffisent pas face au vent. Enfoncez-les directement dans du béton (scellement), ou choisissez les « Platines pour sol dur » chevillées dans le béton.'
                   : (state.support==='pieux' && state.type==='occultante') ? '<b>En occultant</b> : scellez les pieux en les enfonçant dans du béton frais, ils deviennent très résistants. Plantés seuls dans la terre, ils sont réservés à l\'ajourée.'
                   : state.support==='pieux' ? '<b>Sol meuble</b> : en ajouré, les pieux s\'enfoncent directement dans la terre. En zone très ventée, scellez-les dans du béton frais.'
@@ -10839,6 +10843,7 @@ function cloRecap(){
   if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3><button type="button" class="savoir tech-link" onclick="cloOpenTech()">Voir la fiche technique</button>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
+    +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
     +(function(){ var p=computePrice(), ov=CFG_PRICE_TEXT(p); return `<div class="recap-row total"><span>${ov?'Prix au mètre TTC':'Total TTC'}</span><b>${ov?ov.main:fmtEUR(p)}</b></div>`+((ov||!CFG_PRICE_UNIT(p))?'':`<div class="recap-row"><span></span><span style="font-size:13px;color:var(--cg-ink-soft)">${CFG_PRICE_UNIT(p)}</span></div>`); })();
   return w;
 }
@@ -11459,7 +11464,7 @@ function shipInfo(total){
     if(total>=thr) return {line:'Livraison offerte', recap:'Offerte', lbl:'Livraison offerte', rz:'Livraison offerte', del:del};
     const t2=/^livraison/i.test(raw)?raw:('Livraison '+raw);
     const placeholder=(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(total));   // prix « à partir de » : pas encore de vrai total
-    return {line:t2, recap:'Offerte dès '+lim+((placeholder || thr-total>0.25*thr)?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
+    return {line:t2, recap:'Offerte dès '+lim+(placeholder?'':', plus que '+fmtEUR(thr-total)), lbl:t2, rz:t2, del:del};
   }
   const t=/^livraison/i.test(raw)?raw:('Livraison '+raw);            // champ texte : repris mot pour mot
   return {line:t, recap:raw.charAt(0).toUpperCase()+raw.slice(1), lbl:t, rz:t, del:del};
@@ -11678,6 +11683,8 @@ const FLAG_FR='<svg class="fr-flag" viewBox="0 0 3 2" aria-label="France" role="
 const RZ_SVG={
   truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 9.5h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/></svg>',
   ret:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9h11a5 5 0 0 1 0 10H8"/><path d="M6.5 5.5 3 9l3.5 3.5"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5a7.5 7.5 0 0 1-11.2 6.5L4 20l1.1-4.3A7.5 7.5 0 1 1 20 12.5z"/></svg>',
+  tools:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.3-.5-.5-2.3z"/></svg>',
   shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
   leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4.4 3.2-7.5 8.5-7.5C20.5 9.4 17.3 12 12 12Z"/><path d="M12 15c0-3.2-2.4-5.3-6.3-5.3C5.7 13.2 8.1 15 12 15Z"/></svg>'
 };
@@ -11689,6 +11696,7 @@ function buildReassurance(){
   ];
   const w=document.createElement('div'); w.className='reassure';
   items[2].t+=' '+FLAG_FR;   // matière française : petit drapeau
+  if(typeof CFG_RZ_SHIP!=='undefined') items[0]=Object.assign({}, CFG_RZ_SHIP, {ic:RZ_SVG[CFG_RZ_SHIP.ic]||RZ_SVG.truck});   // produit : argument à la place de la livraison
   if(typeof CFG_RZ_EXTRA!=='undefined') CFG_RZ_EXTRA.forEach(x=>items.push(Object.assign({}, x, {ic:RZ_SVG[x.ic]||RZ_SVG.leaf})));   // ex. garantie
   w.innerHTML=items.map(i=>`<div class="rz-item"><span class="rz-ic">${i.ic}</span><div class="rz-tx"><b>${i.t}</b><span>${fixPunct(i.s)}</span></div></div>`).join('');
   return w;
