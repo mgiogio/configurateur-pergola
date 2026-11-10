@@ -10512,7 +10512,7 @@ const SECTIONS = {
   support:{ title:"Fixation au sol.", q:"Quelle fixation pour vos poteaux ?",
     cta:"Comment choisir ma fixation ?",
     arg:{ items:[
-      {t:"Sans support", img:"", b:"Vous fixez les poteaux vous-même, par exemple en les scellant dans des trous remplis de béton. Sur un muret ou une dalle, préférez les « Platines pour sol dur »."},
+      {t:"Sans support", img:"", b:"Vous avez déjà vos propres supports pour fixer les poteaux."},
       {t:"Pieux pour sol souple", img:cloTh('pieu'), b:"Des pieux à enfoncer dans un sol meuble. Plantés directement dans la terre, ils conviennent à la clôture ajourée. Pour une clôture occultante, une grande hauteur ou une zone ventée, scellez-les : enfoncés dans du béton frais, ils deviennent très résistants."},
       {t:"Platines pour sol dur", img:cloTh('platine'), b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } }
 };
@@ -10797,7 +10797,7 @@ function CFG_RENDER(){
                   : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les « Pieux pour sol souple » simplement plantés dans la terre ne suffisent pas face au vent. Enfoncez-les directement dans du béton (scellement), ou choisissez les « Platines pour sol dur » chevillées dans le béton.'
                   : (state.support==='pieux' && state.type==='occultante') ? '<b>En occultant</b> : scellez les pieux en les enfonçant dans du béton frais, ils deviennent très résistants. Plantés seuls dans la terre, ils sont réservés à l\'ajourée.'
                   : state.support==='pieux' ? '<b>Sol meuble</b> : en ajouré, les pieux s\'enfoncent directement dans la terre. En zone très ventée, scellez-les dans du béton frais.'
-                  : '<b>Sans support</b> : vous scellez vous-même les poteaux de 2,50 m ou les fixez sur un support existant.';
+                  : '<b>Sans support</b> : vous avez déjà vos propres supports pour fixer les poteaux.';
       w2.appendChild(hn);
       return w2;
     });
