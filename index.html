@@ -10267,6 +10267,17 @@ var qrcode = function() {
 
 /* Plein écran : le badge « Longueur » remonte en haut à gauche, sous « Quitter », pour ne pas être caché par « Voir dans mon jardin » */
 .stage.fs #cloLenBadge{bottom:auto!important;top:64px;left:12px}
+
+.cgp-root .choices.keep3{grid-template-columns:1fr 1fr 1fr}
+
+/* Réassurance à 4 éléments : grille 2 × 2 sur ordinateur */
+.cgp-root .reassure:has(.rz-item:nth-child(4)){display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:880px){.cgp-root .reassure:has(.rz-item:nth-child(4)){grid-template-columns:1fr}}
+/* Longueur pas encore choisie : texte d'invite en gris */
+.cgp-root select.clo-select.is-empty{color:#787c82!important}
+
+/* Mobile : pas de marge blanche au-dessus de l'image (la 1re étape remonte d'autant) */
+@media (max-width:880px){.cgp-root .layout{padding-top:0!important}}
 </style>
 </head>
 <body>
@@ -10304,7 +10315,7 @@ var qrcode = function() {
 
 <div class="footbar"><div class="wrap">
   <div class="price-block"><div class="lbl" id="shipLbl">Total TTC</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div><div class="unit" id="unitPrice"></div></div>
-  <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Sauver</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
+  <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Enregistrer</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
 <div class="vid-modal" id="vidModal"><div class="vid-card"><button class="vid-close" id="vidClose" aria-label="Fermer">✕</button><div class="vid-frame" id="vidFrame"></div></div></div>
@@ -11480,6 +11491,7 @@ const FLAG_FR='<svg class="fr-flag" viewBox="0 0 3 2" aria-label="France" role="
 const RZ_SVG={
   truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 9.5h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/></svg>',
   ret:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9h11a5 5 0 0 1 0 10H8"/><path d="M6.5 5.5 3 9l3.5 3.5"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
   leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4.4 3.2-7.5 8.5-7.5C20.5 9.4 17.3 12 12 12Z"/><path d="M12 15c0-3.2-2.4-5.3-6.3-5.3C5.7 13.2 8.1 15 12 15Z"/></svg>'
 };
 function buildReassurance(){
@@ -11490,6 +11502,7 @@ function buildReassurance(){
   ];
   const w=document.createElement('div'); w.className='reassure';
   items[2].t+=' '+FLAG_FR;   // matière française : petit drapeau
+  if(typeof CFG_RZ_EXTRA!=='undefined') CFG_RZ_EXTRA.forEach(x=>items.push(Object.assign({}, x, {ic:RZ_SVG[x.ic]||RZ_SVG.leaf})));   // ex. garantie
   w.innerHTML=items.map(i=>`<div class="rz-item"><span class="rz-ic">${i.ic}</span><div class="rz-tx"><b>${i.t}</b><span>${fixPunct(i.s)}</span></div></div>`).join('');
   return w;
 }
@@ -11629,7 +11642,7 @@ function updatePrice(){ const p=computePrice();
   // « Payer en plusieurs fois » n'apparaît qu'avec un vrai total (dès la première option choisie)
   document.querySelectorAll('#cgpRoot .simul').forEach(function(x){ x.style.display = ov ? 'none' : ''; });
   if(__dimsOn) closeDims();
-  if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
+  if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=ov.label; } }   // prix « à partir de » : pas de mention livraison accolée (« À partir de - livraison offerte à partir de… »)
 
 /* ============================================================================
    SCENE 3D + chargement du .glb embarqué
@@ -12304,6 +12317,11 @@ function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
   // Prix « à partir de » encore affiché (rien choisi) : on n'ajoute pas une config par défaut que le client n'a pas vue,
   // on l'emmène à l'étape à compléter (le config peut indiquer laquelle via CFG_CART_FIRST_STEP).
+  // Étape obligatoire non remplie (ex. longueur de la clôture) : bloque toujours l'ajout et emmène le client à l'étape
+  const req=(typeof CFG_CART_REQUIRE==='function') ? CFG_CART_REQUIRE() : null;
+  if(req){ const g=document.getElementById('group-'+req);
+    if(g){ g.scrollIntoView({behavior:'smooth',block:'center'}); g.classList.remove('cg-flash'); void g.offsetWidth; g.classList.add('cg-flash'); }
+    toast((typeof CFG_CART_FIRST_MSG!=='undefined'?CFG_CART_FIRST_MSG:'Complétez votre configuration.')); return; }
   if(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(computePrice()) && !window.__cgCartNudged){
     window.__cgCartNudged=true;   // une seule fois : au 2e clic, on ajoute la configuration affichée (ex. le client veut vraiment 2 m)
     const st=(typeof CFG_CART_FIRST_STEP!=='undefined'?CFG_CART_FIRST_STEP:null), g=st?document.getElementById('group-'+st):null;

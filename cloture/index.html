@@ -10267,6 +10267,17 @@ var qrcode = function() {
 
 /* Plein écran : le badge « Longueur » remonte en haut à gauche, sous « Quitter », pour ne pas être caché par « Voir dans mon jardin » */
 .stage.fs #cloLenBadge{bottom:auto!important;top:64px;left:12px}
+
+.cgp-root .choices.keep3{grid-template-columns:1fr 1fr 1fr}
+
+/* Réassurance à 4 éléments : grille 2 × 2 sur ordinateur */
+.cgp-root .reassure:has(.rz-item:nth-child(4)){display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:880px){.cgp-root .reassure:has(.rz-item:nth-child(4)){grid-template-columns:1fr}}
+/* Longueur pas encore choisie : texte d'invite en gris */
+.cgp-root select.clo-select.is-empty{color:#787c82!important}
+
+/* Mobile : pas de marge blanche au-dessus de l'image (la 1re étape remonte d'autant) */
+@media (max-width:880px){.cgp-root .layout{padding-top:0!important}}
 </style>
 </head>
 <body>
@@ -10304,7 +10315,7 @@ var qrcode = function() {
 
 <div class="footbar"><div class="wrap">
   <div class="price-block"><div class="lbl" id="shipLbl">Total TTC</div><div class="val-row"><span class="val" id="totalPrice">1 119,15 €</span><span class="split" id="splitPay"></span></div><div class="unit" id="unitPrice"></div></div>
-  <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Sauver</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
+  <div class="actions"><button class="btn ghost" id="saveBtn"><span class="lbl-full">Sauvegarder</span><span class="lbl-short">Enregistrer</span></button><button class="btn primary" id="cartBtn">Ajouter au panier</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
 <div class="vid-modal" id="vidModal"><div class="vid-card"><button class="vid-close" id="vidClose" aria-label="Fermer">✕</button><div class="vid-frame" id="vidFrame"></div></div></div>
@@ -10400,9 +10411,9 @@ const GLB_HEIGHT = { '060':'120', '120':'120', '180':'180', '240':'240' };
 
 const HAUTEURS = [
   // 0,60 m retiré de la v1 (2026-10-27) : on reste iso avec les 3 hauteurs du configurateur MKL pour le test A/B
-  { id:'120', label:'1,20 m', sub:'',  m:1.20 },
-  { id:'180', label:'1,80 m', sub:'',  m:1.80 },
-  { id:'240', label:'2,40 m', sub:'',  m:2.40 }
+  { id:'120', label:'1,20 m', sub:'Délimiter',  m:1.20 },
+  { id:'180', label:'1,80 m', sub:'Intimité',  m:1.80 },
+  { id:'240', label:'2,40 m', sub:'Protection maximale',  m:2.40 }
 ];
 const LONG_MIN = 2, LONG_MAX = 91;
 
@@ -10455,10 +10466,10 @@ const cloImg=n=>CLO_IMG+'cloture-'+n+'.webp', cloTh=n=>CLO_IMG+'t/cloture-'+n+'.
 const cloGal=L=>L.map(x=>({src:cloImg(x[0]), th:cloTh(x[0]), alt:x[1]}));
 
 const QUALITY = {
-  tags:["Douglas français","Panneaux de 60 cm","Visserie inox"],
+  tags:["Douglas français","Pose facile","Visserie inox"],
   items:[
     {t:"Douglas français", img:cloTh('douglas-francais'), b:"Les lames sont en douglas issu de forêts françaises, une essence naturellement durable en extérieur. Lames de 4,7 × 2,5 cm, panneaux de 5 cm d'épaisseur."},
-    {t:"Panneaux de 60 cm", img:cloTh('panneaux-60cm'), b:"La clôture est livrée en panneaux de 60 cm de haut que vous assemblez les uns sur les autres jusqu'à la hauteur choisie."},
+    {t:"Pose facile", img:cloTh('panneaux-60cm'), b:"Pas de grand panneau lourd à manœuvrer : la clôture arrive en panneaux de 60 cm de haut, maniables, que vous montez rangée par rangée. Le même panneau sert pour 1,20, 1,80 ou 2,40 m, et se recoupe pour une hauteur sur mesure."},
     {t:"Visserie inox", img:cloTh('visserie-inox'), b:"Toute la visserie est en inox : aucune coulure de rouille sur le bois, une tenue qui dure dans le temps."}
   ]
 };
@@ -10466,9 +10477,8 @@ const QUALITY = {
 /* ---- Textes des etapes (vouvoiement cote client) ---- */
 const SECTIONS = {
   hauteur:{ title:"Hauteur.", q:"Quelle hauteur de clôture ?",
-    desc:"Hauteur hors poteau, assemblée par panneaux de 60 cm.",
     arg:{ imgs:cloGal([['hauteur-1m80','Clôture bois 1,80 m'],['hauteur-1m20','Clôture bois 1,20 m sur muret'],['hauteur-2m40','Clôture bois 2,40 m']]),
-      intro:"La hauteur détermine le nombre de panneaux empilés.", points:[
+      intro:"Hauteur de la clôture, hors poteau.", points:[
       ["1,20 m","Pour délimiter sans fermer : jardinet, massif, séparation basse."],
       ["1,80 m","La hauteur standard pour l'intimité côté jardin ou terrasse."],
       ["2,40 m","Protection maximale, pour couper un vis-à-vis élevé ou le vent."],
@@ -10486,20 +10496,20 @@ const SECTIONS = {
     arg:{ items:[
       {t:"Ajourée", img:cloTh('type-ajouree'), b:"Les lames (4,7 × 2,5 cm) sont espacées de 2 cm : l'air et la lumière passent. Le vent aussi : c'est le bon choix en zone très exposée."},
       {t:"Occultante", img:cloTh('type-occultante'), b:"Une membrane occultante (Delta-Fassade) est fixée au dos des lames : aucun vis-à-vis. Vous pouvez ajouter une 2e face bois pour habiller et protéger la membrane côté voisin."},
-      {t:"Et le vent ?", img:cloTh('vent'), b:"L'occultante a plus de prise au vent que l'ajourée, mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. Au-delà de 1,80 m en occultant, ou en zone très ventée, fixez la clôture dans le béton : « Platines pour sol dur » chevillées dans le béton, ou « Pieux pour sol souple » enfoncés directement dans du béton frais."} ] } },
+      {t:"Et le vent ?", img:cloTh('vent'), b:"L'occultante a plus de prise au vent que l'ajourée, mais reste stable si elle est bien fixée : la membrane est conçue pour résister au vent. En occultant, fixez la clôture dans le béton : « Platines pour sol dur » chevillées dans le béton, ou « Pieux pour sol souple » scellés dans du béton frais (plantés seuls dans la terre, les pieux sont réservés à l'ajourée)."} ] } },
   faces:{ title:"Faces.", q:"Une ou deux faces bois ?",
     arg:{ items:[
       {t:"Une face bois", img:cloTh('une-face-cote-voisin'), b:"Le bois habille un seul côté : tournez-le vers le côté le plus vu (votre jardin, ou la rue comme ici). De l'autre côté, on voit la membrane noire et les traverses de maintien."},
       {t:"Deux faces bois", img:cloTh('deux-faces'), b:"Le bois habille les deux côtés : même rendu côté jardin et côté voisin, et la membrane est protégée entre les deux faces."} ] } },
   poteaux:{ title:"Poteaux.", q:"Avec ou sans poteaux ?",
     arg:{ items:[
-      {t:"Avec poteaux", img:cloTh('avec-poteaux'), b:"Les poteaux sont fournis, en <b>bois lamellé-collé 90 × 90 mm</b>, classe 4 : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Hauteur 2,50 m, à recouper à la hauteur de votre clôture. La quincaillerie pour fixer les panneaux sur les poteaux est fournie avec les poteaux. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
+      {t:"Avec poteaux", img:cloTh('avec-poteaux'), b:"Les poteaux sont fournis, en <b>bois lamellé-collé 90 × 90 mm</b>, classe 4 : contrairement au bois massif, ils ne vrillent pas et restent droits dans le temps. Il faut 1 poteau au départ, puis 1 tous les 2 m (le nombre est calculé pour vous). Hauteur 2,50 m, à recouper à la hauteur de votre clôture. La quincaillerie pour fixer les panneaux sur les poteaux est fournie avec les poteaux. Clôture complète et autoportante : choisissez ensuite la fixation au sol."},
       {t:"Sans poteau", img:"", b:"Vous fixez les panneaux sur un support existant et solide : poteaux maçonnés, bois ou métal, ou directement plaqués contre un mur (les traverses au dos font un tasseau de 2,5 cm). Fixations adaptées à votre support non fournies. Un grillage n'est pas assez solide."} ] } },
-  support:{ title:"Fixation au sol.", q:"Sur quel type de sol ?",
+  support:{ title:"Fixation au sol.", q:"Quelle fixation pour vos poteaux ?",
     cta:"Comment choisir ma fixation ?",
     arg:{ items:[
       {t:"Sans support", img:"", b:"Vous fixez les poteaux vous-même, par exemple en les scellant dans des trous remplis de béton. Sur un muret ou une dalle, préférez les « Platines pour sol dur »."},
-      {t:"Pieux pour sol souple", img:cloTh('pieu'), b:"Des pieux à enfoncer dans la terre : parfait pour un sol meuble, sans béton. Pour plus de tenue (zone ventée, grande hauteur), ils peuvent être scellés en les enfonçant directement dans du béton."},
+      {t:"Pieux pour sol souple", img:cloTh('pieu'), b:"Des pieux à enfoncer dans un sol meuble. Plantés directement dans la terre, ils conviennent à la clôture ajourée. Pour une clôture occultante, une grande hauteur ou une zone ventée, scellez-les : enfoncés dans du béton frais, ils deviennent très résistants."},
       {t:"Platines pour sol dur", img:cloTh('platine'), b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } }
 };
 
@@ -10511,6 +10521,11 @@ function cloLongueurFacturee(){ return 2*Math.ceil(cloLongueur()/2); } // arrond
    données structurées). On affiche donc le prix au mètre de départ tant que le client n'a touché à rien ;
    dès la première option, c'est le vrai total. */
 function CFG_PRICE_TEXT(p){
+  // Options touchées mais longueur pas encore choisie : prix au mètre de la configuration en cours (pas un total pour 2 m)
+  if(window.__cloPriced && !window.__cloLenChosen){
+    var a=state.angles; state.angles=0; var pm=computePrice()/cloLongueur(); state.angles=a;
+    return { main: pm.toFixed(2).replace('.',',')+' €/m', sub:'Prix au mètre', label:'Choisissez la longueur pour le total' };
+  }
   if(window.__cloPriced) return null;
   var mn=Math.min.apply(null, HAUTEURS.map(function(h){ return H_CALC[h.id]; }));
   return { main: mn.toFixed(2).replace('.',',')+' €/m', sub:'Prix au mètre', label:'À partir de' };
@@ -10521,9 +10536,12 @@ function CFG_PRICE_TEXT(p){
    affiché au chargement (« À partir de 47,09 €/m », prix Merchant Center). */
 /* Clic « Ajouter au panier » avant tout choix : on emmène le client à la longueur (pas d'ajout d'une clôture de 2 m par défaut) */
 var CFG_CART_FIRST_STEP='longueur', CFG_CART_FIRST_MSG='Indiquez la longueur de votre clôture pour voir le prix exact.';
+/* Longueur obligatoire avant l'ajout au panier (sinon une clôture de 2 m partirait sans que le client l'ait choisie) */
+function CFG_CART_REQUIRE(){ return window.__cloLenChosen ? null : 'longueur'; }
 function CFG_PRICE_UNIT(p){ var L=cloLongueur(); return (L>0 && L<=1) ? 'soit '+(p/L).toFixed(2).replace('.',',')+' €/m' : ''; }
 /* Réassurance : la clôture est en douglas français (pas de lamellé-collé, sauf les poteaux) */
 var CFG_RZ_WOOD = { t:'Douglas français', s:'Issu de forêts françaises' };
+var CFG_RZ_EXTRA = [{ic:'shield', t:'Bois garanti 20 ans', s:'Traité pour durer en extérieur'}];   // en plus des 3 éléments communs
 function computePrice(){
   var h = PPH[state.pose] ? state.pose : '180';
   var Lpaid = cloLongueur();   // comme MKL (formule officielle « longueur ») : prix au mètre sur la longueur réelle, impaire comprise
@@ -10562,7 +10580,7 @@ function CFG_ENCODE(){ return {p:state.pose, t:state.taille, c:{l:state.longueur
 function CFG_INIT_STATE(){
   // restauration depuis un lien sauvegardé (une seule fois)
   if(!window.__cloRestored && typeof RESTORE!=='undefined' && RESTORE && RESTORE.c){
-    window.__cloRestored=true; window.__cloPriced=true; var r=RESTORE.c;
+    window.__cloRestored=true; window.__cloPriced=true; window.__cloLenChosen=true; var r=RESTORE.c;
     if(r.l) state.longueur=parseInt(r.l,10); if(r.ty) state.type=r.ty; if(r.fa) state.faces=r.fa; if(r.po) state.poteaux=r.po; if(r.su) state.support=r.su; if(r.an!=null) state.angles=parseInt(r.an,10)||0;
     try{ ['hauteur','longueur','type','faces','poteaux','support'].forEach(function(k){ chosen[k]=true; }); }catch(e){}
   }
@@ -10666,7 +10684,7 @@ function CFG_RENDER(){
 
   section('hauteur', function(){
     var w2=document.createElement('div');
-    var c=document.createElement('div'); c.className='choices cols-3';
+    var c=document.createElement('div'); c.className='choices cols-3 keep3';   // 3 hauteurs sur une ligne, même sur mobile
     HAUTEURS.forEach(function(o){
       c.appendChild(choiceCard(o.label, o.sub, '', state.pose===o.id, function(){ cloSetHeight(o.id); }));
     });
@@ -10689,7 +10707,8 @@ function CFG_RENDER(){
       var opt=document.createElement('option'); opt.value=m; opt.textContent=m+' m';
       if(parseInt(state.longueur,10)===m) opt.selected=true; sel.appendChild(opt);
     }
-    sel.onchange=function(){ state.longueur=parseInt(sel.value,10); chosen.longueur=true; cloRefresh('longueur'); };
+    if(!window.__cloLenChosen){ var o0=document.createElement('option'); o0.value=''; o0.textContent='Choisissez la longueur'; o0.disabled=true; o0.selected=true; sel.insertBefore(o0, sel.firstChild); sel.classList.add('is-empty'); }
+    sel.onchange=function(){ if(!sel.value) return; state.longueur=parseInt(sel.value,10); chosen.longueur=true; window.__cloLenChosen=true; cloRefresh('longueur'); };
     row.appendChild(sel);
     wrap.appendChild(row);
     // Transparence longueur impaire : panneaux de 2 m -> longueur recue arrondie + recoupe
@@ -10772,7 +10791,8 @@ function CFG_RENDER(){
       var hn=document.createElement('div'); hn.className='reco-box';
       hn.innerHTML= state.support==='platines' ? '<b>Sur un muret</b> : les platines conviennent si le muret est plat et large d\'au moins 15 cm. En zone ventée, chevillez-les dans du béton.'
                   : (state.support==='pieux' && state.type==='occultante' && state.pose==='240') ? '<b>Attention</b> : en 2,40 m occultant, les « Pieux pour sol souple » simplement plantés dans la terre ne suffisent pas face au vent. Enfoncez-les directement dans du béton (scellement), ou choisissez les « Platines pour sol dur » chevillées dans le béton.'
-                  : state.support==='pieux' ? '<b>Sol meuble</b> : les pieux s\'enfoncent sans béton. En zone très ventée, vous pouvez les sceller en les enfonçant directement dans du béton.'
+                  : (state.support==='pieux' && state.type==='occultante') ? '<b>En occultant</b> : scellez les pieux en les enfonçant dans du béton frais, ils deviennent très résistants. Plantés seuls dans la terre, ils sont réservés à l\'ajourée.'
+                  : state.support==='pieux' ? '<b>Sol meuble</b> : en ajouré, les pieux s\'enfoncent directement dans la terre. En zone très ventée, scellez-les dans du béton frais.'
                   : '<b>Sans support</b> : vous scellez vous-même les poteaux de 2,50 m ou les fixez sur un support existant.';
       w2.appendChild(hn);
       return w2;
@@ -10798,8 +10818,8 @@ function cloKitHtml(){
   // Retour Manuel : pas de liste de composants (approximative) ; on vend la simplicité du montage + la vue éclatée.
   // Texte valable avec ou sans poteaux (les poteaux sont choisis plus loin dans le parcours).
   var btn=(typeof __alt!=='undefined' && __alt) ? '' : '<button type="button" class="clo-kit-btn" onclick="cloExplodeToggle()">Voir comment les panneaux s\'assemblent</button>';
-  return '<div class="clo-kit"><div class="clo-kit-h">Un montage simplifié au maximum</div>'
-    +'<p class="clo-kit-p">Des panneaux en douglas français de 60 × 200 cm, prêts à poser, que vous empilez les uns sur les autres jusqu\'à la hauteur choisie.</p>'
+  return '<div class="clo-kit"><div class="clo-kit-h">Une pose facile, sans grand panneau lourd</div>'
+    +'<p class="clo-kit-p">Vos panneaux de 60 cm de haut arrivent prêts à poser. Maniables, ils se montent rangée par rangée : 2, 3 ou 4 rangées selon la hauteur choisie, et ils se recoupent si besoin.</p>'
     +btn+'</div>';
 }
 /* Fiche technique (ce que les clients demandent dans le chat) : pop-up ouverte depuis le récapitulatif */
@@ -10812,14 +10832,13 @@ function cloOpenTech(){
 }
 function cloRecap(){
   var w=document.createElement('div'); w.className='recap';
-  var rows=[['Hauteur',hLabel(state.pose)],['Longueur',cloLongueurLabel()],['Type',typeLabel()]];
+  var rows=[['Hauteur',hLabel(state.pose)],['Longueur',window.__cloLenChosen?cloLongueurLabel():'À choisir'],['Type',typeLabel()]];
   if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
   rows.push(['Poteaux', state.poteaux==='avec' ? poteauxLabel() : 'Sans poteau (non fournis)']);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
   if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
   w.innerHTML='<h3 class="recap-h">Récapitulatif de votre configuration</h3><button type="button" class="savoir tech-link" onclick="cloOpenTech()">Voir la fiche technique</button>'
     +rows.map(r=>`<div class="recap-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')
-    +`<div class="recap-row"><span>Livraison</span><b class="ship-recap">${shipInfo(computePrice()).recap}</b></div>`
     +(function(){ var p=computePrice(), ov=CFG_PRICE_TEXT(p); return `<div class="recap-row total"><span>${ov?'Prix au mètre TTC':'Total TTC'}</span><b>${ov?ov.main:fmtEUR(p)}</b></div>`+((ov||!CFG_PRICE_UNIT(p))?'':`<div class="recap-row"><span></span><span style="font-size:13px;color:var(--cg-ink-soft)">${CFG_PRICE_UNIT(p)}</span></div>`); })();
   return w;
 }
@@ -11230,6 +11249,7 @@ function cloUpdateBadge(L){
     stage.appendChild(b);
   }
   b.textContent='Longueur : '+L+' m';
+  var on=!!window.__cloLenChosen; b.style.display=on?'':'none'; stage.classList.toggle('has-len', on);   // pas de « 2 m » affiché tant que le client n'a pas choisi
 }
 
 /* ---- Réalité augmentée ----
@@ -11658,6 +11678,7 @@ const FLAG_FR='<svg class="fr-flag" viewBox="0 0 3 2" aria-label="France" role="
 const RZ_SVG={
   truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 9.5h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/></svg>',
   ret:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9h11a5 5 0 0 1 0 10H8"/><path d="M6.5 5.5 3 9l3.5 3.5"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
   leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4.4 3.2-7.5 8.5-7.5C20.5 9.4 17.3 12 12 12Z"/><path d="M12 15c0-3.2-2.4-5.3-6.3-5.3C5.7 13.2 8.1 15 12 15Z"/></svg>'
 };
 function buildReassurance(){
@@ -11668,6 +11689,7 @@ function buildReassurance(){
   ];
   const w=document.createElement('div'); w.className='reassure';
   items[2].t+=' '+FLAG_FR;   // matière française : petit drapeau
+  if(typeof CFG_RZ_EXTRA!=='undefined') CFG_RZ_EXTRA.forEach(x=>items.push(Object.assign({}, x, {ic:RZ_SVG[x.ic]||RZ_SVG.leaf})));   // ex. garantie
   w.innerHTML=items.map(i=>`<div class="rz-item"><span class="rz-ic">${i.ic}</span><div class="rz-tx"><b>${i.t}</b><span>${fixPunct(i.s)}</span></div></div>`).join('');
   return w;
 }
@@ -11807,7 +11829,7 @@ function updatePrice(){ const p=computePrice();
   // « Payer en plusieurs fois » n'apparaît qu'avec un vrai total (dès la première option choisie)
   document.querySelectorAll('#cgpRoot .simul').forEach(function(x){ x.style.display = ov ? 'none' : ''; });
   if(__dimsOn) closeDims();
-  if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=l.textContent.replace(/^Total TTC/, ov.label); } }
+  if(ov && ov.label){ const l=document.getElementById('shipLbl'); if(l) l.textContent=ov.label; } }   // prix « à partir de » : pas de mention livraison accolée (« À partir de - livraison offerte à partir de… »)
 
 /* ============================================================================
    SCENE 3D + chargement du .glb embarqué
@@ -12482,6 +12504,11 @@ function addToCart(){
   if(!CTX.ajaxUrl){ toast('Ajout au panier disponible une fois intégré au site.'); return; }
   // Prix « à partir de » encore affiché (rien choisi) : on n'ajoute pas une config par défaut que le client n'a pas vue,
   // on l'emmène à l'étape à compléter (le config peut indiquer laquelle via CFG_CART_FIRST_STEP).
+  // Étape obligatoire non remplie (ex. longueur de la clôture) : bloque toujours l'ajout et emmène le client à l'étape
+  const req=(typeof CFG_CART_REQUIRE==='function') ? CFG_CART_REQUIRE() : null;
+  if(req){ const g=document.getElementById('group-'+req);
+    if(g){ g.scrollIntoView({behavior:'smooth',block:'center'}); g.classList.remove('cg-flash'); void g.offsetWidth; g.classList.add('cg-flash'); }
+    toast((typeof CFG_CART_FIRST_MSG!=='undefined'?CFG_CART_FIRST_MSG:'Complétez votre configuration.')); return; }
   if(typeof CFG_PRICE_TEXT==='function' && CFG_PRICE_TEXT(computePrice()) && !window.__cgCartNudged){
     window.__cgCartNudged=true;   // une seule fois : au 2e clic, on ajoute la configuration affichée (ex. le client veut vraiment 2 m)
     const st=(typeof CFG_CART_FIRST_STEP!=='undefined'?CFG_CART_FIRST_STEP:null), g=st?document.getElementById('group-'+st):null;
