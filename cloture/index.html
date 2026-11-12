@@ -10303,6 +10303,7 @@ var qrcode = function() {
 .cgp-root .stories-wrap::after{right:0;background:linear-gradient(to right,rgba(255,255,255,0),#fff 85%)}
 .cgp-root .stories-wrap::before{left:0;background:linear-gradient(to left,rgba(255,255,255,0),#fff 85%)}
 .cgp-root .stories-wrap.at-end::after,.cgp-root .stories-wrap.at-start::before{opacity:0}
+.cgp-root .clo-addon-more{align-self:flex-start;margin-top:3px;font-size:12px}
 </style>
     <div class="ar-stage" id="arStage"><button class="ar-ov-close" id="arOvClose" aria-label="Fermer">&#10005;</button><div class="ar-ov-status" id="arOvStatus"></div><model-viewer id="mv" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls loading="eager" touch-action="pan-y"><button slot="ar-button" style="display:none" aria-hidden="true"></button></model-viewer><button id="mvArBtn" class="mv-ar-btn" style="display:none">Voir en r&#233;alit&#233; augment&#233;e</button></div>
   </div>
@@ -10520,14 +10521,15 @@ const SECTIONS = {
       {t:"Sans support", img:"", b:"Vous avez déjà vos propres supports pour fixer les poteaux."},
       {t:"Pieux pour sol souple", img:cloTh('pieu'), b:"Des pieux à enfoncer dans un sol meuble. Plantés directement dans la terre, ils conviennent à la clôture ajourée. Pour une clôture occultante, une grande hauteur ou une zone ventée, scellez-les : enfoncés dans du béton frais, ils deviennent très résistants."},
       {t:"Platines pour sol dur", img:cloTh('platine'), b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } },
-  complements:{ title:"Compléments.", q:"Portillon et finition", argTitle:"Le portillon douglas",
+  complements:{ title:"Compléments.", q:"Portillon et finition" },
+  // « En savoir plus » du portillon : ouvert depuis l'encart portillon (pas un lien sous toute l'étape)
+  portillon:{ title:"Portillon.", argTitle:"Le portillon douglas",
     arg:{ imgs:cloGal([['portillon','Portillon douglas, présenté entre deux poteaux (non fournis)'],['portillon-loquet','Loquet du portillon'],['portillon-charniere','Charnière et équerre de renfort'],['portillon-mesures','Dimensions du portillon (en mm)']]),
       intro:"Un portillon assorti à votre clôture, en douglas français.", points:[
       ["Dimensions","1,59 m de haut, 99 cm de large, poteaux non compris."],
       ["Livré prêt à poser","Portillon déjà assemblé en France, avec charnières, loquet et notice. Poteaux non fournis avec le portillon. Il se pose en 30 minutes environ."],
       ["Poteaux","Il se fixe entre deux poteaux. Avec les poteaux de la clôture, chaque portillon en ajoute 1 au kit."],
-      ["Longueur","La longueur choisie est celle de la clôture seule : prévoyez environ 1,10 m de plus pour le portillon et son poteau."],
-      ["Traitement des coupes","Les poteaux et les panneaux se recoupent à la scie : le produit de traitement protège le bois à ces endroits."] ] } }
+      ["Longueur","La longueur choisie est celle de la clôture seule : prévoyez environ 1,10 m de plus pour le portillon et son poteau."] ] } }
 };
 
 /* ============================ PRIX ============================ */
@@ -10834,15 +10836,16 @@ function CFG_RENDER(){
   if(cloAddonOk('portillon') || cloAddonOk('traitement')){
     section('complements', function(){
       var w2=document.createElement('div');
-      function row(key, img, name, sub, max){
+      function row(key, img, name, sub, max, more){
         var n=state[key]||0, r=document.createElement('div'); r.className='clo-angles clo-addon';
         r.innerHTML='<img class="clo-addon-img" src="'+img+'" alt="" loading="lazy" decoding="async">'
-          +'<span class="clo-angles-l">'+name+'<small>'+sub+'</small></span>'
+          +'<span class="clo-angles-l">'+name+'<small>'+sub+'</small>'+(more?'<button type="button" class="savoir clo-addon-more">En savoir plus</button>':'')+'</span>'
           +'<span class="clo-step"><button type="button" data-d="-1" aria-label="Retirer">−</button><b>'+n+'</b><button type="button" data-d="1" aria-label="Ajouter">+</button></span>';
-        r.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ var v=Math.max(0,Math.min(max,(state[key]||0)+parseInt(b.getAttribute('data-d'),10))); if(v===(state[key]||0)) return; state[key]=v; chosen.complements=true; cloRefresh('angles'); }; });
+        var mb=r.querySelector('.clo-addon-more'); if(mb) mb.onclick=function(){ openArg(more); };
+        r.querySelectorAll('.clo-step button').forEach(function(b){ b.onclick=function(){ var v=Math.max(0,Math.min(max,(state[key]||0)+parseInt(b.getAttribute('data-d'),10))); if(v===(state[key]||0)) return; state[key]=v; chosen.complements=true; cloRefresh('angles'); }; });
         w2.appendChild(r);
       }
-      if(cloAddonOk('portillon')) row('portillon', CLO_IMG+'t/cloture-portillon-sq.webp', 'Portillon douglas', 'Hauteur '+PORTILLON_H+', largeur '+PORTILLON_W+'. 349 €', 3);
+      if(cloAddonOk('portillon')) row('portillon', CLO_IMG+'t/cloture-portillon-sq.webp', 'Portillon douglas', 'Hauteur '+PORTILLON_H+', largeur '+PORTILLON_W+'. 349 €', 3, 'portillon');
       if(cloAddonOk('portillon') && state.portillon>0){ var hn=document.createElement('div'); hn.className='reco-box'; hn.innerHTML=cloPortillonHint(); w2.appendChild(hn); }
       if(cloAddonOk('traitement')) row('traitement', CLO_IMG+'t/cloture-traitement-sq.webp', 'Traitement des coupes', 'Protège le bois recoupé. 1 L, 35 €', 5);
       return w2;
@@ -10884,7 +10887,7 @@ function cloRecap(){
   var w=document.createElement('div'); w.className='recap';
   var rows=[['Hauteur',hLabel(state.pose)],['Longueur',window.__cloLenChosen?cloLongueurLabel():'À choisir'],['Type',typeLabel()]];
   if(state.type==='occultante') rows.push(['Faces',facesLabel()]);
-  rows.push(['Poteaux', state.poteaux==='avec' ? poteauxLabel() : 'Sans poteau (non fournis)']);
+  rows.push(['Poteaux', poteauxLabel()]);
   if(state.poteaux==='avec') rows.push(['Fixation',supportLabel()]);
   if(state.angles && state.poteaux==='avec') rows.push(['Angles',cloAnglesLabel()]);
   cloAddonRows().forEach(function(r){ rows.push(r); });
