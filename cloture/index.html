@@ -10521,7 +10521,7 @@ const SECTIONS = {
       {t:"Pieux pour sol souple", img:cloTh('pieu'), b:"Des pieux à enfoncer dans un sol meuble. Plantés directement dans la terre, ils conviennent à la clôture ajourée. Pour une clôture occultante, une grande hauteur ou une zone ventée, scellez-les : enfoncés dans du béton frais, ils deviennent très résistants."},
       {t:"Platines pour sol dur", img:cloTh('platine'), b:"Des platines avec goujons d'ancrage, à cheviller sur dalle, terrasse, plots béton ou muret plat (socle 15 × 15 cm). En zone ventée, chevillez-les dans du béton."} ] } },
   complements:{ title:"Compléments.", q:"Portillon et finition", argTitle:"Le portillon douglas",
-    arg:{ imgs:cloGal([['portillon','Portillon bois douglas en kit'],['portillon-mesures','Dimensions du portillon (en mm)']]),
+    arg:{ imgs:cloGal([['portillon','Portillon douglas, présenté entre deux poteaux (non fournis)'],['portillon-loquet','Loquet du portillon'],['portillon-charniere','Charnière et équerre de renfort'],['portillon-mesures','Dimensions du portillon (en mm)']]),
       intro:"Un portillon assorti à votre clôture, en douglas français.", points:[
       ["Dimensions","1,59 m de haut, 99 cm de large, poteaux non compris."],
       ["Livré prêt à poser","Portillon déjà assemblé en France, avec charnières, loquet et notice. Poteaux non fournis avec le portillon. Il se pose en 30 minutes environ."],
@@ -10536,8 +10536,8 @@ const SECTIONS = {
 function cloAddonOk(k){ var a=window.CGP_CTX && CGP_CTX.addons; return !!(a && a[k]); }
 var PORTILLON_H = '1,59 m', PORTILLON_W = '99 cm';   // plan PORTILLON COVER COMPLET V3 : vantail 992 × 1588 mm
 function cloPortillonHint(){
-  var d={ '120':'Il dépasse votre clôture de 1,20 m d\'environ 40 cm.', '180':'Il est environ 20 cm plus bas que votre clôture de 1,80 m.', '240':'Il est environ 80 cm plus bas que votre clôture de 2,40 m.' }[state.pose]||'';
-  return '<b>Portillon de '+PORTILLON_H+' de haut.</b> '+d+' Il s\'ajoute à la longueur de clôture choisie : prévoyez environ 1,10 m de plus.'
+  // Pas de comparaison avec la hauteur de la clôture (retour Manuel : ça freine la vente, la hauteur est déjà indiquée)
+  return 'Le portillon s\'ajoute à la longueur de clôture choisie : prévoyez environ 1,10 m de plus.'
     +(state.poteaux==='avec' ? ' Chaque portillon ajoute 1 poteau'+(state.support!=='sans'?' et son pied':'')+'.' : ' À fixer entre deux poteaux solides.');
 }
 function supportEff(){ return (state.poteaux==='avec') ? state.support : 'sans'; }
@@ -11023,10 +11023,68 @@ function CFG_APPLY_VIS(){
     'Pieux_Angle_5_Sol','Pieux_Angle_6_Sol','Visserie Pieux_Angle_5_Sol','Visserie Pieux_Angle_6_Sol',
     'Côté Extérieur Label_Sol','Côté Jardin Label_Sol'], false);
 
+  cloPortillon3D();
   cloApplyExplode();
   cloSyncExt();
   try{ cloFaceChip(); }catch(e){}
   cloUpdateBadge(cloLongueur());
+}
+/* Portillon intégré dans la travée centrale (visuel) : vantail 992 × 1588 mm accroché au poteau de gauche,
+   + 1 poteau (et son pied) si la clôture a des poteaux, puis le reste de la travée en panneau recoupé.
+   Le vantail réutilise le panneau de la clôture (mêmes lames 47 mm espacées de 20 mm, comme le vrai portillon). */
+function cloPortillon3D(){
+  if(!root || typeof THREE==='undefined') return;
+  var old=root.getObjectByName('cloPortillon');
+  if(old){ old.parent.remove(old); old.traverse(function(o){ if(o.isMesh && o.material && o.material.__cloPort) o.material.dispose(); }); }
+  var pph=PPH[GLB_HEIGHT[state.pose]]||3, mids=[];
+  for(var Lv=0; Lv<pph; Lv++){ var N=Lv*3+2;
+    ['Panneau_','Occultant_','Panneaux_2ème_Face_','Visserie Panneaux_','Visserie Panneaux_2ème_Face_'].forEach(function(pre){ var o=sceneNode(pre+N+'_Sol'); if(o) mids.push(o); }); }
+  mids.forEach(function(o){ if(o.userData.__px===undefined) o.userData.__px=o.position.x; o.position.x=o.userData.__px; delete o.userData.cloPortBase; });
+  var PL0=sceneNode('Poteau_2_Sol'); if(PL0) delete PL0.userData.cloPortBase;
+  var n=cloAddonOk('portillon') ? (state.portillon||0) : 0;
+  if(!n) return;
+  var avec=state.poteaux==='avec', H0=0.05, HG=1.588;
+  var leafL=-0.945, leafR=leafL+0.992, postC=leafR+0.055, restL=avec?postC:leafR+0.01, restR=1.0;
+  var G=new THREE.Group(); G.name='cloPortillon'; root.add(G);
+  root.updateMatrixWorld(true);
+  var inv=new THREE.Matrix4().copy(root.matrixWorld).invert();
+  function relBox(node){ var b=new THREE.Box3().setFromObject(node); return b.applyMatrix4(inv); }
+  function cloneAt(node, dx, dy, dz){
+    node.updateWorldMatrix(true,true);
+    var cl=node.clone(true), m=new THREE.Matrix4().multiplyMatrices(inv, node.matrixWorld);
+    m.decompose(cl.position, cl.quaternion, cl.scale); cl.position.x+=dx; cl.position.y+=dy; cl.position.z+=dz; cl.visible=true; G.add(cl); return cl;
+  }
+  function clip(cl, planes){ cl.traverse(function(o){ if(!o.isMesh || !o.material || Array.isArray(o.material)) return;
+    var m=o.material.clone(); if(o.material.__cloShade) cloShadePanelWood(m, cloSeedOf('cloPortillon')); m.__cloPort=true; m.clippingPlanes=planes; o.material=m; }); }
+  if(typeof renderer!=='undefined' && renderer) renderer.localClippingEnabled=true;
+  var W=function(x,y){ return root.localToWorld(new THREE.Vector3(x||0,y||0,0)); };
+  // Vantail : 3 panneaux réduits à 0,992 m, coupés en haut à 1,588 m (24 lames)
+  var P=sceneNode('Panneau_2_Sol');
+  if(P){ var pb=relBox(P), pcz=(pb.min.z+pb.max.z)/2, pcx=(pb.min.x+pb.max.x)/2;
+    var top=new THREE.Plane(new THREE.Vector3(0,-1,0), W(0,H0+HG).y);
+    for(var k=0;k<3;k++){
+      var cl=cloneAt(P, (leafL+leafR)/2-pcx, H0+0.6*k-pb.min.y, -0.083-pcz);
+      cl.scale.x=0.496;
+      clip(cl, [top]);
+    } }
+  // Poteaux : celui du portillon + rehausse du poteau de gauche si la clôture est plus basse que le portillon
+  var need=H0+HG+0.03;
+  var PO=sceneNode('Poteau_3_Sol');
+  if(avec && PO){ var ob=relBox(PO), h=ob.max.y, sy=(h<need)?need/h:1, ocx=(ob.min.x+ob.max.x)/2;
+    var np=cloneAt(PO, postC-ocx, 0, 0); np.scale.y*=sy; clip(np, []);
+    var PL=sceneNode('Poteau_2_Sol');
+    if(PL && sy>1){ var lp=cloneAt(PL, 0, 0, 0); lp.scale.y*=sy; clip(lp, []);
+      PL.userData.cloPortBase={vis:PL.visible, sx:PL.scale.x, px:PL.position.x}; PL.visible=false; }   // remplacé par sa version rehaussée (pas de doublon superposé)
+    // pied du nouveau poteau : on décale le groupe de fixations et on n'en garde qu'un (découpe en x)
+    var FX = state.support==='platines' ? sceneNode('Pieds pour sol dur_Sol') : (state.support==='pieux' ? sceneNode('Pieux pour sol souple_Sol') : null);
+    if(FX){ var fx=cloneAt(FX, postC-ocx, 0, 0), a=W(postC-0.13).x, b=W(postC+0.13).x;
+      clip(fx, [new THREE.Plane(new THREE.Vector3(1,0,0), -a), new THREE.Plane(new THREE.Vector3(-1,0,0), b)]); }
+  }
+  // Reste de la travée centrale : panneaux recoupés entre le portillon (ou son poteau) et le poteau de droite
+  var w=restR-restL, cx=(restL+restR)/2;
+  mids.forEach(function(o){ o.userData.cloPortBase={vis:o.visible, sx:o.scale.x, px:o.userData.__px};
+    if(/^Visserie/.test(o.name)){ o.visible=false; return; }
+    o.scale.x=o.scale.x*(w/2); o.position.x=cx; });
 }
 /* Clôture « qui continue » : copies décoratives du tronçon de 3 travées de chaque côté (±6 m),
    hors de root -> n'entrent ni dans le cadrage, ni dans les mesures, ni dans le prix.
@@ -11040,7 +11098,7 @@ function cloSyncExt(){
     E=window.__cloExt={src:root, g:new THREE.Group(), pairs:[]};
     E.g.name='cloExt';
     root.children.forEach(function(ch){
-      if(/^Sc[eè]ne|Label/i.test(ch.name)) return;
+      if(/^Sc[eè]ne|Label|^cloPortillon/i.test(ch.name)) return;
       [-CLO_EXT, CLO_EXT].forEach(function(dx){
         var cl=ch.clone(true); cl.matrixAutoUpdate=false; E.g.add(cl);
         // poteaux / pieds / pieux : la copie démarre sur le poteau de jonction déjà présent -> on coupe ses fixations
@@ -11064,6 +11122,7 @@ function cloSyncExt(){
         if(p.clip){ if(b.__src!==a.material){ b.__src=a.material; b.__mc=a.material.clone(); b.__mc.clippingPlanes=[p.clip]; } b.material=b.__mc; }
         else b.material=a.material;
       }
+      var bp=a.userData && a.userData.cloPortBase; if(bp){ b.visible=bp.vis; b.scale.x=bp.sx; b.position.x=bp.px; }   // portillon : seulement sur le tronçon réel
       var nm=String(b.name).replace(/\s+/g,'_');
       if((p.dx>0 && nm==='Poteau_1_Sol') || (p.dx<0 && nm==='Poteau_4_Sol')) b.visible=false;   // poteau de jonction déjà présent
       for(var i=0;i<a.children.length && i<b.children.length;i++) sync(a.children[i], b.children[i], false);
@@ -11231,6 +11290,7 @@ function cloLeaveEndView(){ if(window.__cloExtHideNeg || window.__cloXray){ wind
 window.__cloExK=0;
 function cloApplyExplode(){
   if(!root) return; var K=window.__cloExK||0, pph=PPH[GLB_HEIGHT[state.pose]]||3, mainMax=3*pph;
+  var PG=root.getObjectByName('cloPortillon'); if(PG) PG.visible=K<0.02;
   var lift=(state.poteaux==='sans')?0.02:0;
   for(var N=1; N<=4*pph; N++){
     var lvl=(N<=mainMax)?Math.floor((N-1)/3):(N-mainMax-1);
@@ -11315,11 +11375,11 @@ function CFG_AR_PREP(){
   return function(){ window.__cloExK=k; cloApplyExplode(); };
 }
 function CFG_AR_NOTE(){
-  var L=cloLongueur();
-  return '<b>Vous allez voir un échantillon de '+CLO_AR_SAMPLE_M+' m de clôture droite</b>, sans angle, à taille réelle et avec vos options (hauteur '
-    +hLabel(state.pose)+', '+typeLabel().toLowerCase()+'). '
-    +(function(){ var an=(state.angles && state.poteaux==='avec');
-        return (L!==CLO_AR_SAMPLE_M || an) ? 'Votre commande porte, elle, sur '+L+' m'+(an?' avec '+cloAnglesLabel():'')+'.' : ''; })();
+  // Très explicite : la longueur affichée en réalité augmentée n'est PAS celle commandée (retour Manuel)
+  var L=cloLongueur(), an=(state.angles && state.poteaux==='avec'), pt=cloBOM().portillons;
+  return '<b>Exemple de '+CLO_AR_SAMPLE_M+' m, pour voir le rendu chez vous.</b> Ce n\'est pas la longueur de votre commande'
+    +(window.__cloLenChosen ? ' : votre clôture fera <b>'+L+' m</b>'+(an?' avec '+cloAnglesLabel():'')+'.' : '.')
+    +' L\'aperçu montre une clôture droite, sans angle'+(pt?'':'')+', à taille réelle, avec vos options (hauteur '+hLabel(state.pose)+', '+typeLabel().toLowerCase()+').';
 }
 
 /* ---- Panier ---- */
